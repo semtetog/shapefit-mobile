@@ -163,6 +163,39 @@
 
     window.SpaRouter = SpaRouter;
 
+    // Interceptar cliques em links internos para usar navegação SPA
+    document.addEventListener('click', function (event) {
+        // Permitir que outros handlers tratem se já foi prevenido
+        if (event.defaultPrevented) return;
+
+        const anchor = event.target.closest('a');
+        if (!anchor) return;
+
+        const href = anchor.getAttribute('href');
+
+        // Ignorar links sem href ou especiais
+        if (!href ||
+            href.startsWith('#') ||
+            href.startsWith('javascript:') ||
+            anchor.target === '_blank' ||
+            anchor.hasAttribute('data-no-spa')) {
+            return;
+        }
+
+        // Somente tratar URLs internas
+        if (!SpaRouter.isInternalUrl(href)) {
+            return;
+        }
+
+        // Evitar interferir em modificadores (Ctrl+click, etc.)
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+            return;
+        }
+
+        event.preventDefault();
+        SpaRouter.navigate(href);
+    }, true);
+
     // Inicializar listener de popstate
     window.addEventListener('popstate', function () {
         SpaRouter.handlePopState();
