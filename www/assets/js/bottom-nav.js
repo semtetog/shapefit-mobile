@@ -147,3 +147,7 @@ window.addEventListener('load', function() {
         renderBottomNav();
     }
 });
+
+// Expor uma API simples para o SPA/router poder re-renderizar o bottom nav
+window.BottomNav = window.BottomNav || {};
+window.BottomNav.render = renderBottomNav;

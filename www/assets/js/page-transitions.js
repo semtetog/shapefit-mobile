@@ -23,7 +23,13 @@
         requestAnimationFrame(() => {
             // Navegar após pequeno delay para transição visual
             setTimeout(() => {
-                window.location.href = targetUrl;
+                // Se o SPA Router estiver disponível, usar navegação SPA
+                if (window.SpaRouter && typeof window.SpaRouter.navigate === 'function') {
+                    window.SpaRouter.navigate(targetUrl);
+                } else {
+                    // Fallback: navegação tradicional
+                    window.location.href = targetUrl;
+                }
             }, 150);
         });
     }
