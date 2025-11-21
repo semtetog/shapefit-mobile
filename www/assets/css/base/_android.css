@@ -27,10 +27,9 @@
 }
 
 /* Ajuste para a navegação inferior - edge-to-edge com safe-area */
-/* Espaço extra na parte inferior para acomodar gestos do sistema (similar ao iOS) */
-/* Aumentado para 44px + safe-area para ficar igual ao iOS PWA */
+/* Espaço extra na parte inferior, mas menor pra não ficar gigante */
 .android-mobile .bottom-nav {
-    padding-bottom: calc(44px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
     margin-bottom: 0 !important;
     border-bottom: none !important;
     /* Garantir que está no fundo */
@@ -42,10 +41,9 @@
 }
 
 /* Ajuste adicional para o container principal - garantir espaço na parte inferior */
-/* Aumentado para acomodar o bottom-nav com mais espaço (44px de padding + altura dos ícones ~56px) */
 .android-mobile .app-container,
 .android-mobile .container {
-    padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px)) !important;
     margin-bottom: 0 !important;
 }
 
