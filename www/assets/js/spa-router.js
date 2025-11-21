@@ -78,18 +78,52 @@
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
 
+            // Atualizar título
             const newTitle = doc.querySelector('title');
             if (newTitle) {
                 document.title = newTitle.textContent;
             }
 
+            // === PAGE-SPECIFIC CSS ===
+            // Remover estilos antigos marcados como de página
+            Array.from(document.head.querySelectorAll('style[data-page-style],link[data-page-style]'))
+                .forEach(el => el.remove());
+
+            // Copiar <style> da nova página
+            const pageStyles = Array.from(doc.head.querySelectorAll('style'));
+            pageStyles.forEach(styleEl => {
+                if (!styleEl.textContent || !styleEl.textContent.trim()) return;
+                const newStyle = document.createElement('style');
+                newStyle.textContent = styleEl.textContent;
+                newStyle.setAttribute('data-page-style', 'true');
+                document.head.appendChild(newStyle);
+            });
+
+            // Copiar <link rel="stylesheet"> que não sejam globais e ainda não existam
+            const existingHrefs = new Set(
+                Array.from(document.head.querySelectorAll('link[rel="stylesheet"]'))
+                    .map(l => l.getAttribute('href'))
+            );
+            const pageLinks = Array.from(doc.head.querySelectorAll('link[rel="stylesheet"]'));
+            pageLinks.forEach(linkEl => {
+                const href = linkEl.getAttribute('href');
+                if (!href) return;
+                if (existingHrefs.has(href)) return; // já carregado (ex.: style.css)
+
+                const newLink = document.createElement('link');
+                newLink.rel = 'stylesheet';
+                newLink.href = href;
+                newLink.setAttribute('data-page-style', 'true');
+                document.head.appendChild(newLink);
+            });
+
+            // === CONTEÚDO PRINCIPAL ===
             const newAppContainer = doc.querySelector('.app-container') || doc.body;
             const currentAppContainer = document.querySelector('.app-container') || document.body;
 
-            // Trocar conteúdo principal
             currentAppContainer.innerHTML = newAppContainer.innerHTML;
 
-            // Encontrar scripts específicos da página (excluindo os globais já carregados)
+            // === SCRIPTS ESPECÍFICOS DA PÁGINA ===
             const pageScripts = Array.from(doc.querySelectorAll('script'));
 
             const isGlobalScript = (src = '') => {
