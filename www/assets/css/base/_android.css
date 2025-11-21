@@ -1,0 +1,94 @@
+/* assets/css/base/_android.css */
+
+/* Ajustes específicos para Android Mobile - Edge-to-Edge */
+/* Estes estilos só se aplicam quando a classe 'android-mobile' está presente no body */
+
+/* Remover todas as bordas e fazer edge-to-edge */
+.android-mobile body,
+.android-mobile html {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Ajuste para o topo - usar safe-area para status bar transparente */
+/* Padding consistente para todas as páginas - apenas safe-area + pequeno espaço */
+.android-mobile .app-container,
+.android-mobile .container {
+    padding-top: calc(env(safe-area-inset-top, 0px) + 8px) !important;
+    margin-top: 0 !important;
+}
+
+/* Ajuste para o header - remover padding-top extra já que o container já tem */
+.android-mobile .header,
+.android-mobile .header-nav {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+/* Ajuste para a navegação inferior - edge-to-edge com safe-area */
+/* Espaço extra na parte inferior para acomodar gestos do sistema (similar ao iOS) */
+/* Aumentado para 44px + safe-area para ficar igual ao iOS PWA */
+.android-mobile .bottom-nav {
+    padding-bottom: calc(44px + env(safe-area-inset-bottom, 0px)) !important;
+    margin-bottom: 0 !important;
+    border-bottom: none !important;
+    /* Garantir que está no fundo */
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* Ajuste adicional para o container principal - garantir espaço na parte inferior */
+/* Aumentado para acomodar o bottom-nav com mais espaço (44px de padding + altura dos ícones ~56px) */
+.android-mobile .app-container,
+.android-mobile .container {
+    padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px)) !important;
+    margin-bottom: 0 !important;
+}
+
+/* Remover bordas laterais */
+.android-mobile .app-container,
+.android-mobile .container {
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* Ajuste específico para páginas que usam o header */
+.android-mobile .header + *,
+.android-mobile .header-nav + * {
+    margin-top: 8px;
+}
+
+/* Garante que o primeiro elemento dentro do container tenha espaço no topo */
+.android-mobile .app-container > *:first-child,
+.android-mobile .container > *:first-child {
+    margin-top: 0;
+}
+
+/* Ajuste para cards que aparecem primeiro */
+.android-mobile .app-container > .glass-card:first-child,
+.android-mobile .container > .glass-card:first-child {
+    margin-top: 0;
+}
+
+/* Garantir que o body ocupe toda a tela sem bordas */
+.android-mobile body {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    overflow: hidden !important;
+}
+
+/* Garantir que o html também ocupe toda a tela */
+.android-mobile html {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: 100vw !important;
+    overflow: hidden !important;
+}
+

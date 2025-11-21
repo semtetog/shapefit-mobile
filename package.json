@@ -4,7 +4,7 @@
   "description": "ShapeFit Mobile App - Android",
   "main": "www/index.html",
   "scripts": {
-    "build": "powershell -ExecutionPolicy Bypass -File copy-to-www.ps1 && npx cap sync",
+    "build": "npx cap sync",
     "sync": "npx cap sync",
     "open:android": "npx cap open android",
     "clean": "powershell -ExecutionPolicy Bypass -File clean.ps1",

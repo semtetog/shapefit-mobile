@@ -17,8 +17,8 @@ ios/App/Pods/
 ios/App/*.xcworkspace
 ios/App/*.xcuserdatad
 
-# Web build (é gerado a partir do projeto principal)
-www/
+﻿# Web build (já está versionado neste repo para builds iOS no Appflow)
+# (não ignore o diretório www aqui)
 
 # Sistema
 .DS_Store
@@ -32,7 +32,6 @@ node_modules/
 package-lock.json
 
 # Build outputs
-www/
 android/
 ios/
 
