@@ -148,6 +148,27 @@
                 if (oldScript.type) newScript.type = oldScript.type;
                 document.body.appendChild(newScript);
             }
+
+            // === DISPARAR EVENTOS PARA COMPATIBILIDADE COM PÁGINAS ANTIGAS ===
+            // Muitas páginas usam document.addEventListener('DOMContentLoaded', ...) para iniciar
+            // lógica e chamadas de API. Num fluxo SPA, esse evento já ocorreu, então disparamos
+            // manualmente após o carregamento para garantir que esses handlers sejam executados.
+            try {
+                const domContentLoaded = new Event('DOMContentLoaded');
+                document.dispatchEvent(domContentLoaded);
+            } catch (e) {
+                console.warn('[SpaRouter] Erro ao disparar DOMContentLoaded simulado:', e);
+            }
+
+            // Evento customizado específico do SPA, caso queiramos usar no futuro
+            try {
+                const spaEvent = new CustomEvent('spa:page-loaded', {
+                    detail: { path }
+                });
+                document.dispatchEvent(spaEvent);
+            } catch (e) {
+                console.warn('[SpaRouter] Erro ao disparar spa:page-loaded:', e);
+            }
         },
 
         handlePopState() {
