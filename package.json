@@ -1,0 +1,28 @@
+{
+  "name": "shapefit-android-app",
+  "version": "1.0.0",
+  "description": "ShapeFit Mobile App - Android",
+  "main": "www/index.html",
+  "scripts": {
+    "build": "powershell -ExecutionPolicy Bypass -File copy-to-www.ps1 && npx cap sync",
+    "sync": "npx cap sync",
+    "open:android": "npx cap open android",
+    "clean": "powershell -ExecutionPolicy Bypass -File clean.ps1",
+    "generate:assets": "npx capacitor-assets generate"
+  },
+  "dependencies": {
+    "@capacitor-mlkit/barcode-scanning": "^7.3.0",
+    "@capacitor/app": "^7.0.2",
+    "@capacitor/camera": "^7.0.1",
+    "@capacitor/core": "^7.4.2",
+    "@capacitor/filesystem": "^7.0.1",
+    "@capacitor/network": "^7.0.2",
+    "@capacitor/share": "^7.0.2",
+    "@capacitor/splash-screen": "^7.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^7.4.2",
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^7.4.2"
+  }
+}

@@ -1,0 +1,57 @@
+node_modules/
+npm-debug.log*
+yarn.lock
+package-lock.json
+
+# Capacitor / Android
+android/.gradle/
+android/local.properties
+android/app/build/
+android/captures/
+android/.idea/
+android/.cxx/
+
+# iOS (quando formos gerar)
+ios/App/build/
+ios/App/Pods/
+ios/App/*.xcworkspace
+ios/App/*.xcuserdatad
+
+# Web build (é gerado a partir do projeto principal)
+www/
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.iml
+.vscode/
+.idea/
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build outputs
+www/
+android/
+ios/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Cache
+.gradle/
+*.apk
+*.aab
+
+

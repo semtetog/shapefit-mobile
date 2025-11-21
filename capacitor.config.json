@@ -1,0 +1,32 @@
+{
+  "appId": "com.shapefit.app",
+  "appName": "ShapeFit",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false,
+    "allowNavigation": [
+      "https://appshapefit.com",
+      "https://*.appshapefit.com"
+    ],
+    "statusBar": {
+      "style": "DARK",
+      "backgroundColor": "#101010",
+      "overlaysWebView": true
+    },
+    "webViewOptions": {
+      "cacheMode": "LOAD_DEFAULT"
+    }
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#000000",
+      "showSpinner": false
+    }
+  }
+}
