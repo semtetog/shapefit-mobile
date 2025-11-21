@@ -76,9 +76,17 @@ async function isAuthenticated() {
 async function requireAuth() {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
-        // Usar caminho relativo para manter dentro do app
+        // Usar navegação SPA quando possível para evitar tela preta
         console.log('Redirecionando para login');
-        window.location.href = './auth/login.html';
+        // Fallback simples aqui: allow full reload em contextos fora do shell principal
+        const targetUrl = './auth/login.html';
+        if (window.smoothNavigate) {
+            window.smoothNavigate(targetUrl);
+        } else if (window.SpaRouter && typeof window.SpaRouter.navigate === 'function') {
+            window.SpaRouter.navigate(targetUrl);
+        } else {
+            window.location.href = targetUrl;
+        }
         return false;
     }
     return true;
@@ -173,8 +181,15 @@ async function authenticatedFetch(url, options = {}) {
     if (response.status === 401) {
         console.error('Token inválido (401) - redirecionando para login');
         clearAuthToken();
-        // Usar caminho relativo para manter dentro do app
-        window.location.href = './auth/login.html';
+        // Usar navegação SPA quando possível para evitar tela preta
+        const targetUrl = './auth/login.html';
+        if (window.smoothNavigate) {
+            window.smoothNavigate(targetUrl);
+        } else if (window.SpaRouter && typeof window.SpaRouter.navigate === 'function') {
+            window.SpaRouter.navigate(targetUrl);
+        } else {
+            window.location.href = targetUrl;
+        }
         return null;
     }
     

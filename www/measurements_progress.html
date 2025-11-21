@@ -1705,7 +1705,12 @@ html, body {
                                 if (typeof clearAuthToken === 'function') {
                                     clearAuthToken();
                                 }
-                                window.location.href = './auth/login.html';
+                                const targetUrl = './auth/login.html';
+                                if (window.smoothNavigate) {
+                                    window.smoothNavigate(targetUrl);
+                                } else {
+                                    window.location.href = targetUrl;
+                                }
                                 return;
                             }
                             

@@ -407,7 +407,12 @@
     <script>
         // Verificar autenticação
         if (!isAuthenticated()) {
-            window.location.href = './auth/login.html';
+            const targetUrl = './auth/login.html';
+            if (window.smoothNavigate) {
+                window.smoothNavigate(targetUrl);
+            } else {
+                window.location.href = targetUrl;
+            }
         }
         
         const contentContainer = document.getElementById('content-container');
@@ -418,7 +423,12 @@
         const contentId = parseInt(urlParams.get('id') || '0');
         
         if (contentId <= 0) {
-            window.location.href = './content.html';
+            const targetUrl = './content.html';
+            if (window.smoothNavigate) {
+                window.smoothNavigate(targetUrl);
+            } else {
+                window.location.href = targetUrl;
+            }
         }
         
         // Carregar conteúdo
@@ -452,11 +462,21 @@
                 
                 if (!result.success) {
                     if (result.message && result.message.includes('Onboarding')) {
-                        window.location.href = './onboarding/onboarding.html';
+                        const onboardingUrl = './onboarding/onboarding.html';
+                        if (window.smoothNavigate) {
+                            window.smoothNavigate(onboardingUrl);
+                        } else {
+                            window.location.href = onboardingUrl;
+                        }
                         return;
                     }
                     if (result.message && result.message.includes('não encontrado')) {
-                        window.location.href = './content.html';
+                        const listUrl = './content.html';
+                        if (window.smoothNavigate) {
+                            window.smoothNavigate(listUrl);
+                        } else {
+                            window.location.href = listUrl;
+                        }
                         return;
                     }
                     throw new Error(result.message || 'Erro ao carregar conteúdo');

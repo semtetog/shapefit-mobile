@@ -210,13 +210,17 @@
                     console.log('Token salvo:', getAuthToken() ? 'SIM' : 'NÃO');
                     
                     // Redirect based on onboarding status
-                    // Usar caminhos relativos para manter dentro do app
-                    if (result.user && result.user.onboarding_complete) {
-                        console.log('Redirecionando para main_app.html');
-                        window.location.href = '../main_app.html';
+                    // Usar navegação SPA quando possível para evitar tela preta
+                    const targetUrl = (result.user && result.user.onboarding_complete)
+                        ? '../main_app.html'
+                        : '../onboarding/onboarding.html';
+                    console.log('Redirecionando para', targetUrl);
+                    if (window.smoothNavigate) {
+                        window.smoothNavigate(targetUrl);
+                    } else if (window.SpaRouter && typeof window.SpaRouter.navigate === 'function') {
+                        window.SpaRouter.navigate(targetUrl);
                     } else {
-                        console.log('Redirecionando para onboarding');
-                        window.location.href = '../onboarding/onboarding.html';
+                        window.location.href = targetUrl;
                     }
                 } else {
                     // Show error

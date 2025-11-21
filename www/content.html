@@ -351,7 +351,12 @@
     <script>
         // Verificar autenticação
         if (!isAuthenticated()) {
-            window.location.href = './auth/login.html';
+            const targetUrl = './auth/login.html';
+            if (window.smoothNavigate) {
+                window.smoothNavigate(targetUrl);
+            } else {
+                window.location.href = targetUrl;
+            }
         }
         
         const contentContainer = document.getElementById('content-container');
@@ -396,7 +401,12 @@
                 
                 if (!result.success) {
                     if (result.message && result.message.includes('Onboarding')) {
-                        window.location.href = './onboarding/onboarding.html';
+                        const targetUrl = './onboarding/onboarding.html';
+                        if (window.smoothNavigate) {
+                            window.smoothNavigate(targetUrl);
+                        } else {
+                            window.location.href = targetUrl;
+                        }
                         return;
                     }
                     throw new Error(result.message || 'Erro ao carregar conteúdos');

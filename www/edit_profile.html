@@ -1510,7 +1510,12 @@
                         // Chamar API para remover foto
                         const token = getAuthToken();
                         if (!token) {
-                            window.location.href = './auth/login.html';
+                            const targetUrl = './auth/login.html';
+                            if (window.smoothNavigate) {
+                                window.smoothNavigate(targetUrl);
+                            } else {
+                                window.location.href = targetUrl;
+                            }
                             return;
                         }
                         
@@ -1525,7 +1530,12 @@
                         
                         if (removeResponse.status === 401) {
                             clearAuthToken();
-                            window.location.href = './auth/login.html';
+                            const targetUrl = './auth/login.html';
+                            if (window.smoothNavigate) {
+                                window.smoothNavigate(targetUrl);
+                            } else {
+                                window.location.href = targetUrl;
+                            }
                             return;
                         }
                         
@@ -1555,7 +1565,12 @@
                         // Para FormData, não definir Content-Type (deixa o browser definir automaticamente)
                         const token = getAuthToken();
                         if (!token) {
-                            window.location.href = './auth/login.html';
+                            const targetUrl = './auth/login.html';
+                            if (window.smoothNavigate) {
+                                window.smoothNavigate(targetUrl);
+                            } else {
+                                window.location.href = targetUrl;
+                            }
                             return;
                         }
                         
@@ -1576,7 +1591,12 @@
                         // Se receber 401, redirecionar para login
                         if (photoResponse.status === 401) {
                             clearAuthToken();
-                            window.location.href = './auth/login.html';
+                            const targetUrl = './auth/login.html';
+                            if (window.smoothNavigate) {
+                                window.smoothNavigate(targetUrl);
+                            } else {
+                                window.location.href = targetUrl;
+                            }
                             return;
                         }
                         

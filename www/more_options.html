@@ -454,8 +454,13 @@
                 localStorage.removeItem('shapefit_auth_token');
             }
             
-            // Redirecionar para login
-            window.location.href = './auth/login.html';
+            // Redirecionar para login (preferir SPA quando disponível)
+            const targetUrl = './auth/login.html';
+            if (window.smoothNavigate) {
+                window.smoothNavigate(targetUrl);
+            } else {
+                window.location.href = targetUrl;
+            }
         }
         
         document.addEventListener('DOMContentLoaded', async function() {

@@ -756,7 +756,12 @@
 
         // Verificar autenticação
         if (!getAuthToken()) {
-            window.location.href = '../auth/login.html';
+            const targetUrl = '../auth/login.html';
+            if (window.smoothNavigate) {
+                window.smoothNavigate(targetUrl);
+            } else {
+                window.location.href = targetUrl;
+            }
         }
     </script>
 </head>
@@ -1815,8 +1820,13 @@
                             if (result.token) {
                                 setAuthToken(result.token);
                             }
-                            // Sempre usar caminho relativo para manter dentro do app
-                            window.location.href = '../dashboard.html';
+                            // Sempre usar caminho relativo para manter dentro do app (preferir SPA)
+                            const targetUrl = '../dashboard.html';
+                            if (window.smoothNavigate) {
+                                window.smoothNavigate(targetUrl);
+                            } else {
+                                window.location.href = targetUrl;
+                            }
                         } else {
                             alert(result.message || 'Erro ao processar onboarding. Tente novamente.');
                             actionBtn.disabled = false;
@@ -1890,8 +1900,13 @@
             // Botão de sair (só aparece quando é refazer)
             if (exitBtn) {
                 exitBtn.addEventListener('click', () => {
-                    // Sempre redirecionar para dashboard quando clicar em sair
-                    window.location.href = '../dashboard.html';
+                    // Sempre redirecionar para dashboard quando clicar em sair (preferir SPA)
+                    const targetUrl = '../dashboard.html';
+                    if (window.smoothNavigate) {
+                        window.smoothNavigate(targetUrl);
+                    } else {
+                        window.location.href = targetUrl;
+                    }
                 });
             }
 

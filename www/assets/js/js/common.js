@@ -45,8 +45,14 @@ async function apiRequest(url, options = {}) {
         
         if (response.status === 401) {
             clearAuthToken();
-            // Sempre usar caminho relativo para manter dentro do app
-            window.location.href = './auth/login.html';
+            // Preferir navegação SPA quando disponível para evitar tela preta
+            if (window.smoothNavigate) {
+                window.smoothNavigate('./auth/login.html');
+            } else if (window.SpaRouter && typeof window.SpaRouter.navigate === 'function') {
+                window.SpaRouter.navigate('./auth/login.html');
+            } else {
+                window.location.href = './auth/login.html';
+            }
             return null;
         }
         

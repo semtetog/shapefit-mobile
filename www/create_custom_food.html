@@ -442,7 +442,12 @@ body {
                     if (data.success) {
                         showAlert('success', data.message || 'Alimento salvo com sucesso!');
                         setTimeout(() => {
-                            window.location.href = './add_food_to_diary.html';
+                            const targetUrl = './add_food_to_diary.html';
+                            if (window.smoothNavigate) {
+                                window.smoothNavigate(targetUrl);
+                            } else {
+                                window.location.href = targetUrl;
+                            }
                         }, 1500);
                     } else {
                         showAlert('danger', data.message || 'Erro ao salvar o alimento.');
