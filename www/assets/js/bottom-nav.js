@@ -17,9 +17,10 @@ const bottomNavMap = {
     'ranking.html': 'home'
 };
 
-// Detectar página atual
-const bottomNavCurrentPage = window.location.pathname.split('/').pop() || 'main_app.html';
-const bottomNavActiveItem = bottomNavMap[bottomNavCurrentPage] || 'home';
+function getBottomNavActiveItem() {
+    const currentPage = window.location.pathname.split('/').pop() || 'main_app.html';
+    return bottomNavMap[currentPage] || 'home';
+}
 
 // Usar caminhos relativos para manter navegação dentro do app
 // BASE_APP_URL é apenas para APIs, não para navegação
@@ -78,45 +79,32 @@ const bottomNavCSS = `
 `;
 
 // HTML do bottom nav - usando caminhos relativos
-const bottomNavHTML = `
-    <nav class="bottom-nav">
-        <a href="./main_app.html" class="nav-item ${bottomNavActiveItem === 'home' ? 'active' : ''}">
-            <i class="fas fa-home"></i>
-        </a>
-        <a href="./progress.html" class="nav-item ${bottomNavActiveItem === 'stats' ? 'active' : ''}">
-            <i class="fas fa-chart-line"></i>
-        </a>
-        <a href="./diary.html" class="nav-item ${bottomNavActiveItem === 'diary' ? 'active' : ''}">
-            <i class="fas fa-book"></i>
-        </a>
-        <a href="./explore_recipes.html" class="nav-item ${bottomNavActiveItem === 'explore' ? 'active' : ''}">
-            <i class="fas fa-utensils"></i>
-        </a>
-        <a href="./more_options.html" class="nav-item ${bottomNavActiveItem === 'settings' ? 'active' : ''}">
-            <i class="fas fa-cog"></i>
-        </a>
-    </nav>
-`;
+function buildBottomNavHTML() {
+    const activeItem = getBottomNavActiveItem();
+    return `
+        <nav class="bottom-nav">
+            <a href="./main_app.html" class="nav-item ${activeItem === 'home' ? 'active' : ''}">
+                <i class="fas fa-home"></i>
+            </a>
+            <a href="./progress.html" class="nav-item ${activeItem === 'stats' ? 'active' : ''}">
+                <i class="fas fa-chart-line"></i>
+            </a>
+            <a href="./diary.html" class="nav-item ${activeItem === 'diary' ? 'active' : ''}">
+                <i class="fas fa-book"></i>
+            </a>
+            <a href="./explore_recipes.html" class="nav-item ${activeItem === 'explore' ? 'active' : ''}">
+                <i class="fas fa-utensils"></i>
+            </a>
+            <a href="./more_options.html" class="nav-item ${activeItem === 'settings' ? 'active' : ''}">
+                <i class="fas fa-cog"></i>
+            </a>
+        </nav>
+    `;
+}
 
-// Função para renderizar o bottom nav
-function renderBottomNav() {
-    // Verificar se já existe (evitar duplicatas)
-    const existingNav = document.querySelector('.bottom-nav');
-    if (existingNav) {
-        existingNav.remove();
-    }
-    
-    const existingStyle = document.querySelector('style[data-bottom-nav]');
-    if (existingStyle) {
-        existingStyle.remove();
-    }
-    
-    // Verificar se body existe
-    if (!document.body) {
-        return;
-    }
-    
-    // Inserir CSS no head
+// Função para garantir que o CSS está aplicado
+function ensureBottomNavCSS() {
+    if (document.querySelector('style[data-bottom-nav]')) return;
     const styleDiv = document.createElement('div');
     styleDiv.innerHTML = bottomNavCSS;
     const styleElement = styleDiv.querySelector('style');
@@ -124,13 +112,42 @@ function renderBottomNav() {
         styleElement.setAttribute('data-bottom-nav', 'true');
         document.head.appendChild(styleElement);
     }
-    
-    // Inserir HTML no body
-    const navDiv = document.createElement('div');
-    navDiv.innerHTML = bottomNavHTML;
-    const navElement = navDiv.querySelector('nav');
-    if (navElement) {
-        document.body.appendChild(navElement);
+}
+
+// Função para renderizar/atualizar o bottom nav sem recriar desnecessariamente
+function renderBottomNav() {
+    if (!document.body) return;
+
+    ensureBottomNavCSS();
+
+    let navElement = document.querySelector('.bottom-nav');
+    const activeItem = getBottomNavActiveItem();
+
+    if (!navElement) {
+        // Criar nav uma única vez
+        const navDiv = document.createElement('div');
+        navDiv.innerHTML = buildBottomNavHTML();
+        navElement = navDiv.querySelector('nav');
+        if (navElement) {
+            document.body.appendChild(navElement);
+        }
+    } else {
+        // Apenas atualizar classes "active" para evitar flicker
+        const items = navElement.querySelectorAll('.nav-item');
+        items.forEach(item => {
+            const href = item.getAttribute('href') || '';
+            let key = 'home';
+            if (href.includes('progress.html')) key = 'stats';
+            else if (href.includes('diary.html') || href.includes('add_food_to_diary.html') || href.includes('meal_types_overview.html')) key = 'diary';
+            else if (href.includes('explore_recipes.html') || href.includes('favorite_recipes.html') || href.includes('view_recipe.html')) key = 'explore';
+            else if (href.includes('more_options.html') || href.includes('profile_overview.html')) key = 'settings';
+
+            if (key === activeItem) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
     }
 }
 

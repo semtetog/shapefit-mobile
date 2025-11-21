@@ -56,13 +56,9 @@
                 window.location.href = url;
             } finally {
                 this.isNavigating = false;
+                // Removido uso de classes de transição para evitar qualquer flicker visual
                 document.body.classList.remove('page-transitioning');
-                document.body.classList.add('page-entering');
-                requestAnimationFrame(() => {
-                    setTimeout(() => {
-                        document.body.classList.remove('page-entering');
-                    }, 200);
-                });
+                document.body.classList.remove('page-entering');
             }
         },
 
