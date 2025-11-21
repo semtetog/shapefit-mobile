@@ -4,39 +4,21 @@
 (function() {
     'use strict';
     
-    // Função para interceptar navegação e adicionar transição
+    // Navegação sem transições visuais (sem classes, sem delay)
     function handleNavigation(event, targetUrl) {
-        // Se já está em transição, ignorar
-        if (document.body.classList.contains('page-transitioning')) {
-            return;
-        }
-        
-        // Prevenir navegação padrão se for um link interno
         if (event) {
             event.preventDefault();
         }
-        
-        // Adicionar classe de transição
-        document.body.classList.add('page-transitioning');
-        
-        // Aguardar um frame para garantir que a classe foi aplicada
-        requestAnimationFrame(() => {
-            // Navegar com delay mínimo só para aplicar classe (mantido bem curto)
-            setTimeout(() => {
-                // Se o SPA Router estiver disponível, usar navegação SPA
-                if (window.SpaRouter && typeof window.SpaRouter.navigate === 'function') {
-                    window.SpaRouter.navigate(targetUrl);
-                } else {
-                    // Fallback: navegação tradicional
-                    window.location.href = targetUrl;
-                }
-            }, 50);
-        });
+        if (window.SpaRouter && typeof window.SpaRouter.navigate === 'function') {
+            window.SpaRouter.navigate(targetUrl);
+        } else {
+            window.location.href = targetUrl;
+        }
     }
     
     // Interceptar cliques em links internos
     document.addEventListener('DOMContentLoaded', function() {
-        // Interceptar todos os links
+        // Interceptar todos os links internos
         document.addEventListener('click', function(e) {
             const link = e.target.closest('a');
             if (!link) return;
@@ -60,51 +42,8 @@
             handleNavigation(e, href);
         }, true); // Usar capture phase para pegar antes de outros handlers
         
-        // Remover classe de transição quando a página carregar
-        window.addEventListener('pageshow', function(e) {
-            // Se a página foi carregada do cache (back/forward ou voltando do segundo plano), não animar
-            if (e.persisted) {
-                document.body.classList.remove('page-transitioning', 'page-entering');
-                // Página foi restaurada do cache - não recarregar dados desnecessariamente
-                return;
-            }
-            
-            // Página nova - animar entrada (mas mais rápido para evitar piscar)
-            document.body.classList.add('page-entering');
-            requestAnimationFrame(() => {
-                setTimeout(() => {
-                    document.body.classList.remove('page-entering');
-                }, 200); // Reduzido de 300 para 200ms
-            });
-        });
-        
-        // Prevenir recarregamento quando voltar do segundo plano
-        let isPageVisible = true;
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden) {
-                isPageVisible = false;
-            } else {
-                isPageVisible = true;
-                // Quando voltar, não recarregar - o WebView mantém o estado
-                document.body.classList.remove('page-transitioning', 'page-entering');
-            }
-        });
-        
-        // Remover classe quando a página estiver totalmente carregada
-        if (document.readyState === 'complete') {
-            document.body.classList.remove('page-entering');
-        } else {
-            window.addEventListener('load', function() {
-                setTimeout(() => {
-                    document.body.classList.remove('page-entering');
-                }, 100);
-            });
-        }
+        // Não usamos mais classes de transição; mantemos apenas a navegação suave via SPA
     });
-    
-    // Interceptar navegação programática usando uma abordagem diferente
-    // Não podemos redefinir window.location, então vamos interceptar apenas cliques
-    // Para window.location.href, vamos criar uma função wrapper
     
     // Exportar função para uso manual se necessário
     window.smoothNavigate = function(url) {
