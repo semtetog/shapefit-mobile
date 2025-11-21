@@ -18,26 +18,18 @@ html, body {
 /* Estado de transição - página saindo */
 body.page-transitioning .app-container,
 body.page-transitioning .container {
-    opacity: 0.7;
-    transform: translateX(-10px);
+    opacity: 0.95;              /* apenas um leve fade, não some tudo */
+    transform: translateX(-4px);
 }
 
 /* Estado de transição - página entrando */
 body.page-entering .app-container,
 body.page-entering .container {
-    opacity: 0;
-    transform: translateX(10px);
-    animation: pageEnter 0.3s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+    opacity: 1;                 /* manter visível para evitar "pisco" preto */
+    transform: translateX(0);   /* sem animação pesada */
 }
 
-@keyframes pageEnter {
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-/* Prevenir scroll durante transição */
+/* Prevenir scroll durante transição (mantém, mas sem mexer em cor/opacidade do body) */
 body.page-transitioning {
     overflow: hidden;
 }

@@ -21,7 +21,7 @@
         
         // Aguardar um frame para garantir que a classe foi aplicada
         requestAnimationFrame(() => {
-            // Navegar após pequeno delay para transição visual
+            // Navegar com delay mínimo só para aplicar classe (mantido bem curto)
             setTimeout(() => {
                 // Se o SPA Router estiver disponível, usar navegação SPA
                 if (window.SpaRouter && typeof window.SpaRouter.navigate === 'function') {
@@ -30,7 +30,7 @@
                     // Fallback: navegação tradicional
                     window.location.href = targetUrl;
                 }
-            }, 150);
+            }, 50);
         });
     }
     
