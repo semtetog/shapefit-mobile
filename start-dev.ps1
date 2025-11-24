@@ -53,10 +53,23 @@ Write-Host "=" * 60 -ForegroundColor Cyan
 Write-Host "📱 PRÓXIMOS PASSOS:" -ForegroundColor Yellow
 Write-Host "=" * 60 -ForegroundColor Cyan
 Write-Host ""
-Write-Host "1. Certifique-se de que seu iPhone está na MESMA rede WiFi" -ForegroundColor White
-Write-Host "2. O servidor será iniciado em: http://$ipAddress:8100" -ForegroundColor White
-Write-Host "3. Abra o Xcode e rode o app no seu iPhone" -ForegroundColor White
-Write-Host "4. As mudanças serão recarregadas automaticamente!" -ForegroundColor White
+Write-Host "OPÇÃO 1: Testar no Navegador (Mais Rápido)" -ForegroundColor Green
+Write-Host "   Abra: http://localhost:8100" -ForegroundColor White
+Write-Host ""
+Write-Host "OPÇÃO 2: Testar no iPhone como PWA" -ForegroundColor Green
+Write-Host "   1. Certifique-se de que seu iPhone está na MESMA rede WiFi" -ForegroundColor White
+Write-Host "   2. No iPhone (Safari), abra: http://$ipAddress:8100" -ForegroundColor White
+Write-Host "   3. Adicione à Tela de Início (compartilhar > adicionar à tela inicial)" -ForegroundColor White
+Write-Host "   4. Funciona quase como app nativo!" -ForegroundColor White
+Write-Host ""
+Write-Host "OPÇÃO 3: Android (Windows)" -ForegroundColor Green
+Write-Host "   1. Abra Android Studio" -ForegroundColor White
+Write-Host "   2. Rode o app no Android" -ForegroundColor White
+Write-Host "   3. As mudanças serão recarregadas automaticamente!" -ForegroundColor White
+Write-Host ""
+Write-Host "OPÇÃO 4: iOS (Precisa Mac)" -ForegroundColor Yellow
+Write-Host "   ⚠️  Xcode só roda no macOS" -ForegroundColor White
+Write-Host "   Use Mac na nuvem (MacStadium, AWS Mac, etc)" -ForegroundColor White
 Write-Host ""
 Write-Host "⚠️  IMPORTANTE:" -ForegroundColor Yellow
 Write-Host "   - Mantenha este terminal aberto" -ForegroundColor White
