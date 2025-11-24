@@ -490,12 +490,13 @@ window.addEventListener('spa-page-loaded', function(e) {
       console.log('[Banner Carousel] Página main_app carregada via SPA - limpando e re-inicializando carrossel...');
       
       // Limpar completamente antes de re-inicializar
-      if (globalCarouselInterval) {
-        clearInterval(globalCarouselInterval);
+      if (window.globalCarouselInterval) {
+        clearInterval(window.globalCarouselInterval);
+        window.globalCarouselInterval = null;
         globalCarouselInterval = null;
       }
       
-      globalLoadedAnimations.forEach(anim => {
+      window.globalLoadedAnimations.forEach(anim => {
         if (anim && typeof anim.destroy === 'function') {
           try {
             anim.destroy();
