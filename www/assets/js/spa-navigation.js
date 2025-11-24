@@ -218,10 +218,11 @@
             document.body.classList.add('page-transitioning');
             
             // Scroll para o topo instantaneamente (sem animação)
-            const currentContainer = document.querySelector('.app-container, .container');
-            if (currentContainer) {
-                currentContainer.scrollTop = 0;
+            let currentContainer = document.querySelector('.app-container, .container');
+            if (!currentContainer) {
+                throw new Error('Container não encontrado');
             }
+            currentContainer.scrollTop = 0;
             
             // Fazer fetch da nova página
             const response = await fetch(url);
@@ -231,12 +232,6 @@
             
             const html = await response.text();
             const { content, scripts, title, inlineStyles } = extractPageContent(html);
-            
-            // Encontrar o container atual
-            let currentContainer = document.querySelector('.app-container, .container');
-            if (!currentContainer) {
-                throw new Error('Container não encontrado');
-            }
             
             // Preservar bottom-nav (não remover durante navegação)
             const bottomNav = document.querySelector('.bottom-nav');
