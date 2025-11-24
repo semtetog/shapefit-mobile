@@ -349,9 +349,7 @@
                 detail: { url, isSPANavigation: true } 
             }));
             
-            // Fade in após eventos serem disparados
-            currentContainer.style.opacity = '1';
-            
+            // Conteúdo já está visível (sem fade - estilo PWA fluido)
             // Forçar re-execução de códigos de inicialização para páginas específicas
             const pageName = url.split('/').pop().split('?')[0];
             setTimeout(() => {
@@ -488,13 +486,8 @@
     style.textContent = `
         .app-container,
         .container {
-            transition: opacity 0.1s ease !important;
-            will-change: opacity;
-        }
-        
-        .page-transitioning .app-container,
-        .page-transitioning .container {
-            transition: opacity 0.1s ease !important;
+            /* Sem transição de opacity - troca instantânea (estilo PWA) */
+            will-change: contents;
         }
         
         body.page-transitioning {
