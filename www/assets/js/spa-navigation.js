@@ -10,15 +10,25 @@
     let spaContainerCounter = 0;
     
     // Páginas que devem usar navegação normal (não AJAX)
+    // main_app.html sempre recarrega completamente (não pode ser fragmento SPA)
     const excludedPages = [
         '/auth/login.html',
         '/auth/register.html',
-        '/onboarding/onboarding.html'
+        '/onboarding/onboarding.html',
+        '/main_app.html',
+        'main_app.html',
+        '/dashboard.html',
+        'dashboard.html'
     ];
     
     // Verificar se a página atual deve ser excluída
     function shouldExcludePage(url) {
-        return excludedPages.some(excluded => url.includes(excluded));
+        // Verificar se a URL contém qualquer uma das páginas excluídas
+        const urlLower = url.toLowerCase();
+        return excludedPages.some(excluded => {
+            const excludedLower = excluded.toLowerCase();
+            return urlLower.includes(excludedLower) || urlLower.endsWith(excludedLower);
+        });
     }
     
     // Limpar elementos duplicados antes de inserir novo conteúdo
