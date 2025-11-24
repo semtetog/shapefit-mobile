@@ -12,18 +12,37 @@ async function loadMainAppData() {
         }
         
         // Mostrar o container do dashboard
-        const dashboardContainer = document.getElementById('dashboard-container');
+        // Tentar encontrar o container de várias formas
+        let dashboardContainer = document.getElementById('dashboard-container');
+        
+        // Se não encontrar, tentar no spa-container
+        if (!dashboardContainer) {
+            const spaContainer = document.getElementById('spa-container');
+            if (spaContainer) {
+                dashboardContainer = spaContainer.querySelector('#dashboard-container');
+            }
+        }
+        
+        // Se ainda não encontrar, tentar qualquer app-container
+        if (!dashboardContainer) {
+            dashboardContainer = document.querySelector('.app-container');
+        }
+        
         console.log('Tentando mostrar dashboard-container:', !!dashboardContainer);
         if (dashboardContainer) {
+            // Remover display: none inline e forçar block
+            dashboardContainer.removeAttribute('style');
             dashboardContainer.style.display = 'block';
+            dashboardContainer.style.visibility = 'visible';
+            dashboardContainer.style.opacity = '1';
             console.log('dashboard-container display alterado para block');
         } else {
-            console.error('dashboard-container não encontrado!');
-            // Tentar encontrar qualquer container
-            const appContainer = document.querySelector('.app-container');
-            console.log('app-container encontrado:', !!appContainer);
-            if (appContainer) {
-                appContainer.style.display = 'block';
+            console.error('dashboard-container não encontrado! Verificando DOM...');
+            const spaContainer = document.getElementById('spa-container');
+            if (spaContainer) {
+                console.log('spa-container existe, conteúdo:', spaContainer.innerHTML.substring(0, 500));
+            } else {
+                console.error('spa-container também não existe!');
             }
         }
         
