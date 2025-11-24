@@ -67,8 +67,9 @@
     // Executar scripts da nova página
     function executeScripts(scripts) {
         const scriptPromises = [];
+        const executedInlineScripts = new Set(); // Rastrear scripts inline já executados
         
-        scripts.forEach(script => {
+        scripts.forEach((script, index) => {
             if (script.src) {
                 // Script externo - verificar se já foi carregado
                 const existing = document.querySelector(`script[src="${script.src}"]`);
@@ -84,22 +85,37 @@
                     scriptPromises.push(promise);
                 }
             } else {
-                // Script inline - executar diretamente usando eval ou Function
-                // Isso garante que IIFEs sejam executados
-                try {
-                    // Criar script e executar
-                    const newScript = document.createElement('script');
-                    newScript.textContent = script.textContent;
-                    // Adicionar ao body para executar no contexto correto
-                    document.body.appendChild(newScript);
-                    // Remover após execução para não poluir o DOM
-                    setTimeout(() => {
-                        if (newScript.parentNode) {
-                            newScript.parentNode.removeChild(newScript);
-                        }
-                    }, 0);
-                } catch (e) {
-                    console.error('[SPA] Erro ao executar script inline:', e);
+                // Script inline - criar hash para evitar re-execução
+                const scriptHash = script.textContent.substring(0, 100); // Primeiros 100 chars como hash
+                
+                if (!executedInlineScripts.has(scriptHash)) {
+                    executedInlineScripts.add(scriptHash);
+                    
+                    try {
+                        // Envolver em IIFE para evitar conflitos de escopo
+                        const wrappedCode = `
+                            (function() {
+                                try {
+                                    ${script.textContent}
+                                } catch(e) {
+                                    console.error('[SPA] Erro ao executar script inline:', e);
+                                }
+                            })();
+                        `;
+                        
+                        const newScript = document.createElement('script');
+                        newScript.textContent = wrappedCode;
+                        // Adicionar ao body para executar no contexto correto
+                        document.body.appendChild(newScript);
+                        // Remover após execução para não poluir o DOM
+                        setTimeout(() => {
+                            if (newScript.parentNode) {
+                                newScript.parentNode.removeChild(newScript);
+                            }
+                        }, 100);
+                    } catch (e) {
+                        console.error('[SPA] Erro ao executar script inline:', e);
+                    }
                 }
             }
         });
@@ -186,19 +202,38 @@
             await executeScripts(scripts);
             
             // Depois scripts inline que estavam dentro do conteúdo
+            // Usar Set para evitar duplicatas
+            const executedContentScripts = new Set();
             inlineScriptsFromContent.forEach(script => {
-                try {
-                    const newScript = document.createElement('script');
-                    newScript.textContent = script.textContent;
-                    document.body.appendChild(newScript);
-                    // Remover após execução
-                    setTimeout(() => {
-                        if (newScript.parentNode) {
-                            newScript.parentNode.removeChild(newScript);
-                        }
-                    }, 0);
-                } catch (e) {
-                    console.error('[SPA] Erro ao executar script inline do conteúdo:', e);
+                const scriptHash = script.textContent.substring(0, 100);
+                
+                if (!executedContentScripts.has(scriptHash)) {
+                    executedContentScripts.add(scriptHash);
+                    
+                    try {
+                        // Envolver em IIFE para evitar conflitos
+                        const wrappedCode = `
+                            (function() {
+                                try {
+                                    ${script.textContent}
+                                } catch(e) {
+                                    console.error('[SPA] Erro ao executar script do conteúdo:', e);
+                                }
+                            })();
+                        `;
+                        
+                        const newScript = document.createElement('script');
+                        newScript.textContent = wrappedCode;
+                        document.body.appendChild(newScript);
+                        // Remover após execução
+                        setTimeout(() => {
+                            if (newScript.parentNode) {
+                                newScript.parentNode.removeChild(newScript);
+                            }
+                        }, 100);
+                    } catch (e) {
+                        console.error('[SPA] Erro ao executar script inline do conteúdo:', e);
+                    }
                 }
             });
             

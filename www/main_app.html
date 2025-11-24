@@ -2678,6 +2678,12 @@
         const dropHeight = 275.785; 
 
         function updateWaterDrop(animated = true) {
+            // Verificar se elementos existem antes de acessar
+            if (!waterLevelGroup || !waterAmountDisplay) {
+                console.warn('[Water Drop] Elementos não encontrados, pulando atualização');
+                return;
+            }
+            
             const percentage = waterGoal > 0 ? Math.min(window.currentWater / waterGoal, 1) : 0;
             const yTranslate = dropHeight * (1 - percentage);
             
