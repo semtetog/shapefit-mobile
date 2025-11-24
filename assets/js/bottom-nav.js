@@ -181,8 +181,34 @@ function getBottomNavHTML() {
 `;
 }
 
+// Páginas que NÃO devem ter bottom nav
+const pagesWithoutBottomNav = ['login', 'register', 'onboarding'];
+
+// Função para verificar se a página atual deve ter bottom nav
+function shouldShowBottomNav() {
+    const currentPage = getCurrentPageName();
+    const shouldShow = !pagesWithoutBottomNav.includes(currentPage);
+    console.log('[Bottom Nav] Verificando se deve mostrar:', { currentPage, shouldShow });
+    return shouldShow;
+}
+
 // Função para renderizar o bottom nav
 function renderBottomNav() {
+    // Verificar se deve mostrar o bottom nav
+    if (!shouldShowBottomNav()) {
+        // Remover bottom nav se existir (caso tenha sido adicionado antes)
+        const existingNav = document.querySelector('.bottom-nav');
+        if (existingNav) {
+            existingNav.remove();
+        }
+        const existingStyle = document.querySelector('style[data-bottom-nav]');
+        if (existingStyle) {
+            existingStyle.remove();
+        }
+        console.log('[Bottom Nav] Página não deve ter bottom nav, removendo se existir');
+        return;
+    }
+    
     // Verificar se já existe (evitar duplicatas)
     const existingNav = document.querySelector('.bottom-nav');
     if (existingNav) {
