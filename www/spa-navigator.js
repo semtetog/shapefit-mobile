@@ -179,8 +179,12 @@
             if (!pageEl.dataset.loaded) {
                 try {
                     const pageData = await this.loadPageFragment(url);
+                    // INJETAR HTML PRIMEIRO
                     this.injectPageFragment(pageEl, pageData, url);
                     pageEl.dataset.loaded = 'true';
+                    
+                    // AGUARDAR scripts carregarem antes de mostrar página
+                    await this.waitForPageScripts(pageEl);
                 } catch (error) {
                     console.error('Erro ao carregar página:', error);
                     throw error;
@@ -212,6 +216,16 @@
                     window.dispatchEvent(new CustomEvent('spa:page-changed', {
                         detail: { pageId, url }
                     }));
+                    
+                    // Executar verificação de autenticação após mudança de página
+                    if (typeof window.requireAuth === 'function') {
+                        // Verificar se não é página pública
+                        const publicPages = ['login.html', 'register.html', 'index.html'];
+                        const pageName = url.split('/').pop() || '';
+                        if (!publicPages.includes(pageName)) {
+                            window.requireAuth().catch(err => console.error('Erro na autenticação:', err));
+                        }
+                    }
                 });
             });
         },
@@ -364,6 +378,7 @@
             this.convertLinksToSPA(wrapper);
             
             // 4. EXECUTAR SCRIPTS ESPECÍFICOS DA PÁGINA
+            // IMPORTANTE: Executar scripts ANTES de observar elementos
             this.executePageScripts(pageEl, pageData.scripts, url);
             
             // 5. OBSERVAR ELEMENTOS DINÂMICOS
@@ -440,13 +455,17 @@
             });
             
             // Executar scripts inline PRIMEIRO (sincronamente)
+            // IMPORTANTE: Executar no contexto global, não isolado
             inlineScripts.forEach((scriptData) => {
                 try {
-                    // Criar função para executar o código no contexto correto
-                    const func = new Function(scriptData.code);
-                    func();
+                    // Executar diretamente no contexto global usando eval
+                    // Isso garante que window, document, etc. estejam disponíveis
+                    (function() {
+                        eval(scriptData.code);
+                    })();
                 } catch (error) {
                     console.error('Erro ao executar script inline:', error);
+                    console.error('Script que falhou:', scriptData.code.substring(0, 200));
                 }
             });
             
@@ -490,15 +509,77 @@
         },
         
         /**
+         * Aguarda scripts da página carregarem
+         */
+        waitForPageScripts(pageEl) {
+            return new Promise((resolve) => {
+                const scripts = pageEl.querySelectorAll('script[data-page-script]');
+                if (scripts.length === 0) {
+                    this.triggerPageReady(pageEl);
+                    resolve();
+                    return;
+                }
+                
+                let loaded = 0;
+                const total = scripts.length;
+                
+                scripts.forEach(script => {
+                    if (script.src) {
+                        script.onload = () => {
+                            loaded++;
+                            if (loaded === total) {
+                                this.triggerPageReady(pageEl);
+                                resolve();
+                            }
+                        };
+                        script.onerror = () => {
+                            loaded++;
+                            if (loaded === total) {
+                                this.triggerPageReady(pageEl);
+                                resolve();
+                            }
+                        };
+                    } else {
+                        // Script inline já foi executado
+                        loaded++;
+                        if (loaded === total) {
+                            this.triggerPageReady(pageEl);
+                            resolve();
+                        }
+                    }
+                });
+            });
+        },
+        
+        /**
          * Dispara eventos de ready para a página
          */
         triggerPageReady(pageEl) {
-            // Disparar DOMContentLoaded
-            setTimeout(() => {
-                const event = new Event('DOMContentLoaded', { bubbles: true });
-                pageEl.dispatchEvent(event);
-                document.dispatchEvent(event);
-            }, 50);
+            // Disparar DOMContentLoaded IMEDIATAMENTE
+            // Usar CustomEvent para garantir que seja capturado
+            const domReadyEvent = new CustomEvent('DOMContentLoaded', { 
+                bubbles: true, 
+                cancelable: true 
+            });
+            
+            // Disparar no pageEl primeiro
+            pageEl.dispatchEvent(domReadyEvent);
+            
+            // Disparar no document também (para scripts que escutam document)
+            document.dispatchEvent(domReadyEvent);
+            
+            // Disparar evento customizado para inicialização de página
+            const pageId = pageEl.id.replace('page-', '');
+            const enterEvent = new CustomEvent(`spa:enter-${pageId}`, {
+                detail: { pageId: pageEl.id, url: window.location.href }
+            });
+            window.dispatchEvent(enterEvent);
+            
+            // Garantir que scripts que dependem de window.load também funcionem
+            if (document.readyState === 'complete') {
+                const loadEvent = new Event('load', { bubbles: true });
+                window.dispatchEvent(loadEvent);
+            }
         },
         
         /**

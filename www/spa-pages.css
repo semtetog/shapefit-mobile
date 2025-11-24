@@ -9,7 +9,6 @@
     position: relative;
     width: 100%;
     min-height: 100vh;
-    overflow: hidden;
     background: #000;
 }
 
@@ -44,6 +43,10 @@
     transition: none !important; /* Zero transição = zero piscar */
     -webkit-transform: translateZ(0) !important;
     transform: translateZ(0) !important;
+    overflow-y: auto !important; /* PERMITIR SCROLL */
+    -webkit-overflow-scrolling: touch !important; /* Scroll suave no iOS */
+    height: 100vh !important;
+    max-height: 100vh !important;
 }
 
 /* Conteúdo da página */
@@ -51,6 +54,8 @@
     width: 100%;
     min-height: 100vh;
     background: transparent;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Prevenir qualquer flash durante navegação */
