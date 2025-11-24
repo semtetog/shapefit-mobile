@@ -201,47 +201,12 @@
             // Scroll para o topo ANTES do fade in para evitar "arrastar"
             currentContainer.scrollTop = 0;
             
-            // Executar scripts ANTES do fade in para garantir que tudo está pronto
-            // Primeiro scripts externos e do head
-            await executeScripts(scripts);
+            // Executar APENAS scripts externos (scripts inline serão ignorados para evitar re-declarações)
+            // Scripts inline devem usar event listeners (spa-page-loaded) para inicialização
+            const externalScriptsOnly = scripts.filter(script => script.src);
+            await executeScripts(externalScriptsOnly);
             
-            // Depois scripts inline que estavam dentro do conteúdo
-            // Usar Set para evitar duplicatas
-            const executedContentScripts = new Set();
-            inlineScriptsFromContent.forEach(script => {
-                const scriptHash = script.textContent.substring(0, 100);
-                
-                if (!executedContentScripts.has(scriptHash)) {
-                    executedContentScripts.add(scriptHash);
-                    
-                    try {
-                        // Envolver em IIFE para evitar conflitos
-                        const wrappedCode = `
-                            (function() {
-                                try {
-                                    ${script.textContent}
-                                } catch(e) {
-                                    console.error('[SPA] Erro ao executar script do conteúdo:', e);
-                                }
-                            })();
-                        `;
-                        
-                        const newScript = document.createElement('script');
-                        newScript.textContent = wrappedCode;
-                        document.body.appendChild(newScript);
-                        // Remover após execução
-                        setTimeout(() => {
-                            if (newScript.parentNode) {
-                                newScript.parentNode.removeChild(newScript);
-                            }
-                        }, 100);
-                    } catch (e) {
-                        console.error('[SPA] Erro ao executar script inline do conteúdo:', e);
-                    }
-                }
-            });
-            
-            // Pequeno delay para garantir que todos os scripts executaram
+            // Pequeno delay para garantir que scripts externos carregaram
             await new Promise(resolve => setTimeout(resolve, 100));
             
             // Disparar eventos para que as páginas saibam que foram carregadas

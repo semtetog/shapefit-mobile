@@ -2833,7 +2833,12 @@
             waterUnitSelect.addEventListener('change', updateControlsEnabled);
         }
 
-        updateWaterDrop(false);
+        // Verificar se elementos existem antes de chamar updateWaterDrop
+        const waterLevelGroup = document.getElementById('water-level-group');
+        const waterAmountDisplay = document.getElementById('water-amount-display');
+        if (waterLevelGroup && waterAmountDisplay) {
+            updateWaterDrop(false);
+        }
         updateControlsEnabled();
 
 
