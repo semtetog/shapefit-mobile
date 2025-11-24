@@ -218,7 +218,18 @@
             document.body.classList.add('page-transitioning');
             
             // Scroll para o topo instantaneamente (sem animação)
-            let currentContainer = document.querySelector('.app-container, .container');
+            // Encontrar o container atual - REMOVER TODOS OS CONTAINERS ANTIGOS PRIMEIRO
+            const allContainers = document.querySelectorAll('.app-container, .container');
+            let currentContainer = allContainers[0];
+            
+            // Se há múltiplos containers, remover os extras (manter apenas o primeiro)
+            if (allContainers.length > 1) {
+                console.log(`[SPA] Encontrados ${allContainers.length} containers, removendo extras...`);
+                for (let i = 1; i < allContainers.length; i++) {
+                    allContainers[i].remove();
+                }
+            }
+            
             if (!currentContainer) {
                 throw new Error('Container não encontrado');
             }
