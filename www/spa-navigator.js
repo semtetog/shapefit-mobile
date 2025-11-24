@@ -474,38 +474,40 @@
             const totalExternal = externalScripts.length;
             
             if (totalExternal === 0) {
-                // Se não há scripts externos, disparar DOMContentLoaded imediatamente
-                this.triggerPageReady(pageEl);
-            } else {
-                externalScripts.forEach((scriptData) => {
-                    const script = document.createElement('script');
-                    script.setAttribute('data-page-script', pageEl.id);
-                    
-                    let src = scriptData.src;
-                    // Resolver caminho relativo
-                    if (src.startsWith('./')) {
-                        const basePath = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1);
-                        src = basePath + src.substring(2);
-                    }
-                    
-                    script.src = src;
-                    script.async = false; // Carregar em ordem
-                    script.onload = () => {
-                        loadedCount++;
-                        if (loadedCount === totalExternal) {
-                            this.triggerPageReady(pageEl);
-                        }
-                    };
-                    script.onerror = () => {
-                        loadedCount++;
-                        if (loadedCount === totalExternal) {
-                            this.triggerPageReady(pageEl);
-                        }
-                    };
-                    
-                    document.head.appendChild(script);
-                });
+                // Se não há scripts externos, não disparar DOMContentLoaded aqui
+                // Será disparado por waitForPageScripts
+                return;
             }
+            
+            externalScripts.forEach((scriptData) => {
+                const script = document.createElement('script');
+                script.setAttribute('data-page-script', pageEl.id);
+                
+                let src = scriptData.src;
+                // Resolver caminho relativo
+                if (src.startsWith('./')) {
+                    const basePath = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1);
+                    src = basePath + src.substring(2);
+                } else if (!src.startsWith('http') && !src.startsWith('/')) {
+                    // Caminho relativo sem ./
+                    const basePath = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1);
+                    src = basePath + src;
+                }
+                
+                script.src = src;
+                script.async = false; // Carregar em ordem
+                
+                // Adicionar ao pageEl para que waitForPageScripts possa rastrear
+                pageEl.appendChild(script);
+                
+                script.onload = () => {
+                    loadedCount++;
+                };
+                script.onerror = () => {
+                    loadedCount++;
+                    console.error('Erro ao carregar script:', src);
+                };
+            });
         },
         
         /**
@@ -515,37 +517,48 @@
             return new Promise((resolve) => {
                 const scripts = pageEl.querySelectorAll('script[data-page-script]');
                 if (scripts.length === 0) {
-                    this.triggerPageReady(pageEl);
-                    resolve();
+                    // Sem scripts, disparar ready imediatamente
+                    setTimeout(() => {
+                        this.triggerPageReady(pageEl);
+                        resolve();
+                    }, 10);
                     return;
                 }
                 
                 let loaded = 0;
                 const total = scripts.length;
                 
+                const checkComplete = () => {
+                    if (loaded === total) {
+                        // Aguardar um pouco para garantir que scripts executaram
+                        setTimeout(() => {
+                            this.triggerPageReady(pageEl);
+                            resolve();
+                        }, 50);
+                    }
+                };
+                
                 scripts.forEach(script => {
                     if (script.src) {
-                        script.onload = () => {
+                        // Script externo - verificar se já carregou
+                        if (script.complete || script.readyState === 'complete') {
                             loaded++;
-                            if (loaded === total) {
-                                this.triggerPageReady(pageEl);
-                                resolve();
-                            }
-                        };
-                        script.onerror = () => {
-                            loaded++;
-                            if (loaded === total) {
-                                this.triggerPageReady(pageEl);
-                                resolve();
-                            }
-                        };
+                            checkComplete();
+                        } else {
+                            script.onload = () => {
+                                loaded++;
+                                checkComplete();
+                            };
+                            script.onerror = () => {
+                                loaded++;
+                                console.error('Erro ao carregar script:', script.src);
+                                checkComplete();
+                            };
+                        }
                     } else {
                         // Script inline já foi executado
                         loaded++;
-                        if (loaded === total) {
-                            this.triggerPageReady(pageEl);
-                            resolve();
-                        }
+                        checkComplete();
                     }
                 });
             });
