@@ -1,8 +1,24 @@
 # 🚀 Implementação SPA - Eliminação do Piscar Preto no iOS
 
-## ✅ O que foi implementado
+## ✅ O que foi implementado (CORRIGIDO)
 
 Sistema completo de Single Page Application (SPA) que elimina **100% do piscar preto** no iOS ao trocar de páginas.
+
+## 🔧 CORREÇÕES APLICADAS
+
+### ❌ Problemas Anteriores:
+- Carregava documentos HTML completos (com scripts)
+- Executava scripts inline múltiplas vezes
+- Disparava DOMContentLoaded artificialmente
+- Links ainda usavam href (causando recarregamento)
+- Scripts duplicados causavam loops
+
+### ✅ Soluções Implementadas:
+- **Carrega APENAS fragmentos HTML** (sem scripts, sem head, sem body)
+- **Extrai apenas `.app-container` ou `.container`** de cada página
+- **NÃO executa scripts inline** - usa eventos customizados
+- **Remove href de links** - converte para onclick + data attributes
+- **Sistema de eventos** para inicialização de páginas
 
 ## 📁 Arquivos Criados/Modificados
 
@@ -24,14 +40,15 @@ O `index.html` é o **único arquivo HTML** carregado pela WebView. Ele contém:
 - Um container `<div id="spa-container">` onde as páginas são injetadas
 - O sistema SPA Navigator
 
-### 2. Sistema de Navegação
+### 2. Sistema de Navegação (CORRIGIDO)
 
 O `spa-navigator.js`:
-- **Intercepta todos os cliques** em links internos
-- **Carrega páginas via fetch** (sem recarregar WebView)
-- **Injeta conteúdo** no container SPA
-- **Executa scripts** das páginas carregadas
-- **Cacheia páginas** para performance
+- **Intercepta todos os cliques** em links internos (prioridade máxima)
+- **Carrega APENAS fragmentos HTML** via fetch (sem scripts)
+- **Extrai apenas `.app-container` ou `.container`** de cada página
+- **NÃO executa scripts** - usa eventos customizados para inicialização
+- **Converte links para SPA** - remove href, adiciona onclick
+- **Cacheia fragmentos** para performance
 - **Atualiza histórico** sem recarregar
 
 ### 3. Mapeamento de Páginas
@@ -121,10 +138,11 @@ Todas as páginas principais estão mapeadas:
 - Cache persiste durante sessão
 - Reduz requisições desnecessárias
 
-### Execução de Scripts
-- Scripts globais são ignorados (já carregados)
-- Scripts específicos de página são executados
-- DOMContentLoaded é disparado automaticamente
+### Inicialização de Páginas
+- **NÃO executa scripts inline** das páginas
+- **Usa eventos customizados** para inicialização
+- Cada página escuta `spa:enter-{page-id}` para inicializar
+- Ver `SPA-PAGE-INITIALIZATION.md` para detalhes
 
 ### Compatibilidade
 - ✅ Funciona no iOS (elimina piscar preto)
