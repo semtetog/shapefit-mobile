@@ -406,3 +406,23 @@ window.addEventListener('load', () => {
     console.log('[Banner Carousel] Container .main-carousel não encontrado nesta página. Script inativo.');
   }
 });
+
+// Inicializar quando main_app for carregada via SPA
+window.addEventListener('spa:enter-main_app', function() {
+  console.log('[Banner Carousel] Evento spa:enter-main_app detectado, inicializando...');
+  setTimeout(() => {
+    const carousel = document.querySelector('.main-carousel');
+    if (carousel) {
+      if (typeof lottie !== 'undefined') {
+        initLottieCarousel();
+      } else {
+        console.warn('[Banner Carousel] Lottie.js não encontrado, tentando novamente...');
+        setTimeout(() => {
+          if (typeof lottie !== 'undefined') {
+            initLottieCarousel();
+          }
+        }, 500);
+      }
+    }
+  }, 300);
+});

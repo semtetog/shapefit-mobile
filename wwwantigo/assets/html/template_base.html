@@ -1,6 +1,7 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <script src="./www-config.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no">
     
@@ -18,6 +19,9 @@
     <!-- PWA Manifest -->
     <link rel="manifest" href="./manifest.json">
     
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="./assets/images/app-icon.png">
+    
     <!-- Script Critical - Define altura real do viewport -->
     <script>
         function setRealViewportHeight() { 
@@ -30,25 +34,24 @@
             setTimeout(setRealViewportHeight, 100);
         });
         
-        if (window.visualViewport) {
-            const updateKeyboardOffset = () => {
-                const viewportHeight = window.visualViewport.height;
-                const offset = Math.max(0, window.innerHeight - viewportHeight);
-                document.documentElement.style.setProperty('--keyboard-offset', `${offset}px`);
-            };
-            
-            window.visualViewport.addEventListener('resize', updateKeyboardOffset);
-            window.visualViewport.addEventListener('scroll', updateKeyboardOffset);
-            window.addEventListener('orientationchange', updateKeyboardOffset);
-            updateKeyboardOffset();
-        }
-        
         document.addEventListener('touchmove', function(event) {
-            const scrollable = event.target.closest('.app-container, .container, #spa-container');
+            const scrollable = event.target.closest('.app-container, .container');
             if (!scrollable) {
                 event.preventDefault();
             }
         }, { passive: false });
+        
+        (function preventIOSScroll() {
+            const inputs = document.querySelectorAll('input, textarea, select');
+            inputs.forEach(input => {
+                input.addEventListener('focusin', () => { 
+                    setTimeout(() => { window.scrollTo(0, 0); }, 0); 
+                });
+                input.addEventListener('blur', () => { 
+                    window.scrollTo(0, 0); 
+                });
+            });
+        })();
     </script>
     
     <!-- Script para detectar Android -->
@@ -100,25 +103,24 @@
     <!-- CSS Principal -->
     <link rel="stylesheet" href="./assets/css/style.css">
     
-    <!-- Variáveis Globais e Config -->
-    <script src="./www-config.js"></script>
+    <!-- Favicon -->
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+    
+    <!-- Variáveis Globais -->
+    <script>
+        // BASE_APP_URL já foi definido pelo www-config.js
+        // Se não foi definido (fallback), usar URL local
+        if (!window.BASE_APP_URL) {
+            window.BASE_APP_URL = window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/');
+            if (window.BASE_APP_URL.endsWith('/')) {
+                window.BASE_APP_URL = window.BASE_APP_URL.slice(0, -1);
+            }
+        }
+        console.log('[template_base] BASE_APP_URL:', window.BASE_APP_URL);
+    </script>
     
     <!-- Auth Script (deve ser carregado antes de qualquer código que use autenticação) -->
     <script src="./assets/js/auth.js"></script>
-    
-    <!-- Scripts globais -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
-    
-    <!-- Bottom Nav Script (carregado globalmente) -->
-    <script src="./assets/js/bottom-nav.js"></script>
-    
-    <!-- Banner Carousel Script (carregado globalmente para funcionar com SPA) -->
-    <script src="./assets/js/banner-carousel.js"></script>
-    
-    <!-- Router SPA -->
-    <script src="./assets/js/router.js"></script>
     
     <style>
         body {
@@ -133,21 +135,18 @@
             -webkit-user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
-        
-        /* Container SPA - onde as views serão renderizadas */
-        #spa-container {
-            width: 100%;
-            height: 100%;
-            position: relative;
-        }
     </style>
 </head>
 <body>
     <div class="fixed-background"></div>
     <div id="alert-container"></div>
     
-    <!-- Container SPA - onde as views serão renderizadas -->
-    <div id="spa-container"></div>
+    <!-- Conteúdo principal da página começa aqui -->
+    
+    <!-- Scripts globais (serão adicionados no final de cada página) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -172,3 +171,9 @@
     </script>
 </body>
 </html>
+
+
+
+
+
+

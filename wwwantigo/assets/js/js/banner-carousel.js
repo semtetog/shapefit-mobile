@@ -27,17 +27,13 @@ function initLottieCarousel() {
     if (slides.length === 1) {
         const container = slides[0].querySelector('.lottie-animation-container');
         if (container) {
-          // Para desenvolvimento local, usar caminho relativo. Para produção, usar BASE_APP_URL
-          const isLocalDev = window.location.hostname === 'localhost' || 
-                             window.location.hostname === '127.0.0.1' ||
-                             window.location.port === '8100';
-          const bannerBaseUrl = (isLocalDev || !window.BASE_APP_URL) ? '' : window.BASE_APP_URL;
+          const baseUrl = window.BASE_APP_URL || '';
           lottie.loadAnimation({ 
             container, 
             renderer: 'svg', 
             loop: true, 
             autoplay: true, 
-            path: `${bannerBaseUrl}/banner_receitas.json` 
+            path: `${baseUrl}/banner_receitas.json` 
           });
         }
     }
@@ -50,11 +46,8 @@ function initLottieCarousel() {
   let isInitializing = true; // Flag para indicar inicialização
   const DURATION = 7000;
   const loadedAnimations = [];
-  // Para desenvolvimento local, usar caminho relativo. Para produção, usar BASE_APP_URL
-  const isLocalDev = window.location.hostname === 'localhost' || 
-                     window.location.hostname === '127.0.0.1' ||
-                     window.location.port === '8100';
-  const baseUrl = (isLocalDev || !window.BASE_APP_URL) ? '' : window.BASE_APP_URL;
+  // Usar BASE_APP_URL se disponível, senão usar caminho relativo
+  const baseUrl = window.BASE_APP_URL || '';
   const animationPaths = [
     `${baseUrl}/banner_receitas.json`, 
     `${baseUrl}/banner2.json`, 
@@ -405,24 +398,4 @@ window.addEventListener('load', () => {
   } else {
     console.log('[Banner Carousel] Container .main-carousel não encontrado nesta página. Script inativo.');
   }
-});
-
-// Inicializar quando main_app for carregada via SPA
-window.addEventListener('spa:enter-main_app', function() {
-  console.log('[Banner Carousel] Evento spa:enter-main_app detectado, inicializando...');
-  setTimeout(() => {
-    const carousel = document.querySelector('.main-carousel');
-    if (carousel) {
-      if (typeof lottie !== 'undefined') {
-        initLottieCarousel();
-      } else {
-        console.warn('[Banner Carousel] Lottie.js não encontrado, tentando novamente...');
-        setTimeout(() => {
-          if (typeof lottie !== 'undefined') {
-            initLottieCarousel();
-          }
-        }, 500);
-      }
-    }
-  }, 300);
 });
