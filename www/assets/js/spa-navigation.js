@@ -7,6 +7,7 @@
     
     let isNavigating = false;
     let currentPage = window.location.pathname;
+    let spaContainerCounter = 0;
     
     // Páginas que devem usar navegação normal (não AJAX)
     const excludedPages = [
@@ -218,21 +219,30 @@
             document.body.classList.add('page-transitioning');
             
             // Scroll para o topo instantaneamente (sem animação)
-            // Encontrar o container atual - REMOVER TODOS OS CONTAINERS ANTIGOS PRIMEIRO
-            const allContainers = document.querySelectorAll('.app-container, .container');
+            const allContainers = document.querySelectorAll('body > .app-container, body > .container');
             let currentContainer = allContainers[0];
-            
-            // Se há múltiplos containers, remover os extras (manter apenas o primeiro)
-            if (allContainers.length > 1) {
-                console.log(`[SPA] Encontrados ${allContainers.length} containers, removendo extras...`);
-                for (let i = 1; i < allContainers.length; i++) {
-                    allContainers[i].remove();
-                }
-            }
             
             if (!currentContainer) {
                 throw new Error('Container não encontrado');
             }
+            
+            if (!currentContainer.dataset.spaContainerId) {
+                spaContainerCounter += 1;
+                currentContainer.dataset.spaContainerId = `spa-container-${spaContainerCounter}`;
+            }
+            const activeContainerId = currentContainer.dataset.spaContainerId;
+            
+            // Remover containers órfãos (com ID diferente)
+            allContainers.forEach(container => {
+                if (container !== currentContainer) {
+                    const containerId = container.dataset.spaContainerId;
+                    if (!containerId || containerId !== activeContainerId) {
+                        console.log('[SPA] Removendo container órfão:', container);
+                        container.remove();
+                    }
+                }
+            });
+            
             currentContainer.scrollTop = 0;
             
             // Fazer fetch da nova página
@@ -260,6 +270,8 @@
             newContainer.style.opacity = '0';
             newContainer.style.pointerEvents = 'none';
             newContainer.style.visibility = 'hidden';
+            spaContainerCounter += 1;
+            newContainer.dataset.spaContainerId = `spa-container-${spaContainerCounter}`;
             
             // Inserir novo container no mesmo pai do container atual
             const parent = currentContainer.parentNode;
@@ -354,7 +366,7 @@
             
             // SWAP INSTANTÂNEO - trocar containers sem "piscar"
             // REMOVER TODOS OS CONTAINERS ANTIGOS PRIMEIRO (garantir que não há acumulação)
-            const allOldContainers = document.querySelectorAll('.app-container, .container');
+            const allOldContainers = document.querySelectorAll('body > .app-container, body > .container');
             allOldContainers.forEach((container, index) => {
                 // Manter apenas o currentContainer por enquanto, remover os outros
                 if (container !== currentContainer && container !== newContainer) {
@@ -380,7 +392,7 @@
                 currentContainer = newContainer;
                 
                 // Verificação final: garantir que há apenas um container
-                const finalContainers = document.querySelectorAll('.app-container, .container');
+                const finalContainers = document.querySelectorAll('body > .app-container, body > .container');
                 if (finalContainers.length > 1) {
                     console.warn(`[SPA] Ainda há ${finalContainers.length} containers após swap!`);
                     finalContainers.forEach((container, index) => {
