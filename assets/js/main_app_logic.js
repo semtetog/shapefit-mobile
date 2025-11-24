@@ -294,7 +294,7 @@ function updateMacroBar(type, value, goal) {
     }
 }
 
-// Renderizar rotinas/missões (simplificado - script.js cuida dos detalhes)
+// Renderizar rotinas/missões (script.js cuida da renderização completa do HTML)
 function renderRoutines(data) {
     const missionsCard = document.getElementById('missions-card');
     if (!missionsCard) return;
@@ -325,7 +325,7 @@ function renderRoutines(data) {
     }
     
     missionsCard.style.display = 'block';
-    console.log('[main_app_logic] Rotinas renderizadas');
+    console.log('[main_app_logic] Rotinas renderizadas - script.js vai renderizar o HTML completo');
 }
 
 // Renderizar ranking (igual ao código antigo)
@@ -366,15 +366,212 @@ function renderRanking(data) {
     console.log('[main_app_logic] Ranking renderizado');
 }
 
-// Renderizar sugestões de refeições (placeholder)
+// Renderizar sugestões de refeições (igual ao código antigo)
 function renderMealSuggestions(data) {
-    // Implementar se necessário
+    const mealCtaCard = document.getElementById('meal-cta-card');
+    const suggestionsCard = document.getElementById('suggestions-card');
+    
+    const mealSuggestion = data.meal_suggestion || {};
+    const suggestions = mealSuggestion.recipes || [];
+    const BASE_URL = window.BASE_APP_URL;
+    
+    // Função helper para escape HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    if (mealCtaCard) {
+        const greeting = mealSuggestion.greeting || 'O que você vai comer agora?';
+        const mealTypeId = mealSuggestion.db_param || mealSuggestion.meal_type_id || 'lunch';
+        const h2 = mealCtaCard.querySelector('h2');
+        if (h2) h2.textContent = greeting;
+        
+        const addBtn = document.getElementById('add-meal-btn');
+        if (addBtn) {
+            // Função para obter data local (não UTC)
+            function getLocalDateString() {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            }
+            const currentDate = getLocalDateString();
+            addBtn.href = `/add_food_to_diary?meal_type=${mealTypeId}&date=${currentDate}`;
+        }
+    }
+    
+    if (suggestionsCard) {
+        if (suggestions.length > 0) {
+            suggestionsCard.style.display = 'block';
+            
+            // Atualizar título
+            const titleEl = document.getElementById('suggestions-title');
+            if (titleEl) {
+                titleEl.innerHTML = `Sugestões para <span>${escapeHtml(mealSuggestion.display_name || 'Refeição')}</span>`;
+            }
+            
+            // Atualizar link "Ver mais"
+            const viewAllLink = document.getElementById('suggestions-view-all');
+            if (viewAllLink && mealSuggestion.category_id) {
+                viewAllLink.href = `/explore_recipes?categories=${mealSuggestion.category_id}`;
+            }
+            
+            const carousel = document.getElementById('suggestions-carousel');
+            if (carousel) {
+                let html = '';
+                suggestions.forEach(recipe => {
+                    // Construir URL da imagem
+                    const imageUrl = recipe.image_url 
+                        || (recipe.image_filename 
+                            ? `${BASE_URL}/assets/images/recipes/${recipe.image_filename}`
+                            : `${BASE_URL}/assets/images/recipes/placeholder_food.jpg`);
+                    
+                    html += `
+                        <div class="suggestion-item glass-card">
+                            <a href="/view_recipe?id=${recipe.id}" class="suggestion-link">
+                                <div class="suggestion-image-container">
+                                    <img src="${imageUrl}" alt="${escapeHtml(recipe.name)}" onerror="this.src='${BASE_URL}/assets/images/recipes/placeholder_food.jpg'">
+                                </div>
+                                <div class="recipe-info">
+                                    <h4>${escapeHtml(recipe.name)}</h4>
+                                    <span><i class="fas fa-fire-alt"></i> ${Math.round(recipe.kcal_per_serving || 0)} kcal</span>
+                                </div>
+                            </a>
+                        </div>
+                    `;
+                });
+                carousel.innerHTML = html;
+            }
+        } else {
+            // Mostrar mensagem de "nenhuma sugestão"
+            suggestionsCard.style.display = 'block';
+            const carousel = document.getElementById('suggestions-carousel');
+            if (carousel) {
+                carousel.innerHTML = `
+                    <div class="no-suggestions-card glass-card">
+                        <p>Nenhuma sugestão para esta refeição no momento.</p>
+                    </div>
+                `;
+            }
+        }
+    }
+    
     console.log('[main_app_logic] Meal suggestions renderizadas');
 }
 
-// Renderizar desafios (placeholder)
+// Renderizar desafios (igual ao código antigo)
 function renderChallenges(data) {
-    // Implementar se necessário
+    const challengesCard = document.getElementById('challenges-card');
+    if (!challengesCard) return;
+    
+    const challengeGroups = data.challenge_groups || [];
+    const viewAllLink = document.getElementById('challenges-view-all');
+    const emptyState = document.getElementById('challenges-empty-state');
+    const challengesList = document.getElementById('challenges-list');
+    
+    // Função helper para escape HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    if (challengeGroups.length === 0) {
+        if (emptyState) emptyState.style.display = 'block';
+        if (challengesList) challengesList.style.display = 'none';
+        if (viewAllLink) viewAllLink.style.display = 'none';
+        challengesCard.style.display = 'block';
+        console.log('[main_app_logic] Challenges renderizados (vazio)');
+        return;
+    }
+    
+    challengesCard.style.display = 'block';
+    if (emptyState) emptyState.style.display = 'none';
+    if (viewAllLink) viewAllLink.style.display = 'block';
+    
+    if (challengesList) {
+        challengesList.style.display = 'block';
+        let html = '';
+        
+        challengeGroups.forEach(challenge => {
+            // Calcular status e datas
+            const startDate = new Date(challenge.start_date);
+            const endDate = new Date(challenge.end_date);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            let currentStatus, statusText, statusColor;
+            if (today < startDate) {
+                currentStatus = 'scheduled';
+                statusText = 'Agendado';
+                statusColor = 'var(--text-secondary)';
+            } else if (today >= startDate && today <= endDate) {
+                currentStatus = 'active';
+                statusText = 'Em andamento';
+                statusColor = 'var(--accent-orange)';
+            } else {
+                currentStatus = 'completed';
+                statusText = 'Concluído';
+                statusColor = '#4CAF50';
+            }
+            
+            // Calcular progresso (dias)
+            const totalDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+            const daysPassed = today > startDate ? Math.ceil((today - startDate) / (1000 * 60 * 60 * 24)) : 0;
+            const daysRemaining = Math.max(0, Math.ceil((endDate - today) / (1000 * 60 * 60 * 24)));
+            const progressPercentage = totalDays > 0 ? Math.min(100, Math.round((daysPassed / totalDays) * 100)) : 0;
+            
+            // Formatar datas
+            const formatDate = (date) => {
+                const d = new Date(date);
+                const day = String(d.getDate()).padStart(2, '0');
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const year = d.getFullYear();
+                return `${day}/${month}/${year}`;
+            };
+            
+            html += `
+                <a href="/challenges?id=${challenge.id}" class="challenge-item">
+                    <div class="challenge-item-header">
+                        <h4>${escapeHtml(challenge.name)}</h4>
+                        <span class="challenge-status" style="color: ${statusColor};">
+                            ${escapeHtml(statusText)}
+                        </span>
+                    </div>
+                    ${challenge.description ? `
+                        <p class="challenge-description">${escapeHtml(challenge.description.length > 100 ? challenge.description.substring(0, 100) + '...' : challenge.description)}</p>
+                    ` : ''}
+                    <div class="challenge-meta">
+                        <span class="challenge-date">
+                            <i class="fas fa-calendar"></i>
+                            ${formatDate(challenge.start_date)} - ${formatDate(challenge.end_date)}
+                        </span>
+                        <span class="challenge-participants">
+                            <i class="fas fa-users"></i>
+                            ${challenge.total_participants || 0} participante${(challenge.total_participants || 0) > 1 ? 's' : ''}
+                        </span>
+                    </div>
+                    ${currentStatus === 'active' ? `
+                        <div class="challenge-progress">
+                            <div class="challenge-progress-info">
+                                <span>${daysRemaining} dia${daysRemaining > 1 ? 's' : ''} restante${daysRemaining > 1 ? 's' : ''}</span>
+                                <span>${progressPercentage}%</span>
+                            </div>
+                            <div class="progress-bar-challenge">
+                                <div class="progress-bar-challenge-fill" style="width: ${progressPercentage}%;"></div>
+                            </div>
+                        </div>
+                    ` : ''}
+                </a>
+            `;
+        });
+        
+        challengesList.innerHTML = html;
+    }
+    
     console.log('[main_app_logic] Challenges renderizados');
 }
 
