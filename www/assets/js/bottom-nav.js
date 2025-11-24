@@ -103,7 +103,9 @@ function renderBottomNav() {
     // Verificar se já existe (evitar duplicatas)
     const existingNav = document.querySelector('.bottom-nav');
     if (existingNav) {
-        existingNav.remove();
+        // Se já existe, apenas atualizar o item ativo
+        updateActiveItem();
+        return;
     }
     
     const existingStyle = document.querySelector('style[data-bottom-nav]');
@@ -132,6 +134,23 @@ function renderBottomNav() {
     if (navElement) {
         document.body.appendChild(navElement);
     }
+}
+
+// Função para atualizar apenas o item ativo (usado durante navegação SPA)
+function updateActiveItem() {
+    const currentPage = window.location.pathname.split('/').pop() || 'main_app.html';
+    const activeItem = bottomNavMap[currentPage] || 'home';
+    
+    document.querySelectorAll('.bottom-nav .nav-item').forEach(item => {
+        item.classList.remove('active');
+        const href = item.getAttribute('href');
+        if (href) {
+            const itemPage = href.split('/').pop().split('?')[0];
+            if (bottomNavMap[itemPage] === activeItem) {
+                item.classList.add('active');
+            }
+        }
+    });
 }
 
 // Renderizar quando o DOM estiver pronto

@@ -332,7 +332,9 @@
         if (connectionRestored) {
             isOnline = true;
             hideOfflineModal();
-            window.location.reload();
+            // Só recarregar se realmente estava offline antes
+            // O evento 'online' já vai cuidar do reload se necessário
+            console.log('[Network Monitor] Conexão restaurada após teste manual');
         } else {
             // Ainda offline - remover loading e mostrar botão novamente
             retryBtn.classList.remove('loading');
@@ -361,29 +363,37 @@
             // Tentar usar Capacitor Network plugin
             if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Network) {
                 const status = await window.Capacitor.Plugins.Network.getStatus();
-                if (status.connected) {
+                // Só atualizar se o status realmente mudou
+                if (status.connected && !isOnline) {
+                    // Estava offline e agora está online - os eventos já vão cuidar do reload
                     hideOfflineModal();
-                } else {
+                } else if (!status.connected && isOnline) {
+                    // Estava online e agora está offline
                     showOfflineModal();
                 }
+                // Se já estava no estado correto, não fazer nada
                 return;
             }
             
             // Fallback: usar API nativa do navegador
             if (navigator.onLine !== undefined) {
-                if (navigator.onLine) {
+                // Só atualizar se o status realmente mudou
+                if (navigator.onLine && !isOnline) {
+                    // Estava offline e agora está online - os eventos já vão cuidar do reload
                     hideOfflineModal();
-                } else {
+                } else if (!navigator.onLine && isOnline) {
+                    // Estava online e agora está offline
                     showOfflineModal();
                 }
+                // Se já estava no estado correto, não fazer nada
             }
         } catch (error) {
             console.error('[Network Monitor] Erro ao verificar status:', error);
-            // Fallback para navigator.onLine
+            // Fallback para navigator.onLine - mas só atualizar se mudou
             if (navigator.onLine !== undefined) {
-                if (navigator.onLine) {
+                if (navigator.onLine && !isOnline) {
                     hideOfflineModal();
-                } else {
+                } else if (!navigator.onLine && isOnline) {
                     showOfflineModal();
                 }
             }
@@ -392,36 +402,99 @@
     
     // Monitorar eventos de rede
     function setupNetworkMonitoring() {
-        // Verificar status inicial
-        checkNetworkStatus();
+        // Verificar status inicial e definir isOnline corretamente
+        (async function() {
+            try {
+                if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Network) {
+                    const status = await window.Capacitor.Plugins.Network.getStatus();
+                    isOnline = status.connected;
+                } else {
+                    isOnline = navigator.onLine !== undefined ? navigator.onLine : true;
+                }
+            } catch (e) {
+                isOnline = navigator.onLine !== undefined ? navigator.onLine : true;
+            }
+            // Agora verificar status
+            checkNetworkStatus();
+        })();
+        
+        // Rastrear se estava offline antes
+        let wasOffline = !isOnline;
         
         // Eventos nativos do navegador
         window.addEventListener('online', function() {
-            console.log('[Network Monitor] Conexão restaurada');
-            hideOfflineModal();
-            window.location.reload();
+            console.log('[Network Monitor] Evento online disparado');
+            // Só recarregar se realmente estava offline antes
+            if (wasOffline) {
+                console.log('[Network Monitor] Conexão restaurada após estar offline - recarregando');
+                wasOffline = false;
+                hideOfflineModal();
+                // Pequeno delay para garantir que a conexão está estável
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            } else {
+                // Já estava online, apenas esconder modal se estiver visível
+                console.log('[Network Monitor] Já estava online - apenas escondendo modal');
+                hideOfflineModal();
+            }
         });
         
         window.addEventListener('offline', function() {
             console.log('[Network Monitor] Conexão perdida');
+            wasOffline = true;
             showOfflineModal();
         });
         
         // Monitorar usando Capacitor Network plugin (se disponível)
         if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Network) {
+            let lastStatus = null;
+            let lastConnectedState = null;
+            
             window.Capacitor.Plugins.Network.addListener('networkStatusChange', function(status) {
                 console.log('[Network Monitor] Status mudou:', status);
+                
+                // Só reagir se realmente mudou de offline para online
+                // Ignorar mudanças de tipo de conexão (WiFi <-> dados móveis) quando já está online
                 if (status.connected) {
-                    hideOfflineModal();
-                    window.location.reload();
+                    // Se estava offline antes (lastConnectedState era false)
+                    if (lastConnectedState === false) {
+                        // Estava offline e agora está online - recarregar
+                        console.log('[Network Monitor] Conexão restaurada (offline->online) - recarregando');
+                        wasOffline = false;
+                        hideOfflineModal();
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
+                    } else {
+                        // Já estava online ou é a primeira verificação - apenas esconder modal
+                        // Mudança de WiFi para dados móveis (ou vice-versa) não deve recarregar
+                        console.log('[Network Monitor] Já estava online ou mudança de tipo de conexão - não recarregar');
+                        hideOfflineModal();
+                    }
+                    lastConnectedState = true;
                 } else {
+                    // Ficou offline
+                    wasOffline = true;
+                    lastConnectedState = false;
                     showOfflineModal();
+                }
+                
+                lastStatus = status;
+            });
+            
+            // Obter status inicial
+            window.Capacitor.Plugins.Network.getStatus().then(status => {
+                lastStatus = status;
+                lastConnectedState = status.connected;
+                if (!status.connected) {
+                    wasOffline = true;
                 }
             });
         }
         
-        // Verificar periodicamente (a cada 5 segundos) como fallback
-        setInterval(checkNetworkStatus, 5000);
+        // Verificar periodicamente (a cada 10 segundos) como fallback - aumentado para evitar checks excessivos
+        setInterval(checkNetworkStatus, 10000);
     }
     
     // Inicializar quando o DOM estiver pronto
