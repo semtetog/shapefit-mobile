@@ -283,8 +283,19 @@
             const styleLinks = doc.head.querySelectorAll('link[rel="stylesheet"]');
             styleLinks.forEach(link => {
                 const href = link.getAttribute('href');
-                // Ignorar CSS globais que já estão carregados
-                if (href && !href.includes('style.css') && !href.includes('spa-pages.css')) {
+                // Carregar TODOS os CSS, exceto os que já estão no index.html
+                // O index.html já tem: style.css, spa-pages.css, font-awesome, fonts
+                if (href && 
+                    !href.includes('spa-pages.css') &&
+                    !href.includes('font-awesome') &&
+                    !href.includes('fonts.googleapis.com') &&
+                    !href.includes('fonts.gstatic.com')) {
+                    // Incluir style.css se for específico de página (ex: pages/_dashboard.css)
+                    // Mas verificar se não é o style.css principal
+                    if (href.includes('style.css') && !href.includes('pages/') && !href.includes('base/') && !href.includes('components/') && !href.includes('layout/')) {
+                        // É o style.css principal, já está carregado
+                        return;
+                    }
                     pageStyles.links.push(href);
                 }
             });
