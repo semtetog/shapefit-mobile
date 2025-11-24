@@ -149,7 +149,8 @@ const bottomNavCSS = `
     }
 
     .nav-item i {
-        font-size: 1.5rem;
+        font-size: 22px;
+        margin-bottom: 4px;
     }
 
     .nav-item.active {
