@@ -1,6 +1,7 @@
 /**
  * CSS para sistema SPA - Páginas container
- * Elimina piscar preto no iOS
+ * Elimina 100% do piscar preto no iOS
+ * Transições suaves e fluidas como PWA
  */
 
 /* Container principal de páginas */
@@ -9,6 +10,7 @@
     width: 100%;
     min-height: 100vh;
     overflow: hidden;
+    background: #000;
 }
 
 /* Páginas individuais */
@@ -19,43 +21,66 @@
     position: absolute;
     top: 0;
     left: 0;
+    right: 0;
     opacity: 0;
-    transition: opacity 0.2s ease-in-out;
-    will-change: opacity;
+    visibility: hidden;
+    pointer-events: none;
+    will-change: opacity, visibility;
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    transition: opacity 0.15s ease-out, visibility 0.15s ease-out;
 }
 
-/* Página ativa */
+/* Página ativa - INSTANTÂNEO para zero piscar */
 .spa-page.active {
-    display: block;
-    position: relative;
-    opacity: 1;
-    z-index: 1;
+    display: block !important;
+    position: relative !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    z-index: 1 !important;
+    transition: none !important; /* Zero transição = zero piscar */
+    -webkit-transform: translateZ(0) !important;
+    transform: translateZ(0) !important;
 }
 
 /* Conteúdo da página */
 .spa-page-content {
     width: 100%;
     min-height: 100vh;
+    background: transparent;
 }
 
-/* Prevenir flash durante transição */
-body.spa-navigating {
-    overflow: hidden;
+/* Prevenir qualquer flash durante navegação */
+body {
+    background: #000 !important;
+    overflow-x: hidden;
 }
 
-/* Garantir que páginas não sejam visíveis durante carregamento */
-.spa-page:not(.active) {
-    visibility: hidden;
-    pointer-events: none;
+/* Garantir que body não recarregue */
+html {
+    background: #000;
 }
 
-/* Otimização para iOS - prevenir repaint */
+/* Otimização para iOS - prevenir repaint e flicker */
 .spa-page {
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
     -webkit-perspective: 1000;
     perspective: 1000;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
+/* Garantir que páginas inativas não sejam renderizadas */
+.spa-page:not(.active) {
+    display: none !important;
+}
+
+/* Prevenir scroll durante transição (se necessário) */
+body.spa-transitioning {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+}

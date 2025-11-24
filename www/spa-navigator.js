@@ -44,7 +44,16 @@
          */
         init() {
             // Interceptar todos os cliques em links ANTES de qualquer coisa
+            // Usar capture phase (true) para pegar ANTES de outros handlers
             document.addEventListener('click', this.handleLinkClick.bind(this), true);
+            
+            // Interceptar também antesunload para prevenir navegação acidental
+            window.addEventListener('beforeunload', (e) => {
+                // Se estamos em SPA, não permitir navegação padrão
+                if (this.currentPage) {
+                    // Não fazer nada - deixar SPA gerenciar
+                }
+            });
             
             // Substituir window.location.href globalmente
             this.patchLocationHref();
@@ -70,8 +79,12 @@
         /**
          * Intercepta cliques em links - PRIORIDADE MÁXIMA
          * Captura TODOS os tipos de elementos clicáveis
+         * USA CAPTURE PHASE para pegar ANTES de qualquer outro handler
          */
         handleLinkClick(event) {
+            // Se já foi prevenido, não fazer nada
+            if (event.defaultPrevented) return;
+            
             // 1. Verificar se é link com href
             const link = event.target.closest('a[href]');
             if (link) {
@@ -92,7 +105,7 @@
             const spaLink = event.target.closest('[data-spa-link]');
             if (spaLink) {
                 const href = spaLink.getAttribute('data-spa-link');
-                if (href) {
+                if (href && this.getPageIdFromUrl(href)) {
                     event.preventDefault();
                     event.stopPropagation();
                     event.stopImmediatePropagation();
@@ -147,18 +160,11 @@
 
         /**
          * Carrega e mostra uma página
+         * OTIMIZADO: Zero piscar, transição instantânea
          */
         async showPage(pageId, url) {
             // Se já está na página, não fazer nada
             if (this.currentPage === pageId) return;
-
-            // Esconder página atual
-            if (this.currentPage) {
-                const currentEl = document.getElementById(this.currentPage);
-                if (currentEl) {
-                    currentEl.classList.remove('active');
-                }
-            }
 
             // Obter ou criar elemento da página
             let pageEl = document.getElementById(pageId);
@@ -181,20 +187,33 @@
                 }
             }
 
-            // Mostrar página
-            pageEl.classList.add('active');
-            this.currentPage = pageId;
+            // TROCAR PÁGINAS INSTANTANEAMENTE (sem transição para evitar piscar)
+            // Usar requestAnimationFrame para garantir renderização suave
+            requestAnimationFrame(() => {
+                // Esconder página atual
+                if (this.currentPage) {
+                    const currentEl = document.getElementById(this.currentPage);
+                    if (currentEl) {
+                        currentEl.classList.remove('active');
+                    }
+                }
 
-            // Disparar evento customizado para inicialização da página
-            const eventName = `spa:enter-${pageId.replace('page-', '')}`;
-            window.dispatchEvent(new CustomEvent(eventName, {
-                detail: { pageId, url }
-            }));
+                // Mostrar nova página IMEDIATAMENTE
+                pageEl.classList.add('active');
+                this.currentPage = pageId;
 
-            // Evento genérico também
-            window.dispatchEvent(new CustomEvent('spa:page-changed', {
-                detail: { pageId, url }
-            }));
+                // Disparar eventos após renderização
+                requestAnimationFrame(() => {
+                    const eventName = `spa:enter-${pageId.replace('page-', '')}`;
+                    window.dispatchEvent(new CustomEvent(eventName, {
+                        detail: { pageId, url }
+                    }));
+
+                    window.dispatchEvent(new CustomEvent('spa:page-changed', {
+                        detail: { pageId, url }
+                    }));
+                });
+            });
         },
 
         /**
@@ -445,7 +464,7 @@
                 }
             };
             
-            // Interceptar location.replace também
+            // Interceptar location.replace
             const originalReplace = window.location.replace;
             window.location.replace = function(url) {
                 const pageId = self.getPageIdFromUrl(url);
@@ -455,6 +474,31 @@
                     originalReplace.call(window.location, url);
                 }
             };
+            
+            // Interceptar location.reload - NUNCA recarregar no SPA
+            const originalReload = window.location.reload;
+            const reloadHandler = function(forceReload) {
+                // Se for uma página SPA, apenas atualizar a página atual
+                if (self.currentPage) {
+                    const currentUrl = window.location.pathname.split('/').pop() || 'main_app.html';
+                    // Disparar evento de "reload" para páginas que precisam atualizar dados
+                    window.dispatchEvent(new CustomEvent('spa:page-reload', {
+                        detail: { pageId: self.currentPage, url: currentUrl }
+                    }));
+                    // Mostrar página novamente (pode recarregar dados)
+                    self.showPage(self.currentPage, currentUrl);
+                } else {
+                    originalReload.call(window.location, forceReload);
+                }
+            };
+            
+            window.location.reload = reloadHandler;
+            window.reload = reloadHandler;
+            
+            // Interceptar também document.location.reload se existir
+            if (document.location && document.location.reload) {
+                document.location.reload = reloadHandler;
+            }
         }
     };
 

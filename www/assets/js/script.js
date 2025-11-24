@@ -222,18 +222,30 @@ document.addEventListener('DOMContentLoaded', function () {
         switch(bannerNumber) {
             case 1:
                 // Banner 1: Página de receitas
-                window.location.href = 'explore_recipes.php';
+                if (window.SPANavigator) {
+                    window.SPANavigator.navigate('./explore_recipes.html', true);
+                } else if (window.navigateTo) {
+                    window.navigateTo('./explore_recipes.html');
+                }
                 break;
             case 2:
                 // Banner 2: Sem funcionalidade
                 return;
             case 3:
                 // Banner 3: Página de rotinas
-                window.location.href = 'routine.php';
+                if (window.SPANavigator) {
+                    window.SPANavigator.navigate('./routine.html', true);
+                } else if (window.navigateTo) {
+                    window.navigateTo('./routine.html');
+                }
                 break;
             case 4:
                 // Banner 4: Página de progresso
-                window.location.href = 'progress.php';
+                if (window.SPANavigator) {
+                    window.SPANavigator.navigate('./progress.html', true);
+                } else if (window.navigateTo) {
+                    window.navigateTo('./progress.html');
+                }
                 break;
         }
     }

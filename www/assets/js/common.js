@@ -46,13 +46,11 @@ async function apiRequest(url, options = {}) {
         if (response.status === 401) {
             clearAuthToken();
             const targetUrl = './auth/login.html';
-            // SEMPRE usar SPA se disponível
+            // SEMPRE usar SPA
             if (window.SPANavigator) {
                 window.SPANavigator.navigate(targetUrl, true);
             } else if (window.navigateTo) {
                 window.navigateTo(targetUrl);
-            } else {
-                window.location.href = targetUrl;
             }
             return null;
         }

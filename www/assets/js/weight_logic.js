@@ -69,7 +69,13 @@ if (editWeightModal) {
                     window.showAppNotification(data.message, 'success');
                 }
                 setTimeout(() => {
-                    window.location.reload();
+                    // Atualizar página via SPA ao invés de recarregar
+                    if (window.SPANavigator && window.SPANavigator.currentPage) {
+                        const currentUrl = window.location.pathname.split('/').pop() || 'main_app.html';
+                        window.dispatchEvent(new CustomEvent('spa:page-reload', {
+                            detail: { pageId: window.SPANavigator.currentPage, url: currentUrl }
+                        }));
+                    }
                 }, 1500);
             })
             .catch(err => {

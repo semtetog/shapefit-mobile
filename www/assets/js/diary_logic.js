@@ -10,7 +10,11 @@ document.addEventListener('DOMContentLoaded', function() {
         addMealBtn.addEventListener('click', () => {
             const currentDate = dateSpan ? dateSpan.dataset.date : '';
             // Redireciona para a página de adicionar refeição, passando a data atual
-            window.location.href = `./add_food_to_diary.html?date=${currentDate}`;
+            if (window.SPANavigator) {
+                window.SPANavigator.navigate(`./add_food_to_diary.html?date=${currentDate}`, true);
+            } else if (window.navigateTo) {
+                window.navigateTo(`./add_food_to_diary.html?date=${currentDate}`);
+            }
         });
     }
 

@@ -17,7 +17,13 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 alert(data.message || 'Ocorreu um erro.');
                 if (data.success) {
-                    window.location.reload(); // Recarrega a página para mostrar o novo registro no histórico
+                    // Atualizar página via SPA ao invés de recarregar
+                    if (window.SPANavigator && window.SPANavigator.currentPage) {
+                        const currentUrl = window.location.pathname.split('/').pop() || 'measurements_progress.html';
+                        window.dispatchEvent(new CustomEvent('spa:page-reload', {
+                            detail: { pageId: window.SPANavigator.currentPage, url: currentUrl }
+                        }));
+                    }
                 }
             })
             .catch(error => {
