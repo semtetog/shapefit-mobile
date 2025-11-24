@@ -214,8 +214,14 @@
         isNavigating = true;
         
         try {
-            // Adicionar classe de transição
+            // Adicionar classe de transição (apenas para desabilitar cliques)
             document.body.classList.add('page-transitioning');
+            
+            // Scroll para o topo instantaneamente (sem animação)
+            const currentContainer = document.querySelector('.app-container, .container');
+            if (currentContainer) {
+                currentContainer.scrollTop = 0;
+            }
             
             // Fazer fetch da nova página
             const response = await fetch(url);
@@ -235,11 +241,8 @@
             // Preservar bottom-nav (não remover durante navegação)
             const bottomNav = document.querySelector('.bottom-nav');
             
-            // Fade out muito rápido (quase instantâneo para evitar "arrastar")
-            currentContainer.style.opacity = '0';
-            currentContainer.style.transition = 'opacity 0.1s ease';
-            
-            await new Promise(resolve => setTimeout(resolve, 100));
+            // SEM FADE - troca instantânea para evitar "piscar" (estilo PWA)
+            // Não alterar opacity, apenas trocar conteúdo diretamente
             
             // Limpar elementos duplicados ANTES de substituir conteúdo
             cleanupPageElements();
@@ -254,8 +257,11 @@
                 }
             }
             
-            // Substituir conteúdo
+            // Substituir conteúdo (troca instantânea - estilo PWA)
             currentContainer.innerHTML = content;
+            
+            // Scroll para o topo após inserir conteúdo
+            currentContainer.scrollTop = 0;
             
             // Limpar novamente após inserir conteúdo (pode ter criado duplicatas)
             cleanupPageElements();
