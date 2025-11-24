@@ -407,7 +407,7 @@
     <script>
         // Verificar autenticação
         if (!isAuthenticated()) {
-            window.location.href = './auth/login.html';
+            window.location.href = './login.html';
         }
         
         const contentContainer = document.getElementById('content-container');
@@ -452,7 +452,7 @@
                 
                 if (!result.success) {
                     if (result.message && result.message.includes('Onboarding')) {
-                        window.location.href = './onboarding/onboarding.html';
+                        window.location.href = './onboarding.html';
                         return;
                     }
                     if (result.message && result.message.includes('não encontrado')) {

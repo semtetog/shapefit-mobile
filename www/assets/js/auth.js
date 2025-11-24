@@ -78,7 +78,7 @@ async function requireAuth() {
     if (!authenticated) {
         // Usar caminho relativo para manter dentro do app
         console.log('Redirecionando para login');
-        window.location.href = './auth/login.html';
+        window.location.href = './login.html';
         return false;
     }
     return true;
@@ -174,7 +174,7 @@ async function authenticatedFetch(url, options = {}) {
         console.error('Token inválido (401) - redirecionando para login');
         clearAuthToken();
         // Usar caminho relativo para manter dentro do app
-        window.location.href = './auth/login.html';
+        window.location.href = './login.html';
         return null;
     }
     
