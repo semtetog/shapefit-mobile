@@ -29,8 +29,26 @@
         const appContainer = doc.querySelector('.app-container, .container');
         const content = appContainer ? appContainer.innerHTML : '';
         
-        // Extrair scripts que precisam ser executados
-        const scripts = Array.from(doc.querySelectorAll('script[src], script:not([src])'));
+        // Extrair TODOS os scripts (incluindo os que estão dentro do app-container)
+        // Primeiro pegar scripts do head
+        const headScripts = Array.from(doc.head.querySelectorAll('script'));
+        // Depois pegar scripts do body (incluindo dentro do app-container)
+        const bodyScripts = Array.from(doc.body.querySelectorAll('script'));
+        // Combinar todos, removendo duplicatas por src
+        const allScripts = [];
+        const seenSrcs = new Set();
+        
+        [...headScripts, ...bodyScripts].forEach(script => {
+            if (script.src) {
+                if (!seenSrcs.has(script.src)) {
+                    seenSrcs.add(script.src);
+                    allScripts.push(script);
+                }
+            } else {
+                // Script inline - sempre incluir
+                allScripts.push(script);
+            }
+        });
         
         // Extrair título
         const title = doc.querySelector('title')?.textContent || document.title;
@@ -40,7 +58,7 @@
         
         return {
             content,
-            scripts,
+            scripts: allScripts,
             title,
             inlineStyles
         };
@@ -48,23 +66,45 @@
     
     // Executar scripts da nova página
     function executeScripts(scripts) {
+        const scriptPromises = [];
+        
         scripts.forEach(script => {
             if (script.src) {
                 // Script externo - verificar se já foi carregado
                 const existing = document.querySelector(`script[src="${script.src}"]`);
                 if (!existing) {
-                    const newScript = document.createElement('script');
-                    newScript.src = script.src;
-                    newScript.async = false;
-                    document.head.appendChild(newScript);
+                    const promise = new Promise((resolve, reject) => {
+                        const newScript = document.createElement('script');
+                        newScript.src = script.src;
+                        newScript.async = false;
+                        newScript.onload = resolve;
+                        newScript.onerror = reject;
+                        document.head.appendChild(newScript);
+                    });
+                    scriptPromises.push(promise);
                 }
             } else {
-                // Script inline - executar
-                const newScript = document.createElement('script');
-                newScript.textContent = script.textContent;
-                document.body.appendChild(newScript);
+                // Script inline - executar diretamente usando eval ou Function
+                // Isso garante que IIFEs sejam executados
+                try {
+                    // Criar script e executar
+                    const newScript = document.createElement('script');
+                    newScript.textContent = script.textContent;
+                    // Adicionar ao body para executar no contexto correto
+                    document.body.appendChild(newScript);
+                    // Remover após execução para não poluir o DOM
+                    setTimeout(() => {
+                        if (newScript.parentNode) {
+                            newScript.parentNode.removeChild(newScript);
+                        }
+                    }, 0);
+                } catch (e) {
+                    console.error('[SPA] Erro ao executar script inline:', e);
+                }
             }
         });
+        
+        return Promise.all(scriptPromises);
     }
     
     // Adicionar estilos inline
@@ -105,17 +145,27 @@
                 throw new Error('Container não encontrado');
             }
             
-            // Fade out rápido
-            currentContainer.style.opacity = '0';
-            currentContainer.style.transition = 'opacity 0.15s ease';
-            
-            await new Promise(resolve => setTimeout(resolve, 150));
-            
             // Preservar bottom-nav (não remover durante navegação)
             const bottomNav = document.querySelector('.bottom-nav');
             
-            // Substituir conteúdo
+            // Extrair scripts que estão dentro do conteúdo ANTES de substituir
+            const contentDiv = document.createElement('div');
+            contentDiv.innerHTML = content;
+            const inlineScriptsFromContent = Array.from(contentDiv.querySelectorAll('script:not([src])'));
+            
+            // Fade out muito rápido (quase instantâneo para evitar "arrastar")
+            currentContainer.style.opacity = '0';
+            currentContainer.style.transition = 'opacity 0.1s ease';
+            
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Substituir conteúdo (scripts inline serão removidos, mas já foram extraídos)
             currentContainer.innerHTML = content;
+            
+            // Remover scripts inline do conteúdo para evitar duplicação
+            currentContainer.querySelectorAll('script:not([src])').forEach(script => {
+                script.remove();
+            });
             
             // Garantir que bottom-nav ainda está no body (caso tenha sido removido)
             if (bottomNav && !document.body.contains(bottomNav)) {
@@ -128,27 +178,76 @@
             // Atualizar título
             document.title = title;
             
-            // Scroll para o topo
+            // Scroll para o topo ANTES do fade in para evitar "arrastar"
             currentContainer.scrollTop = 0;
             
-            // Fade in
+            // Executar scripts ANTES do fade in para garantir que tudo está pronto
+            // Primeiro scripts externos e do head
+            await executeScripts(scripts);
+            
+            // Depois scripts inline que estavam dentro do conteúdo
+            inlineScriptsFromContent.forEach(script => {
+                try {
+                    const newScript = document.createElement('script');
+                    newScript.textContent = script.textContent;
+                    document.body.appendChild(newScript);
+                    // Remover após execução
+                    setTimeout(() => {
+                        if (newScript.parentNode) {
+                            newScript.parentNode.removeChild(newScript);
+                        }
+                    }, 0);
+                } catch (e) {
+                    console.error('[SPA] Erro ao executar script inline do conteúdo:', e);
+                }
+            });
+            
+            // Pequeno delay para garantir que todos os scripts executaram
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Disparar eventos para que as páginas saibam que foram carregadas
+            // Primeiro DOMContentLoaded (para compatibilidade)
+            const domContentLoadedEvent = new Event('DOMContentLoaded', { bubbles: true, cancelable: true });
+            document.dispatchEvent(domContentLoadedEvent);
+            
+            // Depois o evento customizado SPA
+            window.dispatchEvent(new CustomEvent('spa-page-loaded', { 
+                detail: { url, isSPANavigation: true } 
+            }));
+            
+            // Fade in após eventos serem disparados
             currentContainer.style.opacity = '1';
             
-            // Executar scripts após um pequeno delay para garantir que o DOM está pronto
+            // Forçar re-execução de códigos de inicialização para páginas específicas
+            const pageName = url.split('/').pop().split('?')[0];
             setTimeout(() => {
-                executeScripts(scripts);
+                // Para main_app.html - forçar re-execução do código de carregamento
+                if (pageName === 'main_app.html' || pageName === 'dashboard.html') {
+                    const dashboardContainer = document.getElementById('dashboard-container');
+                    if (dashboardContainer && dashboardContainer.style.display === 'none') {
+                        // Se o container está escondido, significa que os dados não foram carregados
+                        // Disparar um evento específico para forçar reload
+                        window.dispatchEvent(new CustomEvent('spa-reload-page-data', { 
+                            detail: { page: pageName } 
+                        }));
+                    }
+                }
                 
-                // Disparar evento customizado para scripts que dependem dele
-                window.dispatchEvent(new CustomEvent('spa-page-loaded', { 
-                    detail: { url } 
-                }));
-                
-                // Remover classe de transição
-                setTimeout(() => {
-                    document.body.classList.remove('page-transitioning');
-                    isNavigating = false;
-                }, 100);
-            }, 50);
+                // Para outras páginas que usam loadPageData ou similar
+                if (typeof window.loadPageData === 'function') {
+                    try {
+                        window.loadPageData();
+                    } catch (e) {
+                        console.error('[SPA] Erro ao chamar loadPageData:', e);
+                    }
+                }
+            }, 200);
+            
+            // Remover classe de transição
+            setTimeout(() => {
+                document.body.classList.remove('page-transitioning');
+                isNavigating = false;
+            }, 150);
             
             // Atualizar URL sem recarregar
             window.history.pushState({ url }, '', url);
@@ -250,12 +349,18 @@
         navigateToPage(url);
     };
     
-    // Adicionar CSS para transições suaves
+    // Adicionar CSS para transições suaves (sem "arrastar")
     const style = document.createElement('style');
     style.textContent = `
+        .app-container,
+        .container {
+            transition: opacity 0.1s ease !important;
+            will-change: opacity;
+        }
+        
         .page-transitioning .app-container,
         .page-transitioning .container {
-            transition: opacity 0.15s ease;
+            transition: opacity 0.1s ease !important;
         }
         
         body.page-transitioning {
@@ -264,6 +369,16 @@
         
         body.page-transitioning .bottom-nav {
             pointer-events: auto;
+        }
+        
+        /* Prevenir qualquer transformação que cause "arrastar" */
+        .app-container,
+        .container {
+            transform: none !important;
+            left: 0 !important;
+            right: 0 !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
         }
     `;
     document.head.appendChild(style);

@@ -920,6 +920,18 @@ function escapeHtml(text) {
     await loadPageData();
 })();
 
+// Re-executar quando carregado via SPA
+window.addEventListener('spa-page-loaded', function(e) {
+    if (e.detail && e.detail.isSPANavigation) {
+        const pageName = window.location.pathname.split('/').pop();
+        if (pageName === 'explore_recipes.html') {
+            setTimeout(() => {
+                loadPageData();
+            }, 100);
+        }
+    }
+});
+
 document.addEventListener('DOMContentLoaded', function() {
     // Elementos
     const filterBtn = document.getElementById('filter-btn');

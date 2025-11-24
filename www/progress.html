@@ -436,6 +436,39 @@
             }
         })();
         
+        // Re-executar quando carregado via SPA
+        window.addEventListener('spa-page-loaded', function(e) {
+            if (e.detail && e.detail.isSPANavigation) {
+                const pageName = window.location.pathname.split('/').pop();
+                if (pageName === 'progress.html') {
+                    setTimeout(() => {
+                        (async function() {
+                            const authenticated = await requireAuth();
+                            if (!authenticated) return;
+                            
+                            const BASE_URL = window.BASE_APP_URL;
+                            try {
+                                const response = await authenticatedFetch(`${BASE_URL}/api/get_progress_data.php`);
+                                if (!response) return;
+                                
+                                const result = await response.json();
+                                if (!result.success) {
+                                    throw new Error(result.message || 'Erro ao carregar dados');
+                                }
+                                
+                                const data = result.data;
+                                prepareProgressData(data);
+                                renderProgressPage();
+                                document.getElementById('progress-container').style.display = 'block';
+                            } catch (error) {
+                                console.error('Erro ao recarregar progresso via SPA:', error);
+                            }
+                        })();
+                    }, 100);
+                }
+            }
+        });
+        
         function prepareProgressData(data) {
             const goals = data.goals || {};
             const today = data.today || {};

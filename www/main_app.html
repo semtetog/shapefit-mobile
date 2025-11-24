@@ -4525,6 +4525,43 @@ function animatePointsCount(element, startValue, endValue, duration) {
     }
 })();
 
+// Re-executar quando carregado via SPA
+window.addEventListener('spa-page-loaded', function(e) {
+    if (e.detail && e.detail.isSPANavigation) {
+        const pageName = window.location.pathname.split('/').pop();
+        if (pageName === 'main_app.html' || pageName === 'dashboard.html') {
+            // Verificar se o dashboard precisa ser recarregado
+            const dashboardContainer = document.getElementById('dashboard-container');
+            if (dashboardContainer) {
+                // Re-executar o código de carregamento
+                setTimeout(() => {
+                    (async function() {
+                        const BASE_URL = window.BASE_APP_URL;
+                        const authenticated = await requireAuth();
+                        if (!authenticated) return;
+                        
+                        try {
+                            const response = await authenticatedFetch(`${BASE_URL}/api/get_dashboard_data.php`);
+                            if (!response) return;
+                            
+                            const result = await response.json();
+                            if (!result.success) {
+                                throw new Error(result.message || 'Erro ao carregar dados');
+                            }
+                            
+                            const data = result.data;
+                            renderDashboard(data);
+                            dashboardContainer.style.display = 'block';
+                        } catch (error) {
+                            console.error('Erro ao recarregar dashboard via SPA:', error);
+                        }
+                    })();
+                }, 100);
+            }
+        }
+    }
+});
+
 function renderDashboard(data) {
     // Atualizar pontos
     const pointsDisplay = document.getElementById('user-points-display');
