@@ -143,16 +143,16 @@ async function loadMainAppData() {
         // Atualizar pontos do usuário
         // Pode estar em data.user_points, data.user.points, ou data.points
         let userPoints = data.user_points || data.user?.points || data.points || data.user?.total_points;
-        console.log('Atualizando pontos do usuário...', userPoints);
+        console.log('[main_app_logic] Atualizando pontos do usuário...', userPoints);
         if (userPoints !== undefined && userPoints !== null) {
             const pointsDisplay = document.getElementById('user-points-display');
-            console.log('user-points-display encontrado:', !!pointsDisplay);
+            console.log('[main_app_logic] user-points-display encontrado:', !!pointsDisplay);
             if (pointsDisplay) {
                 pointsDisplay.textContent = userPoints;
-                console.log('user-points-display atualizado para:', userPoints);
+                console.log('[main_app_logic] user-points-display atualizado para:', userPoints);
             }
         } else {
-            console.warn('Pontos do usuário não encontrados nos dados. Estrutura:', {
+            console.warn('[main_app_logic] Pontos do usuário não encontrados nos dados. Estrutura:', {
                 user_points: data.user_points,
                 'user.points': data.user?.points,
                 points: data.points,
@@ -160,16 +160,84 @@ async function loadMainAppData() {
             });
         }
         
-        // Carregar dados de peso, água, etc. (se necessário)
-        // O script.js já cuida disso via spa:enter-main_app
+        // Renderizar peso (weight_banner)
+        console.log('[main_app_logic] Renderizando peso...', data.weight_banner);
+        if (data.weight_banner) {
+            const weightCard = document.getElementById('weight-card');
+            if (weightCard && data.weight_banner.current_weight) {
+                const weightValueEl = weightCard.querySelector('#current-weight-value') || 
+                                     weightCard.querySelector('.current-weight-value') ||
+                                     weightCard.querySelector('strong');
+                if (weightValueEl) {
+                    const weightValue = data.weight_banner.current_weight;
+                    weightValueEl.textContent = `${weightValue}kg`;
+                    console.log('[main_app_logic] Peso atualizado para:', weightValue);
+                }
+            }
+        }
         
-        // Aguardar um pouco para garantir que o script.js foi executado
+        // Renderizar água (daily_summary ou water)
+        console.log('[main_app_logic] Renderizando água...', data.daily_summary, data.water);
+        const waterData = data.daily_summary?.water || data.water || data.daily_summary;
+        if (waterData) {
+            const waterAmountDisplay = document.getElementById('water-amount-display');
+            const waterGoalDisplay = document.getElementById('water-goal-display');
+            const waterGoalDisplayTotal = document.getElementById('water-goal-display-total');
+            
+            // Água consumida
+            const waterConsumed = waterData.consumed || waterData.current || waterData.amount || 0;
+            if (waterAmountDisplay) {
+                waterAmountDisplay.textContent = waterConsumed;
+                console.log('[main_app_logic] Água consumida atualizada para:', waterConsumed);
+            }
+            
+            // Meta de água
+            const waterGoal = waterData.goal || waterData.target || 0;
+            if (waterGoalDisplay) {
+                waterGoalDisplay.textContent = `${waterGoal} ml`;
+            }
+            if (waterGoalDisplayTotal) {
+                waterGoalDisplayTotal.textContent = waterGoal;
+            }
+            
+            // Atualizar visual da água (se houver função updateWaterDrop)
+            if (window.updateWaterDrop && typeof window.updateWaterDrop === 'function') {
+                try {
+                    window.updateWaterDrop(waterConsumed, waterGoal);
+                    console.log('[main_app_logic] Visual da água atualizado');
+                } catch (e) {
+                    console.warn('[main_app_logic] Erro ao atualizar visual da água:', e);
+                }
+            }
+        }
+        
+        // Renderizar foto de perfil do usuário
+        if (data.profile_image) {
+            const profileIconLink = document.getElementById('profile-icon-link');
+            if (profileIconLink) {
+                const img = profileIconLink.querySelector('img');
+                if (img) {
+                    img.src = `${window.BASE_APP_URL}/assets/images/users/${data.profile_image}`;
+                } else {
+                    // Se não tiver img, criar
+                    const newImg = document.createElement('img');
+                    newImg.src = `${window.BASE_APP_URL}/assets/images/users/${data.profile_image}`;
+                    newImg.alt = 'Foto de perfil';
+                    newImg.style.cssText = 'width: 40px; height: 40px; border-radius: 50%; object-fit: cover;';
+                    profileIconLink.innerHTML = '';
+                    profileIconLink.appendChild(newImg);
+                }
+                console.log('[main_app_logic] Foto de perfil atualizada');
+            }
+        }
+        
+        // Disparar evento customizado para script.js e outros listeners
         setTimeout(() => {
-            // Disparar evento customizado para script.js se necessário
             window.dispatchEvent(new CustomEvent('main-app-data-loaded', { detail: data }));
+            console.log('[main_app_logic] Evento main-app-data-loaded disparado');
         }, 200);
         
-        console.log('Main app data loaded successfully');
+        console.log('[main_app_logic] Main app data loaded successfully');
         
     } catch (error) {
         console.error('Erro ao carregar dados do main_app:', error);
