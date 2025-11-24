@@ -63,10 +63,35 @@ async function isAuthenticated() {
 async function requireAuth() {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
-        // Se BASE_APP_URL não está definido, tentar detectar
-        const baseUrl = window.BASE_APP_URL || (window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/'));
-        console.log('Redirecionando para login:', `${baseUrl}/auth/login.html`);
-        window.location.href = `${baseUrl}/auth/login.html`;
+        console.log('Usuário não autenticado, redirecionando para login');
+        
+        // Se estiver usando router SPA, usar navegação SPA
+        if (window.router && typeof window.router.navigate === 'function') {
+            console.log('Usando router SPA para redirecionar para /login');
+            window.router.navigate('/login');
+            return false;
+        }
+        
+        // Caso contrário, usar window.location.href com domínio local
+        // Em desenvolvimento local, usar window.location.origin
+        // Em produção, usar BASE_APP_URL apenas se necessário
+        const isLocalDev = window.location.hostname === 'localhost' || 
+                          window.location.hostname === '127.0.0.1' ||
+                          window.location.hostname.includes('192.168.') ||
+                          window.location.port === '8100';
+        
+        let loginUrl;
+        if (isLocalDev) {
+            // Em desenvolvimento local, usar domínio local
+            loginUrl = `${window.location.origin}/login`;
+        } else {
+            // Em produção, tentar usar BASE_APP_URL, mas se não funcionar, usar origin
+            const baseUrl = window.BASE_APP_URL || window.location.origin;
+            loginUrl = `${baseUrl}/auth/login.html`;
+        }
+        
+        console.log('Redirecionando para login:', loginUrl);
+        window.location.href = loginUrl;
         return false;
     }
     return true;
@@ -161,8 +186,28 @@ async function authenticatedFetch(url, options = {}) {
     if (response.status === 401) {
         console.error('Token inválido (401) - redirecionando para login');
         clearAuthToken();
-        const baseUrl = window.BASE_APP_URL || (window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/'));
-        window.location.href = `${baseUrl}/auth/login.html`;
+        
+        // Se estiver usando router SPA, usar navegação SPA
+        if (window.router && typeof window.router.navigate === 'function') {
+            window.router.navigate('/login');
+            return null;
+        }
+        
+        // Caso contrário, usar window.location.href com domínio local
+        const isLocalDev = window.location.hostname === 'localhost' || 
+                          window.location.hostname === '127.0.0.1' ||
+                          window.location.hostname.includes('192.168.') ||
+                          window.location.port === '8100';
+        
+        let loginUrl;
+        if (isLocalDev) {
+            loginUrl = `${window.location.origin}/login`;
+        } else {
+            const baseUrl = window.BASE_APP_URL || window.location.origin;
+            loginUrl = `${baseUrl}/auth/login.html`;
+        }
+        
+        window.location.href = loginUrl;
         return null;
     }
     
