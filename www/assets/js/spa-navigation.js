@@ -328,7 +328,7 @@
             // Atualizar título
             document.title = title;
             
-            // Scroll para o topo ANTES do fade in para evitar "arrastar"
+            // Scroll para o topo (já feito antes, mas garantir novamente)
             currentContainer.scrollTop = 0;
             
             // Executar APENAS scripts externos (scripts inline serão ignorados para evitar re-declarações)
