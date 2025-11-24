@@ -27,13 +27,17 @@ function initLottieCarousel() {
     if (slides.length === 1) {
         const container = slides[0].querySelector('.lottie-animation-container');
         if (container) {
-          const baseUrl = window.BASE_APP_URL || '';
+          // Para desenvolvimento local, usar caminho relativo. Para produção, usar BASE_APP_URL
+          const isLocalDev = window.location.hostname === 'localhost' || 
+                             window.location.hostname === '127.0.0.1' ||
+                             window.location.port === '8100';
+          const bannerBaseUrl = (isLocalDev || !window.BASE_APP_URL) ? '' : window.BASE_APP_URL;
           lottie.loadAnimation({ 
             container, 
             renderer: 'svg', 
             loop: true, 
             autoplay: true, 
-            path: `${baseUrl}/banner_receitas.json` 
+            path: `${bannerBaseUrl}/banner_receitas.json` 
           });
         }
     }
