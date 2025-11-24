@@ -10,7 +10,7 @@
     "clean": "powershell -ExecutionPolicy Bypass -File clean.ps1",
     "generate:assets": "npx capacitor-assets generate",
     "commit": "powershell -ExecutionPolicy Bypass -File commit-and-push.ps1",
-    "commit:msg": "powershell -ExecutionPolicy Bypass -File commit-and-push.ps1"
+    "commit:msg": "powershell -ExecutionPolicy Bypass -File commit-and-push.ps1 -Message"
   },
   "dependencies": {
     "@capacitor-mlkit/barcode-scanning": "^7.3.0",
