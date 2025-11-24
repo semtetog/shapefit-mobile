@@ -1,7 +1,29 @@
 // banner-carousel.js (VERSÃO FINAL, ESTÁVEL E COM LOOP SIMPLES)
 
+// Variáveis globais para controle de limpeza
+let globalCarouselInterval = null;
+let globalLoadedAnimations = [];
+
 function initLottieCarousel() {
   console.log('[Banner Carousel] Inicializando com loop estável...');
+  
+  // LIMPAR ANIMAÇÕES E TIMERS ANTIGOS ANTES DE INICIALIZAR
+  if (globalCarouselInterval) {
+    clearInterval(globalCarouselInterval);
+    globalCarouselInterval = null;
+  }
+  
+  // Destruir todas as animações Lottie antigas
+  globalLoadedAnimations.forEach(anim => {
+    if (anim && typeof anim.destroy === 'function') {
+      try {
+        anim.destroy();
+      } catch (e) {
+        console.warn('[Banner Carousel] Erro ao destruir animação antiga:', e);
+      }
+    }
+  });
+  globalLoadedAnimations = [];
   
   if (typeof lottie === 'undefined') {
     console.error('[Banner Carousel] Biblioteca lottie-web não foi carregada!');
@@ -14,8 +36,26 @@ function initLottieCarousel() {
     return;
   }
   
+  // Verificar se há slides duplicados e remover
   const track = carousel.querySelector('.carousel-track');
-  const slides = Array.from(carousel.querySelectorAll('.lottie-slide'));
+  if (!track) {
+    console.error('[Banner Carousel] Trilho (.carousel-track) não encontrado!');
+    return;
+  }
+  
+  let slides = Array.from(carousel.querySelectorAll('.lottie-slide'));
+  const expectedSlides = 4;
+  
+  // Se há mais slides do que o esperado, remover os extras
+  if (slides.length > expectedSlides) {
+    console.log(`[Banner Carousel] Encontrados ${slides.length} slides, removendo ${slides.length - expectedSlides} duplicados...`);
+    for (let i = expectedSlides; i < slides.length; i++) {
+      slides[i].remove();
+    }
+    // Re-obter slides após remoção
+    slides = Array.from(carousel.querySelectorAll('.lottie-slide'));
+  }
+  
   const paginationContainer = carousel.querySelector('.pagination-container');
   
   if (!track) {
@@ -46,6 +86,10 @@ function initLottieCarousel() {
   let isInitializing = true; // Flag para indicar inicialização
   const DURATION = 7000;
   const loadedAnimations = [];
+  
+  // Atualizar referências globais
+  globalCarouselInterval = carouselInterval;
+  globalLoadedAnimations = loadedAnimations;
   // Banners são arquivos locais - usar caminhos relativos
   // NÃO usar BASE_APP_URL pois os banners estão no app, não no servidor
   const animationPaths = [
@@ -237,10 +281,16 @@ function initLottieCarousel() {
     updatePagination();
     // Timer automático sempre faz loop infinito
     carouselInterval = setInterval(nextSlide, DURATION);
+    // Atualizar referência global
+    globalCarouselInterval = carouselInterval;
   }
   
   function stopCarouselTimer() { 
-    clearInterval(carouselInterval); 
+    clearInterval(carouselInterval);
+    if (globalCarouselInterval) {
+      clearInterval(globalCarouselInterval);
+      globalCarouselInterval = null;
+    }
   }
   
   function restartCarouselTimer() { 
@@ -350,6 +400,9 @@ function initLottieCarousel() {
       return;
     }
     
+    // Limpar container antes de carregar nova animação
+    container.innerHTML = '';
+    
     const anim = lottie.loadAnimation({
         container, 
         renderer: 'svg', 
@@ -361,6 +414,8 @@ function initLottieCarousel() {
     anim.addEventListener('DOMLoaded', () => {
         console.log(`[Banner Carousel] Animação ${index} carregada.`);
         loadedAnimations[index] = anim;
+        // Atualizar referência global
+        globalLoadedAnimations[index] = anim;
         
         // Se é o primeiro slide e ainda está visível, garante que está tocando
         if (index === 0 && currentIndex === 0) {
@@ -410,7 +465,34 @@ window.addEventListener('spa-page-loaded', function(e) {
   if (e.detail && e.detail.isSPANavigation) {
     const pageName = window.location.pathname.split('/').pop();
     if (pageName === 'main_app.html' || pageName === 'dashboard.html') {
-      console.log('[Banner Carousel] Página main_app carregada via SPA - re-inicializando carrossel...');
+      console.log('[Banner Carousel] Página main_app carregada via SPA - limpando e re-inicializando carrossel...');
+      
+      // Limpar completamente antes de re-inicializar
+      if (globalCarouselInterval) {
+        clearInterval(globalCarouselInterval);
+        globalCarouselInterval = null;
+      }
+      
+      globalLoadedAnimations.forEach(anim => {
+        if (anim && typeof anim.destroy === 'function') {
+          try {
+            anim.destroy();
+          } catch (e) {
+            console.warn('[Banner Carousel] Erro ao destruir animação:', e);
+          }
+        }
+      });
+      globalLoadedAnimations = [];
+      
+      // Limpar paginação antiga
+      const carousel = document.querySelector('.main-carousel');
+      if (carousel) {
+        const paginationContainer = carousel.querySelector('.pagination-container');
+        if (paginationContainer) {
+          paginationContainer.innerHTML = '';
+        }
+      }
+      
       setTimeout(() => {
         tryInitCarousel();
       }, 200);

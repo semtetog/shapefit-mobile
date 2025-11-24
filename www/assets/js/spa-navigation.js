@@ -39,12 +39,34 @@
             }
         }
         
-        // Limpar animações Lottie antigas
-        const lottieContainers = document.querySelectorAll('.lottie-animation-container');
-        lottieContainers.forEach(container => {
-            // Limpar conteúdo mas manter o container
-            container.innerHTML = '';
-        });
+        // Limpar carrossel de banners duplicados
+        const carousels = document.querySelectorAll('.main-carousel');
+        if (carousels.length > 1) {
+            // Manter apenas o primeiro, remover os outros
+            for (let i = 1; i < carousels.length; i++) {
+                carousels[i].remove();
+            }
+        }
+        
+        // Limpar slides duplicados dentro do carrossel
+        const carousel = document.querySelector('.main-carousel');
+        if (carousel) {
+            const slides = carousel.querySelectorAll('.lottie-slide');
+            const expectedSlides = 4; // Número esperado de slides
+            if (slides.length > expectedSlides) {
+                // Remover slides extras (manter apenas os primeiros 4)
+                for (let i = expectedSlides; i < slides.length; i++) {
+                    slides[i].remove();
+                }
+            }
+            
+            // Limpar animações Lottie antigas dentro dos containers
+            const lottieContainers = carousel.querySelectorAll('.lottie-animation-container');
+            lottieContainers.forEach(container => {
+                // Limpar conteúdo mas manter o container
+                container.innerHTML = '';
+            });
+        }
     }
     
     // Extrair conteúdo do HTML recebido
