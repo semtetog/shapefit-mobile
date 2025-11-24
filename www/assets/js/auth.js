@@ -5,7 +5,8 @@
 if (typeof window.AUTH_TOKEN_KEY === 'undefined') {
     window.AUTH_TOKEN_KEY = 'shapefit_auth_token';
 }
-const AUTH_TOKEN_KEY = window.AUTH_TOKEN_KEY;
+// Usar window diretamente ao invés de const para evitar re-declaração
+const AUTH_TOKEN_KEY = window.AUTH_TOKEN_KEY || 'shapefit_auth_token';
 // Não declarar BASE_APP_URL aqui - usar window.BASE_APP_URL diretamente
 
 /**

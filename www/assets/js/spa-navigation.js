@@ -342,6 +342,16 @@
             await new Promise(resolve => setTimeout(resolve, 50));
             
             // SWAP INSTANTÂNEO - trocar containers sem "piscar"
+            // REMOVER TODOS OS CONTAINERS ANTIGOS PRIMEIRO (garantir que não há acumulação)
+            const allOldContainers = document.querySelectorAll('.app-container, .container');
+            allOldContainers.forEach((container, index) => {
+                // Manter apenas o currentContainer por enquanto, remover os outros
+                if (container !== currentContainer && container !== newContainer) {
+                    console.log('[SPA] Removendo container órfão:', container);
+                    container.remove();
+                }
+            });
+            
             // Usar requestAnimationFrame para garantir que está no próximo frame
             requestAnimationFrame(() => {
                 // Tornar novo container visível
@@ -350,13 +360,24 @@
                 newContainer.style.pointerEvents = 'auto';
                 newContainer.style.position = 'relative';
                 
-                // Remover container antigo
-                if (currentContainer.parentNode) {
+                // Remover container antigo (garantir que é o correto)
+                if (currentContainer && currentContainer.parentNode && currentContainer !== newContainer) {
                     currentContainer.parentNode.removeChild(currentContainer);
                 }
                 
                 // Atualizar referência
                 currentContainer = newContainer;
+                
+                // Verificação final: garantir que há apenas um container
+                const finalContainers = document.querySelectorAll('.app-container, .container');
+                if (finalContainers.length > 1) {
+                    console.warn(`[SPA] Ainda há ${finalContainers.length} containers após swap!`);
+                    finalContainers.forEach((container, index) => {
+                        if (index > 0 && container !== newContainer) {
+                            container.remove();
+                        }
+                    });
+                }
             });
             
             // Garantir que bottom-nav ainda está no body (caso tenha sido removido)
@@ -371,16 +392,23 @@
             document.title = title;
             
             // Disparar eventos para que as páginas saibam que foram carregadas
-            // Primeiro DOMContentLoaded (para compatibilidade)
-            const domContentLoadedEvent = new Event('DOMContentLoaded', { bubbles: true, cancelable: true });
-            document.dispatchEvent(domContentLoadedEvent);
+            // AGUARDAR o swap do container antes de disparar eventos
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    // Primeiro DOMContentLoaded (para compatibilidade)
+                    const domContentLoadedEvent = new Event('DOMContentLoaded', { bubbles: true, cancelable: true });
+                    document.dispatchEvent(domContentLoadedEvent);
+                    
+                    // Depois o evento customizado SPA
+                    window.dispatchEvent(new CustomEvent('spa-page-loaded', { 
+                        detail: { url, isSPANavigation: true } 
+                    }));
+                });
+            });
             
-            // Depois o evento customizado SPA
-            window.dispatchEvent(new CustomEvent('spa-page-loaded', { 
-                detail: { url, isSPANavigation: true } 
-            }));
             // Forçar re-execução de códigos de inicialização para páginas específicas
             // pageName já foi declarado acima
+            // AGUARDAR o swap do container antes de executar
             setTimeout(() => {
                 // Para main_app.html - forçar re-execução do código de carregamento
                 if (pageName === 'main_app.html' || pageName === 'dashboard.html') {
