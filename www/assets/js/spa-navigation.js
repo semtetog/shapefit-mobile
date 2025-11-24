@@ -286,7 +286,8 @@
             
             // Executar scripts inline MAS apenas uma vez (usando hash)
             // Isso garante que funções sejam definidas, mas evita re-declarações
-            const inlineScripts = Array.from(currentContainer.querySelectorAll('script:not([src])'));
+            // IMPORTANTE: buscar scripts no novo container, não no antigo
+            const inlineScripts = Array.from(newContainer.querySelectorAll('script:not([src])'));
             inlineScripts.forEach(script => {
                 const scriptText = script.textContent.trim();
                 if (scriptText) {
