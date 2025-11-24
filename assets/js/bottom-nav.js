@@ -25,20 +25,58 @@ let bottomNavActiveItem = bottomNavMap[bottomNavCurrentPage] || 'home';
 // Atualizar item ativo quando rota mudar (SPA)
 if (window.addEventListener) {
     window.addEventListener('routeChanged', function(e) {
+        const pageName = e.detail?.pageName || '';
         const route = e.detail?.route || '';
-        const routeName = route.split('/').pop() || route;
-        bottomNavActiveItem = bottomNavMap[routeName] || bottomNavMap[route] || 'home';
+        
+        // Tentar mapear pelo pageName primeiro (mais confiável)
+        let mappedItem = null;
+        if (pageName) {
+            // Tentar com .html
+            mappedItem = bottomNavMap[`${pageName}.html`];
+            // Se não encontrar, tentar sem extensão
+            if (!mappedItem) {
+                mappedItem = bottomNavMap[pageName];
+            }
+        }
+        
+        // Se ainda não encontrou, tentar pela rota
+        if (!mappedItem && route) {
+            const routeName = route.split('/').pop() || route;
+            mappedItem = bottomNavMap[routeName] || bottomNavMap[route];
+        }
+        
+        // Atualizar item ativo
+        bottomNavActiveItem = mappedItem || 'home';
+        
+        // Atualizar visualmente
         updateActiveNavItem();
+        
+        console.log('[Bottom Nav] Rota mudou:', { pageName, route, activeItem: bottomNavActiveItem });
     });
 }
 
 function updateActiveNavItem() {
     const navItems = document.querySelectorAll('.bottom-nav .nav-item');
     navItems.forEach(item => {
-        const route = item.getAttribute('data-route') || item.getAttribute('href');
-        const routeName = route.split('/').pop() || route;
-        const itemType = bottomNavMap[routeName] || bottomNavMap[route] || '';
+        const route = item.getAttribute('data-route') || item.getAttribute('href') || '';
+        // Extrair o nome da rota (sem /)
+        const routeName = route.replace(/^\//, '').split('/')[0] || '';
         
+        // Mapear rota para item
+        let itemType = '';
+        if (routeName === 'main_app' || routeName === 'dashboard' || routeName === '') {
+            itemType = 'home';
+        } else if (routeName === 'progress') {
+            itemType = 'stats';
+        } else if (routeName === 'diary' || routeName === 'add_food_to_diary') {
+            itemType = 'diary';
+        } else if (routeName === 'explore_recipes' || routeName === 'favorite_recipes' || routeName === 'view_recipe') {
+            itemType = 'explore';
+        } else if (routeName === 'more_options' || routeName === 'profile_overview' || routeName === 'edit_profile') {
+            itemType = 'settings';
+        }
+        
+        // Atualizar classe active
         if (itemType === bottomNavActiveItem) {
             item.classList.add('active');
         } else {
