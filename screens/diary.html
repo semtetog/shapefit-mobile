@@ -1,0 +1,56 @@
+<div class="app-container">
+    <!-- Header com navegação de data -->
+    <div class="diary-header">
+        <h1 class="page-title">Diário</h1>
+        <div class="date-selector">
+            <a href="#" id="prev-date" class="date-nav-arrow">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            <span id="current-diary-date">Carregando...</span>
+            <a href="#" id="next-date" class="date-nav-arrow">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Resumo nutricional compacto -->
+    <div class="nutrition-summary">
+        <div class="nutrition-card">
+            <h3>Calorias</h3>
+            <div class="nutrition-value" id="kcal-consumed">0</div>
+            <div class="nutrition-goal">/ <span id="kcal-goal">0</span> kcal</div>
+        </div>
+        <div class="nutrition-card">
+            <h3>Proteínas</h3>
+            <div class="nutrition-value" id="protein-consumed">0g</div>
+            <div class="nutrition-goal">/ <span id="protein-goal">0</span>g</div>
+        </div>
+        <div class="nutrition-card">
+            <h3>Carboidratos</h3>
+            <div class="nutrition-value" id="carbs-consumed">0g</div>
+            <div class="nutrition-goal">/ <span id="carbs-goal">0</span>g</div>
+        </div>
+        <div class="nutrition-card">
+            <h3>Gorduras</h3>
+            <div class="nutrition-value" id="fat-consumed">0g</div>
+            <div class="nutrition-goal">/ <span id="fat-goal">0</span>g</div>
+        </div>
+    </div>
+
+    <!-- Lista de refeições -->
+    <div class="meals-list" id="meals-list">
+        <div class="empty-state">
+            <i class="fas fa-spinner fa-spin"></i>
+            <h3>Carregando...</h3>
+        </div>
+    </div>
+
+    <!-- Botão de adicionar refeição integrado -->
+    <div class="add-meal-section">
+        <button class="add-meal-btn-integrated" id="add-meal-btn">
+            <i class="fas fa-plus"></i>
+            <span>Adicionar Refeição</span>
+        </button>
+    </div>
+</div>
+

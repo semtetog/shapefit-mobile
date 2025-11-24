@@ -1,0 +1,79 @@
+<div class="app-container">
+    <div class="page-header">
+        <h1 class="page-title">Sua Rotina</h1>
+    </div>
+    
+    <section class="routine-content-wrapper">
+        <div class="glass-card">
+            <div class="progress-info">
+                <span class="progress-text" id="progress-text">0/0 concluídas</span>
+                <span class="progress-percentage" id="progress-percentage">0%</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" id="progress-bar" style="width: 0%;"></div>
+            </div>
+        </div>
+        
+        <div>
+            <h2 class="section-title">A Fazer</h2>
+            <ul class="routine-list" id="routine-list-todo">
+                <li class="placeholder-card" id="all-done-placeholder" style="display: none;">
+                    <i class="fas fa-trophy"></i>
+                    <p>Parabéns! Você completou tudo.</p>
+                </li>
+            </ul>
+        </div>
+        
+        <div>
+            <h2 class="section-title">Concluídas</h2>
+            <ul class="routine-list" id="routine-list-completed">
+                <li class="placeholder-card" id="none-completed-placeholder" style="display: none;">
+                    <p>Nenhuma tarefa concluída ainda.</p>
+                </li>
+            </ul>
+        </div>
+    </section>
+</div>
+
+<!-- Modal para duração de exercício -->
+<div class="modal-overlay" id="exercise-duration-modal">
+    <div class="modal-content glass-card">
+        <h2>⏱️ Duração do Exercício</h2>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="exercise-duration-input">Quanto tempo durou o exercício?</label>
+                <div class="duration-input-group">
+                    <input type="number" id="exercise-duration-input" class="form-input" placeholder="Ex: 45" min="15" max="300" value="60">
+                    <span class="duration-unit">minutos</span>
+                </div>
+                <small class="form-help">Entre 15 e 300 minutos</small>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="primary-button secondary-button" data-action="close-modal">Cancelar</button>
+                <button type="button" class="primary-button" id="confirm-exercise-duration">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Sono -->
+<div class="modal-overlay" id="sleep-modal-main">
+    <div class="modal-content glass-card">
+        <h2>😴 Registrar Sono</h2>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="sleep-time-main">Hora que deitou:</label>
+                <input type="time" id="sleep-time-main" class="time-input" value="22:00">
+            </div>
+            <div class="form-group">
+                <label for="wake-time-main">Hora que acordou:</label>
+                <input type="time" id="wake-time-main" class="time-input" value="07:00">
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button type="button" class="primary-button secondary-button" data-action="close-modal">Cancelar</button>
+            <button type="button" class="primary-button" id="confirm-sleep-main">Registrar Sono</button>
+        </div>
+    </div>
+</div>
+

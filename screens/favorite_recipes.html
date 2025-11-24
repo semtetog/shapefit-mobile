@@ -1,0 +1,82 @@
+<div class="app-container">
+    <header class="page-header">
+        <a href="./explore_recipes.html" class="back-button" aria-label="Voltar"><i class="fas fa-chevron-left"></i></a>
+        <div class="page-header-text">
+            <h1>Receitas Favoritas</h1>
+            <p>Sua coleção pessoal de receitas.</p>
+        </div>
+    </header>
+
+    <div class="search-filter-container">
+        <div class="search-form">
+            <i class="fas fa-search search-icon"></i>
+            <input type="search" id="search-input" class="search-input" placeholder="Buscar nos favoritos..." value="">
+        </div>
+        <button class="filter-button" id="filter-button" aria-label="Filtrar"><i class="fas fa-sliders-h"></i></button>
+    </div>
+
+    <div id="loading-state" style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
+        <i class="fas fa-spinner fa-spin" style="font-size: 48px; margin-bottom: 16px;"></i>
+        <p>Carregando receitas favoritas...</p>
+    </div>
+
+    <div class="recipe-list-stack" id="recipes-list" style="display: none;"></div>
+    
+    <div class="empty-favorites-message glass-card" id="empty-state" style="display: none;">
+        <i class="far fa-heart"></i>
+        <p id="empty-message">Você ainda não favoritou nenhuma receita.<br><span style="color: var(--accent-orange);">Toque no coração para guardá-las aqui.</span></p>
+    </div>
+</div>
+
+<div class="modal-overlay" id="filter-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">Filtros</h2>
+        </div>
+        
+        <div class="modal-scrollable-content">
+            <section class="filter-section">
+                <div class="filter-section-header">
+                    <p>Ordenar por</p>
+                    <span>Escolha apenas uma opção</span>
+                </div>
+                <div class="sort-pill-group">
+                    <label class="sort-pill">
+                        <input type="radio" id="sort_name_asc" name="sort" value="name_asc">
+                        <span>Nome (A-Z)</span>
+                    </label>
+                    <label class="sort-pill">
+                        <input type="radio" id="sort_kcal_asc" name="sort" value="kcal_asc">
+                        <span>Menos Calóricas</span>
+                    </label>
+                    <label class="sort-pill">
+                        <input type="radio" id="sort_protein_desc" name="sort" value="protein_desc">
+                        <span>Mais Proteicas</span>
+                    </label>
+                    <label class="sort-pill">
+                        <input type="radio" id="sort_time_asc" name="sort" value="time_asc">
+                        <span>Mais Rápidas</span>
+                    </label>
+                </div>
+            </section>
+            
+            <section class="filter-section">
+                <div class="filter-section-header">
+                    <p>Categorias</p>
+                    <span>Selecione quantas quiser</span>
+                </div>
+                <div class="chips-grid" id="category-options">
+                    <div style="grid-column: 1 / -1; text-align:center; padding: 20px; color: var(--text-secondary);">
+                        <i class="fas fa-spinner fa-spin"></i> Carregando categorias...
+                    </div>
+                </div>
+            </section>
+        </div>
+        
+        <div class="modal-actions">
+            <button class="btn-secondary" id="clear-filters-btn">Limpar</button>
+            <button class="btn-primary" id="apply-filters-btn">Aplicar</button>
+        </div>
+    </div>
+</div>
+
