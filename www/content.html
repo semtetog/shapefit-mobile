@@ -559,9 +559,26 @@
             `;
         }
         
+        // Função para inicializar a página
+        function initializePage() {
+            loadContents();
+        }
+        
+        // Re-executar quando carregado via SPA
+        window.addEventListener('spa-page-loaded', function(e) {
+            if (e.detail && e.detail.isSPANavigation) {
+                const pageName = window.location.pathname.split('/').pop();
+                if (pageName === 'content.html') {
+                    setTimeout(() => {
+                        initializePage();
+                    }, 100);
+                }
+            }
+        });
+        
         // Carregar dados ao iniciar
         document.addEventListener('DOMContentLoaded', function() {
-            loadContents();
+            initializePage();
         });
     </script>
     

@@ -460,20 +460,41 @@
             window.location.href = './auth/login.html';
         }
         
-        document.addEventListener('DOMContentLoaded', async function() {
+        // Função para inicializar a página
+        async function initializePage() {
             const authenticated = await requireAuth();
             if (!authenticated) return;
             
             // Configurar botão de logout
             const logoutBtn = document.getElementById('logout-btn');
             if (logoutBtn) {
-                logoutBtn.addEventListener('click', function(e) {
+                // Remover listeners antigos para evitar duplicação
+                const newLogoutBtn = logoutBtn.cloneNode(true);
+                logoutBtn.parentNode.replaceChild(newLogoutBtn, logoutBtn);
+                
+                newLogoutBtn.addEventListener('click', function(e) {
                     e.preventDefault();
                     handleLogout();
                 });
             }
             
             await loadMoreOptionsData();
+        }
+        
+        // Re-executar quando carregado via SPA
+        window.addEventListener('spa-page-loaded', function(e) {
+            if (e.detail && e.detail.isSPANavigation) {
+                const pageName = window.location.pathname.split('/').pop();
+                if (pageName === 'more_options.html') {
+                    setTimeout(() => {
+                        initializePage();
+                    }, 100);
+                }
+            }
+        });
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            await initializePage();
         });
     </script>
 </body>

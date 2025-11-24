@@ -7,8 +7,12 @@
     "build": "npx cap sync",
     "sync": "npx cap sync",
     "open:android": "npx cap open android",
+    "open:ios": "npx cap open ios",
     "clean": "powershell -ExecutionPolicy Bypass -File clean.ps1",
-    "generate:assets": "npx capacitor-assets generate"
+    "generate:assets": "npx capacitor-assets generate",
+    "dev": "powershell -ExecutionPolicy Bypass -File start-dev.ps1",
+    "dev:stop": "powershell -ExecutionPolicy Bypass -File stop-dev.ps1",
+    "serve": "npx http-server www -p 8100 -c-1 --cors"
   },
   "dependencies": {
     "@capacitor-mlkit/barcode-scanning": "^7.3.0",

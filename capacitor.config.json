@@ -4,6 +4,9 @@
   "webDir": "www",
   "server": {
     "androidScheme": "https"
+    // Para Live Reload durante desenvolvimento, descomente e configure seu IP:
+    // "url": "http://SEU_IP_AQUI:8100",
+    // "cleartext": true
   },
   "android": {
     "allowMixedContent": false,

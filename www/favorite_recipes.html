@@ -794,6 +794,18 @@
                 }
             }
             
+            // Re-executar quando carregado via SPA
+            window.addEventListener('spa-page-loaded', function(e) {
+                if (e.detail && e.detail.isSPANavigation) {
+                    const pageName = window.location.pathname.split('/').pop();
+                    if (pageName === 'favorite_recipes.html') {
+                        setTimeout(() => {
+                            loadPageData();
+                        }, 100);
+                    }
+                }
+            });
+            
             // Executar quando DOM estiver pronto
             if (document.readyState === 'loading') {
                 document.addEventListener('DOMContentLoaded', setupFilterModal);
