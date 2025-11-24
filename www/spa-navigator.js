@@ -132,8 +132,7 @@
         async navigate(url, updateHistory = true) {
             const pageId = this.getPageIdFromUrl(url);
             if (!pageId) {
-                // Se não for uma página conhecida, usar navegação padrão
-                window.location.href = url;
+                console.warn('Página não mapeada:', url);
                 return;
             }
 
@@ -178,20 +177,13 @@
                     pageEl.dataset.loaded = 'true';
                 } catch (error) {
                     console.error('Erro ao carregar página:', error);
-                    // Fallback: tentar navegação padrão
-                    window.location.href = url;
-                    return;
+                    throw error;
                 }
             }
 
             // Mostrar página
             pageEl.classList.add('active');
             this.currentPage = pageId;
-
-            // Atualizar bottom nav se disponível
-            if (window.BottomNav && typeof window.BottomNav.render === 'function') {
-                window.BottomNav.render();
-            }
 
             // Disparar evento customizado para inicialização da página
             const eventName = `spa:enter-${pageId.replace('page-', '')}`;
