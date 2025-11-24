@@ -318,7 +318,12 @@
             const inlineStyles = doc.head.querySelectorAll('style');
             inlineStyles.forEach(style => {
                 if (style.textContent && style.textContent.trim()) {
-                    pageStyles.inline.push(style.textContent);
+                    // Corrigir caminhos relativos dentro do CSS inline (ex: background-image)
+                    let cssContent = style.textContent;
+                    if (url.includes('/')) {
+                        cssContent = cssContent.replace(/url\(['"]?\.\.\//g, 'url("./');
+                    }
+                    pageStyles.inline.push(cssContent);
                 }
             });
             
