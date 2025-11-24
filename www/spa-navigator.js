@@ -178,8 +178,8 @@
             // Carregar conteúdo se ainda não foi carregado
             if (!pageEl.dataset.loaded) {
                 try {
-                    const fragment = await this.loadPageFragment(url);
-                    this.injectPageFragment(pageEl, fragment, url);
+                    const pageData = await this.loadPageFragment(url);
+                    this.injectPageFragment(pageEl, pageData, url);
                     pageEl.dataset.loaded = 'true';
                 } catch (error) {
                     console.error('Erro ao carregar página:', error);
@@ -217,7 +217,7 @@
         },
 
         /**
-         * Carrega apenas o FRAGMENTO HTML (sem scripts, sem head, sem body)
+         * Carrega o FRAGMENTO HTML + ESTILOS + SCRIPTS da página
          */
         async loadPageFragment(url) {
             // Verificar cache
@@ -241,7 +241,7 @@
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
             
-            // Extrair APENAS o conteúdo do .app-container ou .container
+            // Extrair conteúdo do .app-container ou .container
             let fragment = '';
             const appContainer = doc.querySelector('.app-container');
             const container = doc.querySelector('.container');
@@ -250,43 +250,233 @@
             if (target) {
                 fragment = target.innerHTML;
             } else {
-                // Fallback: extrair body mas sem scripts
+                // Fallback: extrair body mas sem scripts globais
                 const body = doc.body;
                 if (body) {
-                    // Remover todos os scripts do body antes de extrair
+                    // Remover scripts globais do body antes de extrair
                     const scripts = body.querySelectorAll('script');
-                    scripts.forEach(script => script.remove());
+                    scripts.forEach(script => {
+                        const src = script.getAttribute('src');
+                        // Remover apenas scripts globais
+                        if (src && (
+                            src.includes('www-config.js') ||
+                            src.includes('auth.js') ||
+                            src.includes('common.js') ||
+                            src.includes('bottom-nav.js') ||
+                            src.includes('spa-navigator.js') ||
+                            src.includes('app-state.js')
+                        )) {
+                            script.remove();
+                        }
+                    });
                     fragment = body.innerHTML;
                 }
             }
             
-            // Cachear fragmento
-            this.fragmentCache.set(url, fragment);
+            // Extrair estilos do head (CSS específicos da página)
+            const pageStyles = {
+                links: [],
+                inline: []
+            };
             
-            return fragment;
+            // Links para CSS específicos
+            const styleLinks = doc.head.querySelectorAll('link[rel="stylesheet"]');
+            styleLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                // Ignorar CSS globais que já estão carregados
+                if (href && !href.includes('style.css') && !href.includes('spa-pages.css')) {
+                    pageStyles.links.push(href);
+                }
+            });
+            
+            // Estilos inline
+            const inlineStyles = doc.head.querySelectorAll('style');
+            inlineStyles.forEach(style => {
+                if (style.textContent && style.textContent.trim()) {
+                    pageStyles.inline.push(style.textContent);
+                }
+            });
+            
+            // Extrair scripts específicos da página (do body)
+            const pageScripts = [];
+            const bodyScripts = doc.body.querySelectorAll('script');
+            bodyScripts.forEach(script => {
+                const src = script.getAttribute('src');
+                // Ignorar scripts globais
+                if (src && (
+                    src.includes('www-config.js') ||
+                    src.includes('auth.js') ||
+                    src.includes('common.js') ||
+                    src.includes('bottom-nav.js') ||
+                    src.includes('spa-navigator.js') ||
+                    src.includes('app-state.js')
+                )) {
+                    return;
+                }
+                
+                if (src) {
+                    pageScripts.push({ type: 'external', src: src });
+                } else if (script.textContent && script.textContent.trim()) {
+                    pageScripts.push({ type: 'inline', code: script.textContent });
+                }
+            });
+            
+            // Cachear tudo
+            const cached = {
+                fragment: fragment,
+                styles: pageStyles,
+                scripts: pageScripts
+            };
+            
+            this.fragmentCache.set(url, cached);
+            
+            return cached;
         },
 
         /**
-         * Injeta o fragmento HTML na página
-         * NÃO executa scripts - apenas injeta HTML
+         * Injeta o fragmento HTML na página + estilos + scripts
          */
-        injectPageFragment(pageEl, fragment, url) {
+        injectPageFragment(pageEl, pageData, url) {
             // Limpar o container
             pageEl.innerHTML = '';
             
-            // Criar um wrapper para o conteúdo
+            // 1. CARREGAR ESTILOS ESPECÍFICOS DA PÁGINA
+            this.loadPageStyles(pageEl, pageData.styles, url);
+            
+            // 2. INJETAR HTML
             const wrapper = document.createElement('div');
             wrapper.className = 'spa-page-content';
-            wrapper.innerHTML = fragment;
-            
+            wrapper.innerHTML = pageData.fragment;
             pageEl.appendChild(wrapper);
             
-            // Converter TODOS os elementos de navegação para usar SPA
-            // Isso deve ser feito ANTES de qualquer script rodar
+            // 3. CONVERTER LINKS PARA SPA (antes de scripts)
             this.convertLinksToSPA(wrapper);
             
-            // Usar MutationObserver para capturar elementos adicionados dinamicamente
+            // 4. EXECUTAR SCRIPTS ESPECÍFICOS DA PÁGINA
+            this.executePageScripts(pageEl, pageData.scripts, url);
+            
+            // 5. OBSERVAR ELEMENTOS DINÂMICOS
             this.observeDynamicElements(wrapper);
+        },
+        
+        /**
+         * Carrega estilos específicos da página
+         */
+        loadPageStyles(pageEl, styles, baseUrl) {
+            const pageId = pageEl.id;
+            const styleContainerId = `${pageId}-styles`;
+            
+            // Remover estilos antigos desta página
+            const oldContainer = document.getElementById(styleContainerId);
+            if (oldContainer) {
+                oldContainer.remove();
+            }
+            
+            // Criar container para estilos desta página
+            const styleContainer = document.createElement('div');
+            styleContainer.id = styleContainerId;
+            styleContainer.setAttribute('data-page-styles', pageId);
+            
+            // Carregar links CSS
+            styles.links.forEach(href => {
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                // Resolver caminho relativo
+                let resolvedHref = href;
+                if (href.startsWith('./')) {
+                    const basePath = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1);
+                    resolvedHref = basePath + href.substring(2);
+                }
+                link.href = resolvedHref;
+                link.setAttribute('data-page-style', pageId);
+                document.head.appendChild(link);
+            });
+            
+            // Adicionar estilos inline
+            if (styles.inline.length > 0) {
+                const styleEl = document.createElement('style');
+                styleEl.setAttribute('data-page-style', pageId);
+                styleEl.textContent = styles.inline.join('\n');
+                document.head.appendChild(styleEl);
+            }
+        },
+        
+        /**
+         * Executa scripts específicos da página
+         */
+        executePageScripts(pageEl, scripts, baseUrl) {
+            const externalScripts = [];
+            const inlineScripts = [];
+            
+            // Separar scripts externos e inline
+            scripts.forEach((scriptData) => {
+                if (scriptData.type === 'external') {
+                    externalScripts.push(scriptData);
+                } else {
+                    inlineScripts.push(scriptData);
+                }
+            });
+            
+            // Executar scripts inline PRIMEIRO (sincronamente)
+            inlineScripts.forEach((scriptData) => {
+                try {
+                    // Criar função para executar o código no contexto correto
+                    const func = new Function(scriptData.code);
+                    func();
+                } catch (error) {
+                    console.error('Erro ao executar script inline:', error);
+                }
+            });
+            
+            // Carregar scripts externos (assincronamente)
+            let loadedCount = 0;
+            const totalExternal = externalScripts.length;
+            
+            if (totalExternal === 0) {
+                // Se não há scripts externos, disparar DOMContentLoaded imediatamente
+                this.triggerPageReady(pageEl);
+            } else {
+                externalScripts.forEach((scriptData) => {
+                    const script = document.createElement('script');
+                    script.setAttribute('data-page-script', pageEl.id);
+                    
+                    let src = scriptData.src;
+                    // Resolver caminho relativo
+                    if (src.startsWith('./')) {
+                        const basePath = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1);
+                        src = basePath + src.substring(2);
+                    }
+                    
+                    script.src = src;
+                    script.async = false; // Carregar em ordem
+                    script.onload = () => {
+                        loadedCount++;
+                        if (loadedCount === totalExternal) {
+                            this.triggerPageReady(pageEl);
+                        }
+                    };
+                    script.onerror = () => {
+                        loadedCount++;
+                        if (loadedCount === totalExternal) {
+                            this.triggerPageReady(pageEl);
+                        }
+                    };
+                    
+                    document.head.appendChild(script);
+                });
+            }
+        },
+        
+        /**
+         * Dispara eventos de ready para a página
+         */
+        triggerPageReady(pageEl) {
+            // Disparar DOMContentLoaded
+            setTimeout(() => {
+                const event = new Event('DOMContentLoaded', { bubbles: true });
+                pageEl.dispatchEvent(event);
+                document.dispatchEvent(event);
+            }, 50);
         },
         
         /**
