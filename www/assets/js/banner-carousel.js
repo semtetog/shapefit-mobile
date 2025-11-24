@@ -1,43 +1,29 @@
 // banner-carousel.js (VERSÃO FINAL, ESTÁVEL E COM LOOP SIMPLES)
 
-// Variáveis globais para evitar múltiplas inicializações
-let globalCarouselInitialized = false;
-let globalLoadedAnimations = [];
+// Variáveis globais para controle de limpeza
 let globalCarouselInterval = null;
+let globalLoadedAnimations = [];
 
 function initLottieCarousel() {
   console.log('[Banner Carousel] Inicializando com loop estável...');
   
-  // Limpar inicialização anterior se existir
-  if (globalCarouselInitialized) {
-    console.log('[Banner Carousel] Limpando inicialização anterior...');
-    // Parar timer
-    if (globalCarouselInterval) {
-      clearInterval(globalCarouselInterval);
-      globalCarouselInterval = null;
-    }
-    // Destruir animações antigas
-    globalLoadedAnimations.forEach(anim => {
-      if (anim && anim.destroy) {
-        try {
-          anim.destroy();
-        } catch (e) {
-          console.warn('[Banner Carousel] Erro ao destruir animação:', e);
-        }
-      }
-    });
-    globalLoadedAnimations = [];
-    // Remover paginação antiga
-    const oldPagination = document.querySelectorAll('.pagination-container .pagination-item');
-    oldPagination.forEach(item => item.remove());
-    // Remover event listeners antigos (criar novo carousel element)
-    const oldCarousel = document.querySelector('.main-carousel');
-    if (oldCarousel) {
-      const newCarousel = oldCarousel.cloneNode(true);
-      oldCarousel.parentNode.replaceChild(newCarousel, oldCarousel);
-    }
-    globalCarouselInitialized = false;
+  // LIMPAR ANIMAÇÕES E TIMERS ANTIGOS ANTES DE INICIALIZAR
+  if (globalCarouselInterval) {
+    clearInterval(globalCarouselInterval);
+    globalCarouselInterval = null;
   }
+  
+  // Destruir todas as animações Lottie antigas
+  globalLoadedAnimations.forEach(anim => {
+    if (anim && typeof anim.destroy === 'function') {
+      try {
+        anim.destroy();
+      } catch (e) {
+        console.warn('[Banner Carousel] Erro ao destruir animação antiga:', e);
+      }
+    }
+  });
+  globalLoadedAnimations = [];
   
   if (typeof lottie === 'undefined') {
     console.error('[Banner Carousel] Biblioteca lottie-web não foi carregada!');
@@ -50,11 +36,26 @@ function initLottieCarousel() {
     return;
   }
   
-  // Marcar como inicializado
-  globalCarouselInitialized = true;
-  
+  // Verificar se há slides duplicados e remover
   const track = carousel.querySelector('.carousel-track');
-  const slides = Array.from(carousel.querySelectorAll('.lottie-slide'));
+  if (!track) {
+    console.error('[Banner Carousel] Trilho (.carousel-track) não encontrado!');
+    return;
+  }
+  
+  let slides = Array.from(carousel.querySelectorAll('.lottie-slide'));
+  const expectedSlides = 4;
+  
+  // Se há mais slides do que o esperado, remover os extras
+  if (slides.length > expectedSlides) {
+    console.log(`[Banner Carousel] Encontrados ${slides.length} slides, removendo ${slides.length - expectedSlides} duplicados...`);
+    for (let i = expectedSlides; i < slides.length; i++) {
+      slides[i].remove();
+    }
+    // Re-obter slides após remoção
+    slides = Array.from(carousel.querySelectorAll('.lottie-slide'));
+  }
+  
   const paginationContainer = carousel.querySelector('.pagination-container');
   
   if (!track) {
@@ -66,17 +67,13 @@ function initLottieCarousel() {
     if (slides.length === 1) {
         const container = slides[0].querySelector('.lottie-animation-container');
         if (container) {
-          // Para desenvolvimento local, usar caminho relativo. Para produção, usar BASE_APP_URL
-          const isLocalDev = window.location.hostname === 'localhost' || 
-                             window.location.hostname === '127.0.0.1' ||
-                             window.location.port === '8100';
-          const bannerBaseUrl = (isLocalDev || !window.BASE_APP_URL) ? '' : window.BASE_APP_URL;
+          // Banner é arquivo local - usar caminho relativo
           lottie.loadAnimation({ 
             container, 
             renderer: 'svg', 
             loop: true, 
             autoplay: true, 
-            path: `${bannerBaseUrl}/banner_receitas.json` 
+            path: './banner_receitas.json' 
           });
         }
     }
@@ -89,18 +86,17 @@ function initLottieCarousel() {
   let isInitializing = true; // Flag para indicar inicialização
   const DURATION = 7000;
   const loadedAnimations = [];
-  // Usar array global para gerenciar animações
+  
+  // Atualizar referências globais
+  globalCarouselInterval = carouselInterval;
   globalLoadedAnimations = loadedAnimations;
-  // Para desenvolvimento local, usar caminho relativo. Para produção, usar BASE_APP_URL
-  const isLocalDev = window.location.hostname === 'localhost' || 
-                     window.location.hostname === '127.0.0.1' ||
-                     window.location.port === '8100';
-  const baseUrl = (isLocalDev || !window.BASE_APP_URL) ? '' : window.BASE_APP_URL;
+  // Banners são arquivos locais - usar caminhos relativos
+  // NÃO usar BASE_APP_URL pois os banners estão no app, não no servidor
   const animationPaths = [
-    `${baseUrl}/banner_receitas.json`, 
-    `${baseUrl}/banner2.json`, 
-    `${baseUrl}/banner3.json`, 
-    `${baseUrl}/banner4.json`
+    './banner_receitas.json', 
+    './banner2.json', 
+    './banner3.json', 
+    './banner4.json'
   ];
   const slidesCount = slides.length;
 
@@ -285,15 +281,12 @@ function initLottieCarousel() {
     updatePagination();
     // Timer automático sempre faz loop infinito
     carouselInterval = setInterval(nextSlide, DURATION);
-    // Salvar referência global
+    // Atualizar referência global
     globalCarouselInterval = carouselInterval;
   }
   
   function stopCarouselTimer() { 
-    if (carouselInterval) {
-      clearInterval(carouselInterval);
-      carouselInterval = null;
-    }
+    clearInterval(carouselInterval);
     if (globalCarouselInterval) {
       clearInterval(globalCarouselInterval);
       globalCarouselInterval = null;
@@ -407,6 +400,9 @@ function initLottieCarousel() {
       return;
     }
     
+    // Limpar container antes de carregar nova animação
+    container.innerHTML = '';
+    
     const anim = lottie.loadAnimation({
         container, 
         renderer: 'svg', 
@@ -418,6 +414,8 @@ function initLottieCarousel() {
     anim.addEventListener('DOMLoaded', () => {
         console.log(`[Banner Carousel] Animação ${index} carregada.`);
         loadedAnimations[index] = anim;
+        // Atualizar referência global
+        globalLoadedAnimations[index] = anim;
         
         // Se é o primeiro slide e ainda está visível, garante que está tocando
         if (index === 0 && currentIndex === 0) {
@@ -431,30 +429,94 @@ function initLottieCarousel() {
   });
 }
 
-// Inicializar quando main_app for carregada via SPA (único ponto de entrada)
-window.addEventListener('spa:enter-main_app', function() {
-  console.log('[Banner Carousel] Evento spa:enter-main_app detectado, inicializando...');
-  setTimeout(() => {
-    const carousel = document.querySelector('.main-carousel');
-    if (carousel) {
-      if (typeof lottie !== 'undefined') {
-        initLottieCarousel();
-      } else {
-        console.warn('[Banner Carousel] Lottie.js não encontrado, tentando novamente...');
-        setTimeout(() => {
-          if (typeof lottie !== 'undefined') {
-            initLottieCarousel();
-          }
-        }, 500);
-      }
+// Função para inicializar o carrossel (reutilizável)
+function tryInitCarousel() {
+  console.log('[Banner Carousel] Tentando inicializar carrossel...');
+  
+  const carousel = document.querySelector('.main-carousel');
+  if (carousel) {
+    // Aguardar um pouco mais para garantir que Lottie.js carregou
+    if (typeof lottie !== 'undefined') {
+      initLottieCarousel();
     } else {
-      console.log('[Banner Carousel] Container .main-carousel não encontrado ainda. Tentando novamente...');
+      console.warn('[Banner Carousel] Lottie.js não foi encontrado. Tentando novamente em 500ms...');
+      // Tentar novamente após um delay
       setTimeout(() => {
-        const carousel2 = document.querySelector('.main-carousel');
-        if (carousel2 && typeof lottie !== 'undefined') {
+        if (typeof lottie !== 'undefined') {
           initLottieCarousel();
+        } else {
+          console.error('[Banner Carousel] Lottie.js ainda não foi encontrado após delay.');
         }
       }, 500);
     }
-  }, 300);
+  } else {
+    console.log('[Banner Carousel] Container .main-carousel não encontrado nesta página. Script inativo.');
+  }
+}
+
+// Aguarda o window.load para garantir que todos os scripts carregaram
+window.addEventListener('load', () => {
+  console.log('[Banner Carousel] Window load event - verificando se o carrossel existe...');
+  tryInitCarousel();
+});
+
+// Suporte para navegação SPA - re-inicializar quando main_app for carregado via SPA
+// Usar uma flag para evitar múltiplas inicializações simultâneas
+let isReinitializing = false;
+
+window.addEventListener('spa-page-loaded', function(e) {
+  if (e.detail && e.detail.isSPANavigation) {
+    const pageName = window.location.pathname.split('/').pop();
+    if (pageName === 'main_app.html' || pageName === 'dashboard.html') {
+      // Evitar múltiplas inicializações simultâneas
+      if (isReinitializing) {
+        console.log('[Banner Carousel] Já está re-inicializando, ignorando...');
+        return;
+      }
+      
+      isReinitializing = true;
+      console.log('[Banner Carousel] Página main_app carregada via SPA - limpando e re-inicializando carrossel...');
+      
+      // Limpar completamente antes de re-inicializar
+      if (globalCarouselInterval) {
+        clearInterval(globalCarouselInterval);
+        globalCarouselInterval = null;
+      }
+      
+      globalLoadedAnimations.forEach(anim => {
+        if (anim && typeof anim.destroy === 'function') {
+          try {
+            anim.destroy();
+          } catch (e) {
+            console.warn('[Banner Carousel] Erro ao destruir animação:', e);
+          }
+        }
+      });
+      globalLoadedAnimations = [];
+      
+      // Limpar paginação antiga E containers de animação
+      const carousel = document.querySelector('.main-carousel');
+      if (carousel) {
+        const paginationContainer = carousel.querySelector('.pagination-container');
+        if (paginationContainer) {
+          paginationContainer.innerHTML = '';
+        }
+        
+        // Limpar TODOS os containers de animação para evitar duplicatas
+        const animationContainers = carousel.querySelectorAll('.lottie-animation-container');
+        animationContainers.forEach(container => {
+          container.innerHTML = '';
+        });
+      }
+      
+      // Aguardar um pouco mais para garantir que o HTML foi completamente inserido
+      setTimeout(() => {
+        tryInitCarousel();
+        // Resetar flag após um delay
+        setTimeout(() => {
+          isReinitializing = false;
+        }, 1000);
+      }, 300);
+    }
+  }
 });

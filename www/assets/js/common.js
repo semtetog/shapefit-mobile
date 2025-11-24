@@ -45,7 +45,7 @@ async function apiRequest(url, options = {}) {
         
         if (response.status === 401) {
             clearAuthToken();
-            window.location.href = `${window.BASE_APP_URL}/auth/login.php`;
+            window.location.href = './auth/login.html';
             return null;
         }
         
@@ -100,10 +100,53 @@ function formatDate(dateStr) {
     }
 }
 
+// Função para obter data/hora do servidor (para validações críticas)
+// IMPORTANTE: Use esta função para validações que não podem ser burladas pelo cliente
+// (ex: restrição de 7 dias para atualizar peso)
+let serverDateCache = null;
+let serverDateCacheTime = null;
+const SERVER_DATE_CACHE_DURATION = 60000; // Cache por 1 minuto
+
+async function getServerDate() {
+    // Se temos cache válido, retornar
+    if (serverDateCache && serverDateCacheTime && (Date.now() - serverDateCacheTime) < SERVER_DATE_CACHE_DURATION) {
+        return serverDateCache;
+    }
+    
+    try {
+        // Tentar obter data do servidor via API
+        // Se a API não retornar, usar data local como fallback (mas avisar no console)
+        const response = await fetch(`${window.BASE_APP_URL || ''}/api/get_server_time.php`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${getAuthToken() || ''}`
+            }
+        });
+        
+        if (response && response.ok) {
+            const result = await response.json();
+            if (result.success && result.server_date) {
+                serverDateCache = result.server_date;
+                serverDateCacheTime = Date.now();
+                console.log('[Server Date] Data do servidor obtida:', serverDateCache);
+                return serverDateCache;
+            }
+        }
+    } catch (error) {
+        console.warn('[Server Date] Erro ao obter data do servidor, usando data local:', error);
+    }
+    
+    // Fallback: usar data local (mas avisar que não é seguro para validações)
+    const localDate = getLocalDateString();
+    console.warn('[Server Date] Usando data local como fallback (não seguro para validações críticas):', localDate);
+    return localDate;
+}
+
 // Exportar funções globais
 window.apiRequest = apiRequest;
 window.escapeHtml = escapeHtml;
 window.formatDate = formatDate;
 window.getLocalDateString = getLocalDateString;
 window.addDaysLocal = addDaysLocal;
+window.getServerDate = getServerDate;
 

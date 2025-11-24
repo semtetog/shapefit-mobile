@@ -2,7 +2,7 @@
 // Este arquivo gerencia tokens e autenticação para o Capacitor
 
 const AUTH_TOKEN_KEY = 'shapefit_auth_token';
-const BASE_APP_URL = window.BASE_APP_URL || '';
+// Não declarar BASE_APP_URL aqui - usar window.BASE_APP_URL diretamente
 
 /**
  * Obtém o token de autenticação do localStorage
@@ -35,11 +35,23 @@ async function isAuthenticated() {
         return false;
     }
     
-    // Se BASE_APP_URL não está definido, tentar detectar
-    const baseUrl = window.BASE_APP_URL || (window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/'));
+    // Se tem token, assumir que está autenticado (verificação será feita nas requisições)
+    // Isso evita redirecionamentos desnecessários quando há problemas de rede
+    return true;
+    
+    // Código comentado - verificação no servidor será feita nas requisições individuais
+    /*
+    // Usar BASE_APP_URL que foi definido pelo www-config.js
+    // NÃO usar window.location.origin pois no Capacitor é localhost
+    if (!window.BASE_APP_URL) {
+        console.error('[auth.js] BASE_APP_URL não foi definido!');
+        return false;
+    }
+    
+    const baseUrl = window.BASE_APP_URL;
     
     try {
-        console.log('Verificando token em:', `${baseUrl}/api/verify_token.php`);
+        console.log('[auth.js] Verificando token em:', `${baseUrl}/api/verify_token.php`);
         const response = await fetch(`${baseUrl}/api/verify_token.php`, {
             method: 'POST',
             headers: {
@@ -55,6 +67,7 @@ async function isAuthenticated() {
         console.error('Erro ao verificar token:', error);
         return false;
     }
+    */
 }
 
 /**
@@ -63,35 +76,9 @@ async function isAuthenticated() {
 async function requireAuth() {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
-        console.log('Usuário não autenticado, redirecionando para login');
-        
-        // Se estiver usando router SPA, usar navegação SPA
-        if (window.router && typeof window.router.navigate === 'function') {
-            console.log('Usando router SPA para redirecionar para /login');
-            window.router.navigate('/login');
-            return false;
-        }
-        
-        // Caso contrário, usar window.location.href com domínio local
-        // Em desenvolvimento local, usar window.location.origin
-        // Em produção, usar BASE_APP_URL apenas se necessário
-        const isLocalDev = window.location.hostname === 'localhost' || 
-                          window.location.hostname === '127.0.0.1' ||
-                          window.location.hostname.includes('192.168.') ||
-                          window.location.port === '8100';
-        
-        let loginUrl;
-        if (isLocalDev) {
-            // Em desenvolvimento local, usar domínio local
-            loginUrl = `${window.location.origin}/login`;
-        } else {
-            // Em produção, tentar usar BASE_APP_URL, mas se não funcionar, usar origin
-            const baseUrl = window.BASE_APP_URL || window.location.origin;
-            loginUrl = `${baseUrl}/auth/login.html`;
-        }
-        
-        console.log('Redirecionando para login:', loginUrl);
-        window.location.href = loginUrl;
+        // Usar caminho relativo para manter dentro do app
+        console.log('Redirecionando para login');
+        window.location.href = './auth/login.html';
         return false;
     }
     return true;
@@ -186,28 +173,8 @@ async function authenticatedFetch(url, options = {}) {
     if (response.status === 401) {
         console.error('Token inválido (401) - redirecionando para login');
         clearAuthToken();
-        
-        // Se estiver usando router SPA, usar navegação SPA
-        if (window.router && typeof window.router.navigate === 'function') {
-            window.router.navigate('/login');
-            return null;
-        }
-        
-        // Caso contrário, usar window.location.href com domínio local
-        const isLocalDev = window.location.hostname === 'localhost' || 
-                          window.location.hostname === '127.0.0.1' ||
-                          window.location.hostname.includes('192.168.') ||
-                          window.location.port === '8100';
-        
-        let loginUrl;
-        if (isLocalDev) {
-            loginUrl = `${window.location.origin}/login`;
-        } else {
-            const baseUrl = window.BASE_APP_URL || window.location.origin;
-            loginUrl = `${baseUrl}/auth/login.html`;
-        }
-        
-        window.location.href = loginUrl;
+        // Usar caminho relativo para manter dentro do app
+        window.location.href = './auth/login.html';
         return null;
     }
     
@@ -221,4 +188,55 @@ window.clearAuthToken = clearAuthToken;
 window.isAuthenticated = isAuthenticated;
 window.requireAuth = requireAuth;
 window.authenticatedFetch = authenticatedFetch;
+
+// Carregar page-transitions.js automaticamente se disponível
+(function() {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPageTransitions();
+        });
+    } else {
+        loadPageTransitions();
+    }
+    
+    function loadPageTransitions() {
+        // Verificar se já foi carregado
+        if (window.pageTransitionsLoaded) return;
+        
+        // Tentar carregar o script de transições
+        const script = document.createElement('script');
+        script.src = './assets/js/page-transitions.js';
+        script.onerror = function() {
+            // Se falhar, tentar caminho relativo
+            const script2 = document.createElement('script');
+            script2.src = '../assets/js/page-transitions.js';
+            script2.onerror = function() {
+                // Se ainda falhar, não fazer nada (página pode não ter o arquivo)
+            };
+            document.head.appendChild(script2);
+        };
+        document.head.appendChild(script);
+        window.pageTransitionsLoaded = true;
+    }
+})();
+
+// Carregar network-monitor.js automaticamente
+(function() {
+    const scriptId = 'network-monitor-script';
+    if (!document.getElementById(scriptId)) {
+        const script = document.createElement('script');
+        script.id = scriptId;
+        script.src = './assets/js/network-monitor.js';
+        script.onerror = function() {
+            // Se falhar, tentar caminho relativo
+            const script2 = document.createElement('script');
+            script2.src = '../assets/js/network-monitor.js';
+            script2.onerror = function() {
+                // Se ainda falhar, não fazer nada (página pode não ter o arquivo)
+            };
+            document.head.appendChild(script2);
+        };
+        document.head.appendChild(script);
+    }
+})();
 
