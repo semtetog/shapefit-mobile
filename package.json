@@ -8,7 +8,9 @@
     "sync": "npx cap sync",
     "open:android": "npx cap open android",
     "clean": "powershell -ExecutionPolicy Bypass -File clean.ps1",
-    "generate:assets": "npx capacitor-assets generate"
+    "generate:assets": "npx capacitor-assets generate",
+    "commit": "powershell -ExecutionPolicy Bypass -File commit-and-push.ps1",
+    "commit:msg": "powershell -ExecutionPolicy Bypass -File commit-and-push.ps1"
   },
   "dependencies": {
     "@capacitor-mlkit/barcode-scanning": "^7.3.0",
