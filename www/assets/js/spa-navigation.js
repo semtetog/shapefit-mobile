@@ -335,12 +335,12 @@
                 script.remove();
             });
             
-            // Executar APENAS scripts externos no novo container (scripts inline serão ignorados para evitar re-declarações)
+            // Executar APENAS scripts externos (scripts inline serão ignorados para evitar re-declarações)
             // Scripts inline devem usar event listeners (spa-page-loaded) para inicialização
             const externalScriptsOnly = scripts.filter(script => script.src);
             await executeScripts(externalScriptsOnly);
             
-            // Pequeno delay para garantir que scripts externos carregaram
+            // Pequeno delay para garantir que scripts externos carregaram e conteúdo está renderizado
             await new Promise(resolve => setTimeout(resolve, 50));
             
             // SWAP INSTANTÂNEO - trocar containers sem "piscar"
