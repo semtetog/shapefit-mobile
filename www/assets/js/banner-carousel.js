@@ -461,10 +461,20 @@ window.addEventListener('load', () => {
 });
 
 // Suporte para navegação SPA - re-inicializar quando main_app for carregado via SPA
+// Usar uma flag para evitar múltiplas inicializações simultâneas
+let isReinitializing = false;
+
 window.addEventListener('spa-page-loaded', function(e) {
   if (e.detail && e.detail.isSPANavigation) {
     const pageName = window.location.pathname.split('/').pop();
     if (pageName === 'main_app.html' || pageName === 'dashboard.html') {
+      // Evitar múltiplas inicializações simultâneas
+      if (isReinitializing) {
+        console.log('[Banner Carousel] Já está re-inicializando, ignorando...');
+        return;
+      }
+      
+      isReinitializing = true;
       console.log('[Banner Carousel] Página main_app carregada via SPA - limpando e re-inicializando carrossel...');
       
       // Limpar completamente antes de re-inicializar
@@ -484,18 +494,29 @@ window.addEventListener('spa-page-loaded', function(e) {
       });
       globalLoadedAnimations = [];
       
-      // Limpar paginação antiga
+      // Limpar paginação antiga E containers de animação
       const carousel = document.querySelector('.main-carousel');
       if (carousel) {
         const paginationContainer = carousel.querySelector('.pagination-container');
         if (paginationContainer) {
           paginationContainer.innerHTML = '';
         }
+        
+        // Limpar TODOS os containers de animação para evitar duplicatas
+        const animationContainers = carousel.querySelectorAll('.lottie-animation-container');
+        animationContainers.forEach(container => {
+          container.innerHTML = '';
+        });
       }
       
+      // Aguardar um pouco mais para garantir que o HTML foi completamente inserido
       setTimeout(() => {
         tryInitCarousel();
-      }, 200);
+        // Resetar flag após um delay
+        setTimeout(() => {
+          isReinitializing = false;
+        }, 1000);
+      }, 300);
     }
   }
 });

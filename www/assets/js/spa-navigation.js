@@ -244,6 +244,16 @@
             // Limpar elementos duplicados ANTES de substituir conteúdo
             cleanupPageElements();
             
+            // Se está voltando para main_app, limpar completamente o carrossel ANTES de inserir novo conteúdo
+            const pageName = url.split('/').pop().split('?')[0];
+            if (pageName === 'main_app.html' || pageName === 'dashboard.html') {
+                const existingCarousel = currentContainer.querySelector('.main-carousel');
+                if (existingCarousel) {
+                    console.log('[SPA] Removendo carrossel antigo antes de inserir novo conteúdo');
+                    existingCarousel.remove();
+                }
+            }
+            
             // Substituir conteúdo
             currentContainer.innerHTML = content;
             
