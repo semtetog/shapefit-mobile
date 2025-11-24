@@ -106,7 +106,7 @@ function updateActiveNavItem() {
 // Base URL para os links
 const bottomNavBaseURL = window.BASE_APP_URL || '';
 
-// CSS do bottom nav
+// CSS do bottom nav (EXATAMENTE IGUAL AO WWWANTIGO)
 const bottomNavCSS = `
     <style>
     /* === ESTILO FINAL E CLEAN PARA A BARRA DE NAVEGAÇÃO === */
@@ -120,11 +120,12 @@ const bottomNavCSS = `
         margin: 0 !important;
         /* Removido max-width e margin para ocupar toda a largura da tela */
         /* Padding mínimo sempre presente + safe-area quando disponível */
-        padding-top: 12px !important;
-        padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+        /* Reduzido para não ficar com margem gigante, especialmente no iOS nativo */
+        padding-top: 10px !important;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
         padding-left: calc(10px + env(safe-area-inset-left, 0px)) !important;
         padding-right: calc(10px + env(safe-area-inset-right, 0px)) !important;
-        min-height: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
+        min-height: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
         background: rgba(24, 24, 24, 0.85) !important;
         backdrop-filter: blur(15px) !important;
         -webkit-backdrop-filter: blur(15px) !important;
@@ -149,8 +150,7 @@ const bottomNavCSS = `
     }
 
     .nav-item i {
-        font-size: 22px;
-        margin-bottom: 4px;
+        font-size: 1.5rem;
     }
 
     .nav-item.active {
