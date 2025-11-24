@@ -12,7 +12,9 @@
     const excludedPages = [
         '/auth/login.html',
         '/auth/register.html',
-        '/onboarding/onboarding.html'
+        '/onboarding/onboarding.html',
+        '/main_app.html',  // main_app sempre recarrega completamente para evitar acúmulo de elementos
+        '/dashboard.html'  // dashboard também
     ];
     
     // Verificar se a página atual deve ser excluída
@@ -153,6 +155,15 @@
     // Navegar para uma nova página via AJAX
     async function navigateToPage(url) {
         if (isNavigating) return;
+        
+        // Verificar se é main_app ou dashboard - sempre recarregar completamente
+        const pageName = url.split('/').pop().split('?')[0];
+        if (pageName === 'main_app.html' || pageName === 'dashboard.html') {
+            console.log('[SPA] main_app/dashboard detectado - fazendo reload completo para evitar acúmulo de elementos');
+            window.location.href = url;
+            return;
+        }
+        
         if (shouldExcludePage(url)) {
             window.location.href = url;
             return;
