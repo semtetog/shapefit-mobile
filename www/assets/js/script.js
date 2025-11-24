@@ -80,6 +80,28 @@ function initMainAppScript() {
             let waterRemoveBtn = document.getElementById('water-remove-btn');
             let waterUnitSelect = document.getElementById('water-unit-select');
 
+            // Remover listeners antigos se existirem (clonar elementos para remover todos os listeners)
+            if (waterAddBtn) {
+                const newBtn = waterAddBtn.cloneNode(true);
+                waterAddBtn.parentNode.replaceChild(newBtn, waterAddBtn);
+                waterAddBtn = newBtn;
+            }
+            if (waterRemoveBtn) {
+                const newBtn = waterRemoveBtn.cloneNode(true);
+                waterRemoveBtn.parentNode.replaceChild(newBtn, waterRemoveBtn);
+                waterRemoveBtn = newBtn;
+            }
+            if (waterAmountInput) {
+                const newInput = waterAmountInput.cloneNode(true);
+                waterAmountInput.parentNode.replaceChild(newInput, waterAmountInput);
+                waterAmountInput = newInput;
+            }
+            if (waterUnitSelect) {
+                const newSelect = waterUnitSelect.cloneNode(true);
+                waterUnitSelect.parentNode.replaceChild(newSelect, waterUnitSelect);
+                waterUnitSelect = newSelect;
+            }
+
             window.currentWater = window.currentWater || 0;
             const waterGoal = 2000;
             const CUP_SIZE_ML = 250;
@@ -237,53 +259,82 @@ function initMainAppScript() {
         });
         
         // --- LÓGICA DA ROTINA (MISSÕES) ---
-        const routineCard = document.querySelector('.card-routine');
-        if (routineCard) {
-            routineCard.addEventListener('click', async (event) => {
-                const button = event.target.closest('.complete-mission-btn');
-                if (!button || button.disabled) return;
-
-                const missionItem = button.closest('.mission-item');
-                const routineId = missionItem.dataset.routineId;
-
-                button.classList.add('completed');
-                button.disabled = true;
-
+        // Usar event delegation para capturar cliques nos botões de missão
+        document.addEventListener('click', async function(event) {
+            const button = event.target.closest('.mission-action-btn');
+            if (!button) return;
+            
+            const missionSlide = button.closest('.mission-slide');
+            if (!missionSlide) return;
+            
+            const missionId = missionSlide.dataset.missionId;
+            const isCompleted = missionSlide.dataset.completed === '1';
+            
+            if (isCompleted) return;
+            
+            // Remover listeners antigos clonando o elemento
+            if (button.classList.contains('skip-btn')) {
+                console.log(`[Mission Action] Pulando missão: ${missionId}`);
                 try {
-                    const response = await fetch('/api/update_routine_status.php', {
+                    const response = await authenticatedFetch(`${window.BASE_APP_URL}/api/skip_mission.php`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: `routine_id=${routineId}&status=1&csrf_token=${csrfToken}`
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ mission_id: missionId })
                     });
+                    if (!response) return;
                     const result = await response.json();
-                    
                     if (result.success) {
-                        const progressFill = document.getElementById('routine-progress-fill');
-                        const progressText = document.getElementById('routine-progress-text');
-                        let [completed, total] = progressText.textContent.match(/\d+/g).map(Number);
-                        completed++;
-                        
-                        progressFill.style.width = `${(completed / total) * 100}%`;
-                        progressText.textContent = `${completed}/${total} concluídas`;
-                        
-                        if (result.points_awarded > 0) {
+                        showAppNotification('Missão pulada!', 'info');
+                        if (window.loadMainAppData) window.loadMainAppData();
+                    } else {
+                        showAppNotification(result.message || 'Erro ao pular missão.', 'error');
+                    }
+                } catch (error) {
+                    showAppNotification('Erro de conexão ao pular missão.', 'error');
+                    console.error('Erro ao pular missão:', error);
+                }
+            } else if (button.classList.contains('complete-btn') && !button.classList.contains('disabled')) {
+                console.log(`[Mission Action] Completando missão: ${missionId}`);
+                try {
+                    const response = await authenticatedFetch(`${window.BASE_APP_URL}/api/complete_mission.php`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ mission_id: missionId })
+                    });
+                    if (!response) return;
+                    const result = await response.json();
+                    if (result.success) {
+                        showAppNotification('Missão completada!', 'success');
+                        if (result.points_awarded !== 0) {
                             showSinglePopup(result.points_awarded, 'gain');
+                        }
+                        if (result.new_total_points !== undefined) {
                             updateUserPointsDisplay(result.new_total_points);
                         }
-
-                        missionItem.style.transition = 'all 0.5s ease';
-                        missionItem.style.opacity = '0';
-                        missionItem.style.transform = 'translateX(-20px)';
-                        setTimeout(() => missionItem.remove(), 500);
-
-                    } else { throw new Error(result.message); }
+                        if (window.loadMainAppData) window.loadMainAppData();
+                    } else {
+                        showAppNotification(result.message || 'Erro ao completar missão.', 'error');
+                    }
                 } catch (error) {
-                    showAppNotification(error.message || 'Erro ao atualizar missão.', 'error');
-                    button.classList.remove('completed');
-                    button.disabled = false;
+                    showAppNotification('Erro de conexão ao completar missão.', 'error');
+                    console.error('Erro ao completar missão:', error);
                 }
-            });
-        }
+            } else if (button.classList.contains('duration-btn')) {
+                console.log(`[Mission Action] Abrindo modal de duração para: ${missionId}`);
+                const durationModal = document.getElementById('exercise-duration-modal');
+                if (durationModal) {
+                    durationModal.classList.add('active');
+                    durationModal.dataset.missionId = missionId;
+                }
+            } else if (button.classList.contains('sleep-btn')) {
+                console.log(`[Mission Action] Abrindo modal de sono para: ${missionId}`);
+                const sleepModal = document.getElementById('sleep-modal-main');
+                if (sleepModal) {
+                    sleepModal.classList.add('active');
+                    sleepModal.dataset.missionId = missionId;
+                }
+            }
+        });
     }
 
     // =========================================================================

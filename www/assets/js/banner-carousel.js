@@ -1,7 +1,43 @@
 // banner-carousel.js (VERSÃO FINAL, ESTÁVEL E COM LOOP SIMPLES)
 
+// Variáveis globais para evitar múltiplas inicializações
+let globalCarouselInitialized = false;
+let globalLoadedAnimations = [];
+let globalCarouselInterval = null;
+
 function initLottieCarousel() {
   console.log('[Banner Carousel] Inicializando com loop estável...');
+  
+  // Limpar inicialização anterior se existir
+  if (globalCarouselInitialized) {
+    console.log('[Banner Carousel] Limpando inicialização anterior...');
+    // Parar timer
+    if (globalCarouselInterval) {
+      clearInterval(globalCarouselInterval);
+      globalCarouselInterval = null;
+    }
+    // Destruir animações antigas
+    globalLoadedAnimations.forEach(anim => {
+      if (anim && anim.destroy) {
+        try {
+          anim.destroy();
+        } catch (e) {
+          console.warn('[Banner Carousel] Erro ao destruir animação:', e);
+        }
+      }
+    });
+    globalLoadedAnimations = [];
+    // Remover paginação antiga
+    const oldPagination = document.querySelectorAll('.pagination-container .pagination-item');
+    oldPagination.forEach(item => item.remove());
+    // Remover event listeners antigos (criar novo carousel element)
+    const oldCarousel = document.querySelector('.main-carousel');
+    if (oldCarousel) {
+      const newCarousel = oldCarousel.cloneNode(true);
+      oldCarousel.parentNode.replaceChild(newCarousel, oldCarousel);
+    }
+    globalCarouselInitialized = false;
+  }
   
   if (typeof lottie === 'undefined') {
     console.error('[Banner Carousel] Biblioteca lottie-web não foi carregada!');
@@ -13,6 +49,9 @@ function initLottieCarousel() {
     console.error('[Banner Carousel] Container .main-carousel não encontrado!');
     return;
   }
+  
+  // Marcar como inicializado
+  globalCarouselInitialized = true;
   
   const track = carousel.querySelector('.carousel-track');
   const slides = Array.from(carousel.querySelectorAll('.lottie-slide'));
@@ -50,6 +89,8 @@ function initLottieCarousel() {
   let isInitializing = true; // Flag para indicar inicialização
   const DURATION = 7000;
   const loadedAnimations = [];
+  // Usar array global para gerenciar animações
+  globalLoadedAnimations = loadedAnimations;
   // Para desenvolvimento local, usar caminho relativo. Para produção, usar BASE_APP_URL
   const isLocalDev = window.location.hostname === 'localhost' || 
                      window.location.hostname === '127.0.0.1' ||
@@ -244,10 +285,19 @@ function initLottieCarousel() {
     updatePagination();
     // Timer automático sempre faz loop infinito
     carouselInterval = setInterval(nextSlide, DURATION);
+    // Salvar referência global
+    globalCarouselInterval = carouselInterval;
   }
   
   function stopCarouselTimer() { 
-    clearInterval(carouselInterval); 
+    if (carouselInterval) {
+      clearInterval(carouselInterval);
+      carouselInterval = null;
+    }
+    if (globalCarouselInterval) {
+      clearInterval(globalCarouselInterval);
+      globalCarouselInterval = null;
+    }
   }
   
   function restartCarouselTimer() { 
@@ -381,33 +431,7 @@ function initLottieCarousel() {
   });
 }
 
-// Aguarda o window.load para garantir que todos os scripts carregaram
-window.addEventListener('load', () => {
-  console.log('[Banner Carousel] Window load event - verificando se o carrossel existe...');
-  
-  // CORREÇÃO: Só tenta iniciar o carrossel se o elemento existir na página
-  const carousel = document.querySelector('.main-carousel');
-  if (carousel) {
-    // Aguardar um pouco mais para garantir que Lottie.js carregou
-    if (typeof lottie !== 'undefined') {
-      initLottieCarousel();
-    } else {
-      console.warn('[Banner Carousel] Lottie.js não foi encontrado. Tentando novamente em 500ms...');
-      // Tentar novamente após um delay
-      setTimeout(() => {
-        if (typeof lottie !== 'undefined') {
-          initLottieCarousel();
-        } else {
-          console.error('[Banner Carousel] Lottie.js ainda não foi encontrado após delay.');
-        }
-      }, 500);
-    }
-  } else {
-    console.log('[Banner Carousel] Container .main-carousel não encontrado nesta página. Script inativo.');
-  }
-});
-
-// Inicializar quando main_app for carregada via SPA
+// Inicializar quando main_app for carregada via SPA (único ponto de entrada)
 window.addEventListener('spa:enter-main_app', function() {
   console.log('[Banner Carousel] Evento spa:enter-main_app detectado, inicializando...');
   setTimeout(() => {
@@ -423,6 +447,14 @@ window.addEventListener('spa:enter-main_app', function() {
           }
         }, 500);
       }
+    } else {
+      console.log('[Banner Carousel] Container .main-carousel não encontrado ainda. Tentando novamente...');
+      setTimeout(() => {
+        const carousel2 = document.querySelector('.main-carousel');
+        if (carousel2 && typeof lottie !== 'undefined') {
+          initLottieCarousel();
+        }
+      }, 500);
     }
   }, 300);
 });
