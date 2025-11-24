@@ -76,17 +76,8 @@ async function isAuthenticated() {
 async function requireAuth() {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
-        // Usar navegação SPA quando possível para evitar tela preta
         console.log('Redirecionando para login');
-        // Fallback simples aqui: allow full reload em contextos fora do shell principal
-        const targetUrl = './auth/login.html';
-        if (window.smoothNavigate) {
-            window.smoothNavigate(targetUrl);
-        } else if (window.SpaRouter && typeof window.SpaRouter.navigate === 'function') {
-            window.SpaRouter.navigate(targetUrl);
-        } else {
-            window.location.href = targetUrl;
-        }
+        window.location.href = './auth/login.html';
         return false;
     }
     return true;
@@ -181,15 +172,7 @@ async function authenticatedFetch(url, options = {}) {
     if (response.status === 401) {
         console.error('Token inválido (401) - redirecionando para login');
         clearAuthToken();
-        // Usar navegação SPA quando possível para evitar tela preta
-        const targetUrl = './auth/login.html';
-        if (window.smoothNavigate) {
-            window.smoothNavigate(targetUrl);
-        } else if (window.SpaRouter && typeof window.SpaRouter.navigate === 'function') {
-            window.SpaRouter.navigate(targetUrl);
-        } else {
-            window.location.href = targetUrl;
-        }
+        window.location.href = './auth/login.html';
         return null;
     }
     
@@ -204,36 +187,6 @@ window.isAuthenticated = isAuthenticated;
 window.requireAuth = requireAuth;
 window.authenticatedFetch = authenticatedFetch;
 
-// Carregar page-transitions.js automaticamente se disponível
-(function() {
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            loadPageTransitions();
-        });
-    } else {
-        loadPageTransitions();
-    }
-    
-    function loadPageTransitions() {
-        // Verificar se já foi carregado
-        if (window.pageTransitionsLoaded) return;
-        
-        // Tentar carregar o script de transições
-        const script = document.createElement('script');
-        script.src = './assets/js/page-transitions.js';
-        script.onerror = function() {
-            // Se falhar, tentar caminho relativo
-            const script2 = document.createElement('script');
-            script2.src = '../assets/js/page-transitions.js';
-            script2.onerror = function() {
-                // Se ainda falhar, não fazer nada (página pode não ter o arquivo)
-            };
-            document.head.appendChild(script2);
-        };
-        document.head.appendChild(script);
-        window.pageTransitionsLoaded = true;
-    }
-})();
 
 // Carregar network-monitor.js automaticamente
 (function() {

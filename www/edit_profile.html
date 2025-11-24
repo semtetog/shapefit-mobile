@@ -1511,11 +1511,7 @@
                         const token = getAuthToken();
                         if (!token) {
                             const targetUrl = './auth/login.html';
-                            if (window.smoothNavigate) {
-                                window.smoothNavigate(targetUrl);
-                            } else {
-                                window.location.href = targetUrl;
-                            }
+                            window.location.href = targetUrl;
                             return;
                         }
                         
@@ -1531,11 +1527,7 @@
                         if (removeResponse.status === 401) {
                             clearAuthToken();
                             const targetUrl = './auth/login.html';
-                            if (window.smoothNavigate) {
-                                window.smoothNavigate(targetUrl);
-                            } else {
-                                window.location.href = targetUrl;
-                            }
+                            window.location.href = targetUrl;
                             return;
                         }
                         
@@ -1566,11 +1558,7 @@
                         const token = getAuthToken();
                         if (!token) {
                             const targetUrl = './auth/login.html';
-                            if (window.smoothNavigate) {
-                                window.smoothNavigate(targetUrl);
-                            } else {
-                                window.location.href = targetUrl;
-                            }
+                            window.location.href = targetUrl;
                             return;
                         }
                         
@@ -1592,11 +1580,7 @@
                         if (photoResponse.status === 401) {
                             clearAuthToken();
                             const targetUrl = './auth/login.html';
-                            if (window.smoothNavigate) {
-                                window.smoothNavigate(targetUrl);
-                            } else {
-                                window.location.href = targetUrl;
-                            }
+                            window.location.href = targetUrl;
                             return;
                         }
                         

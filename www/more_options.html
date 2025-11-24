@@ -456,11 +456,7 @@
             
             // Redirecionar para login (preferir SPA quando disponível)
             const targetUrl = './auth/login.html';
-            if (window.smoothNavigate) {
-                window.smoothNavigate(targetUrl);
-            } else {
-                window.location.href = targetUrl;
-            }
+            window.location.href = targetUrl;
         }
         
         document.addEventListener('DOMContentLoaded', async function() {

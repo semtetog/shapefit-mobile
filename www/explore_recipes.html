@@ -1009,23 +1009,13 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const queryString = params.toString();
         const targetUrl = queryString ? `./explore_recipes.html?${queryString}` : './explore_recipes.html';
-        if (window.smoothNavigate) {
-            window.smoothNavigate(targetUrl);
-        } else {
-            window.location.href = targetUrl;
-        }
+        window.location.href = targetUrl;
     };
     
     // Limpar filtros
     const clearFilters = () => {
         const targetUrl = './explore_recipes.html';
-        if (window.smoothNavigate) {
-            window.smoothNavigate(targetUrl);
-        } else if (window.SpaRouter && typeof window.SpaRouter.navigate === 'function') {
-            window.SpaRouter.navigate(targetUrl);
-        } else {
-            window.location.href = targetUrl;
-        }
+        window.location.href = targetUrl;
     };
     
     // Event listeners
@@ -1052,11 +1042,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     const queryString = params.toString();
                     const targetUrl = queryString ? `./explore_recipes.html?${queryString}` : './explore_recipes.html';
-                    if (window.smoothNavigate) {
-                        window.smoothNavigate(targetUrl);
-                    } else {
-                        window.location.href = targetUrl;
-                    }
+                    window.location.href = targetUrl;
                 }
             }, 500);
         });

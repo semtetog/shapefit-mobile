@@ -260,15 +260,9 @@
                     // Save token
                     setAuthToken(result.token);
                     
-                    // Redirect to onboarding (preferir SPA para evitar tela preta)
+                    // Redirect to onboarding
                     const targetUrl = '../onboarding/onboarding.html';
-                    if (window.smoothNavigate) {
-                        window.smoothNavigate(targetUrl);
-                    } else if (window.SpaRouter && typeof window.SpaRouter.navigate === 'function') {
-                        window.SpaRouter.navigate(targetUrl);
-                    } else {
-                        window.location.href = targetUrl;
-                    }
+                    window.location.href = targetUrl;
                 } else {
                     // Show errors
                     if (result.errors) {

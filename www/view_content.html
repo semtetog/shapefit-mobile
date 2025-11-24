@@ -58,7 +58,6 @@
     <!-- Auth Script -->
     <script src="./assets/js/auth.js"></script>
     <script src="./assets/js/common.js"></script>
-    <script src="./assets/js/page-transitions.js"></script>
     
     <style>
         body {
@@ -408,11 +407,7 @@
         // Verificar autenticação
         if (!isAuthenticated()) {
             const targetUrl = './auth/login.html';
-            if (window.smoothNavigate) {
-                window.smoothNavigate(targetUrl);
-            } else {
-                window.location.href = targetUrl;
-            }
+            window.location.href = targetUrl;
         }
         
         const contentContainer = document.getElementById('content-container');
@@ -424,11 +419,7 @@
         
         if (contentId <= 0) {
             const targetUrl = './content.html';
-            if (window.smoothNavigate) {
-                window.smoothNavigate(targetUrl);
-            } else {
-                window.location.href = targetUrl;
-            }
+            window.location.href = targetUrl;
         }
         
         // Carregar conteúdo
@@ -463,20 +454,12 @@
                 if (!result.success) {
                     if (result.message && result.message.includes('Onboarding')) {
                         const onboardingUrl = './onboarding/onboarding.html';
-                        if (window.smoothNavigate) {
-                            window.smoothNavigate(onboardingUrl);
-                        } else {
-                            window.location.href = onboardingUrl;
-                        }
+                        window.location.href = onboardingUrl;
                         return;
                     }
                     if (result.message && result.message.includes('não encontrado')) {
                         const listUrl = './content.html';
-                        if (window.smoothNavigate) {
-                            window.smoothNavigate(listUrl);
-                        } else {
-                            window.location.href = listUrl;
-                        }
+                        window.location.href = listUrl;
                         return;
                     }
                     throw new Error(result.message || 'Erro ao carregar conteúdo');

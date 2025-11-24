@@ -757,11 +757,7 @@
         // Verificar autenticação
         if (!getAuthToken()) {
             const targetUrl = '../auth/login.html';
-            if (window.smoothNavigate) {
-                window.smoothNavigate(targetUrl);
-            } else {
-                window.location.href = targetUrl;
-            }
+            window.location.href = targetUrl;
         }
     </script>
 </head>
@@ -1822,11 +1818,7 @@
                             }
                             // Sempre usar caminho relativo para manter dentro do app (preferir SPA)
                             const targetUrl = '../dashboard.html';
-                            if (window.smoothNavigate) {
-                                window.smoothNavigate(targetUrl);
-                            } else {
-                                window.location.href = targetUrl;
-                            }
+                            window.location.href = targetUrl;
                         } else {
                             alert(result.message || 'Erro ao processar onboarding. Tente novamente.');
                             actionBtn.disabled = false;
@@ -1902,8 +1894,7 @@
                 exitBtn.addEventListener('click', () => {
                     // Sempre redirecionar para dashboard quando clicar em sair (preferir SPA)
                     const targetUrl = '../dashboard.html';
-                    if (window.smoothNavigate) {
-                        window.smoothNavigate(targetUrl);
+                    window.location.href = targetUrl;
                     } else {
                         window.location.href = targetUrl;
                     }

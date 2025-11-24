@@ -1706,11 +1706,7 @@ html, body {
                                     clearAuthToken();
                                 }
                                 const targetUrl = './auth/login.html';
-                                if (window.smoothNavigate) {
-                                    window.smoothNavigate(targetUrl);
-                                } else {
-                                    window.location.href = targetUrl;
-                                }
+                                window.location.href = targetUrl;
                                 return;
                             }
                             

@@ -215,13 +215,7 @@
                         ? '../main_app.html'
                         : '../onboarding/onboarding.html';
                     console.log('Redirecionando para', targetUrl);
-                    if (window.smoothNavigate) {
-                        window.smoothNavigate(targetUrl);
-                    } else if (window.SpaRouter && typeof window.SpaRouter.navigate === 'function') {
-                        window.SpaRouter.navigate(targetUrl);
-                    } else {
-                        window.location.href = targetUrl;
-                    }
+                    window.location.href = targetUrl;
                 } else {
                     // Show error
                     formError.textContent = result.message || 'Email ou senha incorretos.';

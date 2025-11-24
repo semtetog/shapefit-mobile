@@ -749,13 +749,7 @@
                     const selectedCategories = Array.from(document.querySelectorAll('#category-options input:checked')).map(input => input.value);
                     if (query === '' && selectedCategories.length === 0 && !sortValue) {
                         const targetUrl = './favorite_recipes.html';
-                        if (window.smoothNavigate) {
-                            window.smoothNavigate(targetUrl);
-                        } else if (window.SpaRouter && typeof window.SpaRouter.navigate === 'function') {
-                            window.SpaRouter.navigate(targetUrl);
-                        } else {
-                            window.location.href = targetUrl;
-                        }
+                        window.location.href = targetUrl;
                         return;
                     }
                     // Usar caminho relativo para manter dentro do app
@@ -765,11 +759,7 @@
                     if (selectedCategories.length > 0) params.set('categories', selectedCategories.join(','));
                     const queryString = params.toString();
                     const targetUrl = queryString ? `./favorite_recipes.html?${queryString}` : './favorite_recipes.html';
-                    if (window.smoothNavigate) {
-                        window.smoothNavigate(targetUrl);
-                    } else {
-                        window.location.href = targetUrl;
-                    }
+                    window.location.href = targetUrl;
                 };
                 
                 if (applyFiltersBtn) {
@@ -779,13 +769,7 @@
                 if (clearFiltersBtn) {
                     clearFiltersBtn.addEventListener('click', () => {
                         const targetUrl = './favorite_recipes.html';
-                        if (window.smoothNavigate) {
-                            window.smoothNavigate(targetUrl);
-                        } else if (window.SpaRouter && typeof window.SpaRouter.navigate === 'function') {
-                            window.SpaRouter.navigate(targetUrl);
-                        } else {
-                            window.location.href = targetUrl;
-                        }
+                        window.location.href = targetUrl;
                     });
                 }
                 
@@ -807,13 +791,7 @@
                                 }
                                 const queryString = params.toString();
                                 const targetUrl = queryString ? `./favorite_recipes.html?${queryString}` : './favorite_recipes.html';
-                                if (window.smoothNavigate) {
-                                    window.smoothNavigate(targetUrl);
-                                } else if (window.SpaRouter && typeof window.SpaRouter.navigate === 'function') {
-                                    window.SpaRouter.navigate(targetUrl);
-                                } else {
-                                    window.location.href = targetUrl;
-                                }
+                                window.location.href = targetUrl;
                             }
                         }, 500);
                     });

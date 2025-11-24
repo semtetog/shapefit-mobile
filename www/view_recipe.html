@@ -642,11 +642,7 @@
             if (!recipeId) {
                 alert('ID da receita inválido.');
             const targetUrl = './explore_recipes.html';
-            if (window.smoothNavigate) {
-                window.smoothNavigate(targetUrl);
-            } else {
-                window.location.href = targetUrl;
-            }
+            window.location.href = targetUrl;
                 return;
             }
             
@@ -693,11 +689,7 @@
                     `;
                     setTimeout(() => {
                         const targetUrl = './explore_recipes.html';
-                        if (window.smoothNavigate) {
-                            window.smoothNavigate(targetUrl);
-                        } else {
-                            window.location.href = targetUrl;
-                        }
+                        window.location.href = targetUrl;
                     }, 2000);
                 }
             }
@@ -913,8 +905,7 @@
                             alert(result.message || 'Refeição registrada com sucesso!');
                             // Sempre usar caminho relativo para manter dentro do app (preferir SPA)
                             const targetUrl = './diary.html';
-                            if (window.smoothNavigate) {
-                                window.smoothNavigate(targetUrl);
+                            window.location.href = targetUrl;
                             } else {
                                 window.location.href = targetUrl;
                             }
