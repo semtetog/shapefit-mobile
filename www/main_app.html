@@ -2175,20 +2175,26 @@
     let totalMissionsCount = 0;
     let pendingSlides = [];
     
-    function showCurrentMission() {
-        // Lógica simples igual ao main_app.php
-        missionSlides.forEach(s => s.classList.remove('active'));
-        if (completionCard) completionCard.classList.remove('active');
-        
-        if (pendingSlides.length > 0) {
-            pendingSlides[0].classList.add('active');
-        } else {
-            if (completionCard) completionCard.classList.add('active');
-        }
+    // Garantir que funções sejam globais para evitar problemas com SPA
+    if (typeof window.showCurrentMission === 'undefined') {
+        window.showCurrentMission = function() {
+            // Lógica simples igual ao main_app.php
+            if (typeof missionSlides !== 'undefined' && missionSlides) {
+                missionSlides.forEach(s => s.classList.remove('active'));
+            }
+            if (completionCard) completionCard.classList.remove('active');
+            
+            if (pendingSlides.length > 0) {
+                pendingSlides[0].classList.add('active');
+            } else {
+                if (completionCard) completionCard.classList.add('active');
+            }
+        };
     }
     
-    function initializeMissionsCarousel() {
-        // --- LÓGICA DO CARROSSEL DE MISSÕES ---
+    if (typeof window.initializeMissionsCarousel === 'undefined') {
+        window.initializeMissionsCarousel = function() {
+            // --- LÓGICA DO CARROSSEL DE MISSÕES ---
         const missionsCarousel = document.getElementById('missions-carousel');
         if (!missionsCarousel) {
             // Tentar novamente depois de um delay se não encontrou
@@ -2284,7 +2290,7 @@
                 }
             }
         });
-
+        };
     }
     
     function updateMissionsProgress() {
@@ -2666,11 +2672,12 @@
         }
 
         // --- LÓGICA DO CARD DE HIDRATAÇÃO ---
-        const waterLevelGroup = document.getElementById('water-level-group');
-        const waterAmountDisplay = document.getElementById('water-amount-display');
-		const waterAmountInput = document.getElementById('water-amount-input');
-		const waterAddBtn = document.getElementById('water-add-btn');
-		const waterUnitSelect = document.getElementById('water-unit-select');
+        // Usar variáveis locais dentro de função para evitar re-declarações
+        let waterLevelGroup = document.getElementById('water-level-group');
+        let waterAmountDisplay = document.getElementById('water-amount-display');
+		let waterAmountInput = document.getElementById('water-amount-input');
+		let waterAddBtn = document.getElementById('water-add-btn');
+		let waterUnitSelect = document.getElementById('water-unit-select');
 
         window.currentWater = window.currentWater || 0;
         const waterGoal = 2000;
@@ -2834,9 +2841,10 @@
         }
 
         // Verificar se elementos existem antes de chamar updateWaterDrop
-        const waterLevelGroup = document.getElementById('water-level-group');
-        const waterAmountDisplay = document.getElementById('water-amount-display');
-        if (waterLevelGroup && waterAmountDisplay) {
+        // Re-atualizar referências dos elementos (podem ter mudado após navegação SPA)
+        waterLevelGroup = document.getElementById('water-level-group');
+        waterAmountDisplay = document.getElementById('water-amount-display');
+        if (waterLevelGroup && waterAmountDisplay && typeof updateWaterDrop === 'function') {
             updateWaterDrop(false);
         }
         updateControlsEnabled();

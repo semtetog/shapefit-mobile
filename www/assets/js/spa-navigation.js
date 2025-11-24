@@ -181,9 +181,38 @@
             // Substituir conteúdo
             currentContainer.innerHTML = content;
             
-            // REMOVER TODOS OS SCRIPTS INLINE do conteúdo para evitar re-declarações
-            // Scripts inline devem usar event listeners (spa-page-loaded) para inicialização
-            currentContainer.querySelectorAll('script:not([src])').forEach(script => {
+            // Executar scripts inline MAS apenas uma vez (usando hash)
+            // Isso garante que funções sejam definidas, mas evita re-declarações
+            const inlineScripts = Array.from(currentContainer.querySelectorAll('script:not([src])'));
+            inlineScripts.forEach(script => {
+                const scriptText = script.textContent.trim();
+                if (scriptText) {
+                    // Criar hash robusto do script
+                    const scriptHash = btoa(scriptText.substring(0, Math.min(300, scriptText.length))).substring(0, 60);
+                    
+                    // Só executar se não foi executado antes
+                    if (!window.__spaExecutedScripts.has(scriptHash)) {
+                        window.__spaExecutedScripts.add(scriptHash);
+                        
+                        try {
+                            // Executar script diretamente (sem IIFE) para que funções fiquem no escopo global
+                            // Mas usar eval em contexto isolado para evitar problemas
+                            const scriptElement = document.createElement('script');
+                            scriptElement.textContent = scriptText;
+                            document.body.appendChild(scriptElement);
+                            
+                            // Remover após execução
+                            setTimeout(() => {
+                                if (scriptElement.parentNode) {
+                                    scriptElement.parentNode.removeChild(scriptElement);
+                                }
+                            }, 50);
+                        } catch (e) {
+                            console.error('[SPA] Erro ao executar script inline:', e);
+                        }
+                    }
+                }
+                // Remover script do DOM original
                 script.remove();
             });
             
