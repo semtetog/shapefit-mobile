@@ -1,9 +1,61 @@
+// Função para carregar dados do perfil
+async function loadProfileData() {
+    try {
+        const authenticated = await requireAuth();
+        if (!authenticated) {
+            return;
+        }
+        
+        const response = await authenticatedFetch(`${window.BASE_APP_URL}/api/get_profile_data.php`);
+        if (!response || !response.ok) {
+            console.error('Erro ao carregar dados do perfil');
+            return;
+        }
+        
+        const result = await response.json();
+        if (!result.success) {
+            console.error('Erro na API:', result.message);
+            return;
+        }
+        
+        const data = result.data;
+        
+        // Preencher campos do formulário
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const phoneInput = document.getElementById('phone');
+        const birthdateInput = document.getElementById('birthdate');
+        const genderInput = document.querySelector('input[name="gender"][value="' + data.gender + '"]');
+        const heightInput = document.getElementById('height');
+        const activityLevelInput = document.querySelector('input[name="activity_level"][value="' + data.activity_level + '"]');
+        const goalInput = document.querySelector('input[name="goal"][value="' + data.goal + '"]');
+        
+        if (nameInput) nameInput.value = data.name || '';
+        if (emailInput) emailInput.value = data.email || '';
+        if (phoneInput) phoneInput.value = data.phone || '';
+        if (birthdateInput) birthdateInput.value = data.birthdate || '';
+        if (genderInput) genderInput.checked = true;
+        if (heightInput) heightInput.value = data.height || '';
+        if (activityLevelInput) activityLevelInput.checked = true;
+        if (goalInput) goalInput.checked = true;
+        
+        // Atualizar foto de perfil
+        const profilePictureDisplay = document.getElementById('profile-picture-display');
+        if (profilePictureDisplay && data.profile_image_filename) {
+            profilePictureDisplay.src = `${window.BASE_APP_URL}/assets/images/users/${data.profile_image_filename}`;
+        }
+        
+        console.log('Profile data loaded successfully');
+        
+    } catch (error) {
+        console.error('Erro ao carregar dados do perfil:', error);
+    }
+}
+
 // Função para inicializar a página de edit profile
 function initEditProfilePage() {
-    // Nota: Este arquivo parece ser uma versão antiga.
-    // O código principal está inline no HTML original.
-    // Se o código inline ainda estiver sendo usado, ele precisa ser extraído para este arquivo
-    // e atualizado para usar eventos SPA.
+    // Carregar dados do perfil
+    loadProfileData();
     
     const csrfToken = document.getElementById('csrf_token_main_app')?.value;
     const editProfileForm = document.getElementById('edit-profile-form');

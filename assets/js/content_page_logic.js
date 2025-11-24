@@ -1,3 +1,14 @@
+// Função helper para escape HTML (se não estiver definida em common.js)
+if (typeof escapeHtml === 'undefined') {
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    window.escapeHtml = escapeHtml;
+}
+
 // Verificar autenticação
 if (!isAuthenticated()) {
     window.location.href = './auth/login.html';

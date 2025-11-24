@@ -1,7 +1,7 @@
 // ========================================
 // CARREGAR E RENDERIZAR RANKING
 // ========================================
-(async function initRankingPage() {
+async function initRankingPage() {
     const BASE_URL = window.BASE_APP_URL;
     let currentLimit = 15;
     let totalUsers = 0;
@@ -296,6 +296,13 @@
 // Evento quando a view Ranking entra
 window.addEventListener('spa:enter-ranking', async function() {
     await initRankingPage();
+});
+
+// Também escutar routeChanged para garantir que funciona
+window.addEventListener('routeChanged', async function(e) {
+    if (e.detail?.pageName === 'ranking') {
+        await initRankingPage();
+    }
 });
 
 // Evento quando a view Ranking sai (opcional, para cleanup)
