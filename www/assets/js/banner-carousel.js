@@ -46,8 +46,11 @@ function initLottieCarousel() {
   let isInitializing = true; // Flag para indicar inicialização
   const DURATION = 7000;
   const loadedAnimations = [];
-  // Usar BASE_APP_URL se disponível, senão usar caminho relativo
-  const baseUrl = window.BASE_APP_URL || '';
+  // Para desenvolvimento local, usar caminho relativo. Para produção, usar BASE_APP_URL
+  const isLocalDev = window.location.hostname === 'localhost' || 
+                     window.location.hostname === '127.0.0.1' ||
+                     window.location.port === '8100';
+  const baseUrl = (isLocalDev || !window.BASE_APP_URL) ? '' : window.BASE_APP_URL;
   const animationPaths = [
     `${baseUrl}/banner_receitas.json`, 
     `${baseUrl}/banner2.json`, 
