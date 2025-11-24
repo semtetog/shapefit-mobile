@@ -77,7 +77,15 @@ async function requireAuth() {
     const authenticated = await isAuthenticated();
     if (!authenticated) {
         console.log('Redirecionando para login');
-        window.location.href = './auth/login.html';
+        const targetUrl = './auth/login.html';
+        // Usar SPA se disponível, senão usar navegação tradicional
+        if (window.SPANavigator && window.SPANavigator.getPageIdFromUrl(targetUrl)) {
+            window.SPANavigator.navigate(targetUrl, true);
+        } else if (window.navigateTo) {
+            window.navigateTo(targetUrl);
+        } else {
+            window.location.href = targetUrl;
+        }
         return false;
     }
     return true;
@@ -172,7 +180,15 @@ async function authenticatedFetch(url, options = {}) {
     if (response.status === 401) {
         console.error('Token inválido (401) - redirecionando para login');
         clearAuthToken();
-        window.location.href = './auth/login.html';
+        const targetUrl = './auth/login.html';
+        // Usar SPA se disponível
+        if (window.SPANavigator && window.SPANavigator.getPageIdFromUrl(targetUrl)) {
+            window.SPANavigator.navigate(targetUrl, true);
+        } else if (window.navigateTo) {
+            window.navigateTo(targetUrl);
+        } else {
+            window.location.href = targetUrl;
+        }
         return null;
     }
     

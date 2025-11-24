@@ -309,15 +309,22 @@
 
         /**
          * Intercepta navegação programática
-         * Substitui window.location.href para páginas internas
+         * Cria função helper para substituir window.location.href
          */
         interceptProgrammaticNavigation() {
-            // Criar função helper para substituir window.location.href
-            const originalLocationHref = Object.getOwnPropertyDescriptor(window, 'location') || 
-                                        Object.getOwnPropertyDescriptor(Object.getPrototypeOf(window), 'location');
+            // Criar função helper global para navegação
+            window.navigateTo = (url) => {
+                const pageId = this.getPageIdFromUrl(url);
+                if (pageId) {
+                    this.navigate(url, true);
+                } else {
+                    window.location.href = url;
+                }
+            };
             
-            // Interceptar apenas quando necessário
-            // As páginas carregadas via fetch já terão seus links interceptados pelo handleLinkClick
+            // Interceptar window.location.href usando Proxy (se suportado)
+            // Nota: Não podemos substituir window.location diretamente por questões de segurança
+            // Mas podemos interceptar através dos event listeners e função helper
         }
     };
 

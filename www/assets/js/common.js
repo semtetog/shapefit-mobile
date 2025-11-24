@@ -45,7 +45,15 @@ async function apiRequest(url, options = {}) {
         
         if (response.status === 401) {
             clearAuthToken();
-            window.location.href = './auth/login.html';
+            const targetUrl = './auth/login.html';
+            // Usar SPA se disponível
+            if (window.SPANavigator && window.SPANavigator.getPageIdFromUrl(targetUrl)) {
+                window.SPANavigator.navigate(targetUrl, true);
+            } else if (window.navigateTo) {
+                window.navigateTo(targetUrl);
+            } else {
+                window.location.href = targetUrl;
+            }
             return null;
         }
         
