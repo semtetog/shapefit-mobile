@@ -1,7 +1,7 @@
 ﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <script src="../www-config.js"></script>
+    <script src="../www-config.js?v=2"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
@@ -109,14 +109,12 @@
     
         <script>
         // BASE_APP_URL já foi definido pelo www-config.js
-        // Se não foi definido (fallback), usar URL local
+        // Garantir que sempre use appshapefit.com para APIs
         if (!window.BASE_APP_URL) {
-            window.BASE_APP_URL = window.location.origin + window.location.pathname.split('/').slice(0, -2).join('/');
-            if (window.BASE_APP_URL.endsWith('/')) {
-                window.BASE_APP_URL = window.BASE_APP_URL.slice(0, -1);
-            }
+            window.BASE_APP_URL = 'https://appshapefit.com';
+            console.warn('[Login] BASE_APP_URL não estava definido, usando fallback:', window.BASE_APP_URL);
         }
-        console.log('BASE_APP_URL definido como:', window.BASE_APP_URL);
+        console.log('[Login] BASE_APP_URL:', window.BASE_APP_URL);
         </script>
 </head>
 <body>
@@ -193,13 +191,27 @@
             submitBtn.textContent = 'Entrando...';
             
             try {
-                const response = await fetch(`${window.BASE_APP_URL}/api/login.php`, {
+                const apiUrl = `${window.BASE_APP_URL}/api/login.php`;
+                console.log('[Login] Fazendo requisição para:', apiUrl);
+                
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({ email, password })
                 });
+                
+                console.log('[Login] Response status:', response.status);
+                console.log('[Login] Response headers:', response.headers.get('content-type'));
+                
+                // Verificar se a resposta é JSON antes de fazer parse
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    console.error('[Login] Resposta não é JSON:', text.substring(0, 500));
+                    throw new Error('Resposta do servidor não é JSON válido');
+                }
                 
                 const result = await response.json();
                 
