@@ -101,9 +101,13 @@ const bottomNavHTML = `
 // Função para renderizar o bottom nav
 function renderBottomNav() {
     // Verificar se já existe (evitar duplicatas)
-    const existingNav = document.querySelector('.bottom-nav');
-    if (existingNav) {
-        // Se já existe, apenas atualizar o item ativo
+    const existingNavs = document.querySelectorAll('.bottom-nav');
+    
+    // Se existem múltiplos, remover todos e criar um novo
+    if (existingNavs.length > 1) {
+        existingNavs.forEach(nav => nav.remove());
+    } else if (existingNavs.length === 1) {
+        // Se já existe apenas um, apenas atualizar o item ativo
         updateActiveItem();
         return;
     }

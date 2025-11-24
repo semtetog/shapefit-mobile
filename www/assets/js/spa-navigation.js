@@ -12,14 +12,39 @@
     const excludedPages = [
         '/auth/login.html',
         '/auth/register.html',
-        '/onboarding/onboarding.html',
-        '/main_app.html',  // main_app sempre recarrega completamente para evitar acúmulo de elementos
-        '/dashboard.html'  // dashboard também
+        '/onboarding/onboarding.html'
     ];
     
     // Verificar se a página atual deve ser excluída
     function shouldExcludePage(url) {
         return excludedPages.some(excluded => url.includes(excluded));
+    }
+    
+    // Limpar elementos duplicados antes de inserir novo conteúdo
+    function cleanupPageElements() {
+        // Remover bottom-navs duplicados (manter apenas um)
+        const bottomNavs = document.querySelectorAll('.bottom-nav');
+        if (bottomNavs.length > 1) {
+            // Manter apenas o primeiro, remover os outros
+            for (let i = 1; i < bottomNavs.length; i++) {
+                bottomNavs[i].remove();
+            }
+        }
+        
+        // Remover scripts duplicados do bottom-nav
+        const bottomNavScripts = document.querySelectorAll('script[src*="bottom-nav.js"]');
+        if (bottomNavScripts.length > 1) {
+            for (let i = 1; i < bottomNavScripts.length; i++) {
+                bottomNavScripts[i].remove();
+            }
+        }
+        
+        // Limpar animações Lottie antigas
+        const lottieContainers = document.querySelectorAll('.lottie-animation-container');
+        lottieContainers.forEach(container => {
+            // Limpar conteúdo mas manter o container
+            container.innerHTML = '';
+        });
     }
     
     // Extrair conteúdo do HTML recebido
@@ -156,18 +181,13 @@
     async function navigateToPage(url) {
         if (isNavigating) return;
         
-        // Verificar se é main_app ou dashboard - sempre recarregar completamente
-        const pageName = url.split('/').pop().split('?')[0];
-        if (pageName === 'main_app.html' || pageName === 'dashboard.html') {
-            console.log('[SPA] main_app/dashboard detectado - fazendo reload completo para evitar acúmulo de elementos');
-            window.location.href = url;
-            return;
-        }
-        
         if (shouldExcludePage(url)) {
             window.location.href = url;
             return;
         }
+        
+        // Limpar elementos duplicados antes de navegar
+        cleanupPageElements();
         
         isNavigating = true;
         
@@ -199,8 +219,14 @@
             
             await new Promise(resolve => setTimeout(resolve, 100));
             
+            // Limpar elementos duplicados ANTES de substituir conteúdo
+            cleanupPageElements();
+            
             // Substituir conteúdo
             currentContainer.innerHTML = content;
+            
+            // Limpar novamente após inserir conteúdo (pode ter criado duplicatas)
+            cleanupPageElements();
             
             // Executar scripts inline MAS apenas uma vez (usando hash)
             // Isso garante que funções sejam definidas, mas evita re-declarações
