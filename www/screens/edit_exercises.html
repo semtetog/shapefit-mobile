@@ -1,0 +1,102 @@
+<div class="app-container">
+    <header class="header-nav">
+        <div class="header-left">
+            <button type="button" class="back-button" id="back-btn">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+        </div>
+    </header>
+
+    <div class="step-content">
+        <div id="error-message" class="error-message" style="display: none;"></div>
+
+        <div class="step-main">
+            <div>
+                <h1 class="page-title">Quais exercícios você pratica?</h1>
+                <p class="page-subtitle">Pode escolher mais de um.</p>
+            </div>
+
+            <div id="exercise-options-wrapper">
+                <div class="selectable-options-grid">
+                    <input type="checkbox" id="ex1" name="exercise_types[]" value="Musculação">
+                    <label for="ex1" class="option-card small"><span>Musculação</span></label>
+
+                    <input type="checkbox" id="ex2" name="exercise_types[]" value="Corrida">
+                    <label for="ex2" class="option-card small"><span>Corrida</span></label>
+
+                    <input type="checkbox" id="ex3" name="exercise_types[]" value="Crossfit">
+                    <label for="ex3" class="option-card small"><span>Crossfit</span></label>
+
+                    <input type="checkbox" id="ex4" name="exercise_types[]" value="Natação">
+                    <label for="ex4" class="option-card small"><span>Natação</span></label>
+
+                    <input type="checkbox" id="ex5" name="exercise_types[]" value="Yoga">
+                    <label for="ex5" class="option-card small"><span>Yoga</span></label>
+
+                    <input type="checkbox" id="ex6" name="exercise_types[]" value="Futebol">
+                    <label for="ex6" class="option-card small"><span>Futebol</span></label>
+
+                    <button type="button" class="option-button small" id="other-activity-btn">
+                        <span>Outro</span>
+                    </button>
+
+                    <input type="checkbox" id="ex-none" name="exercise_type_none">
+                    <label for="ex-none" class="option-card small option-none"><span>Nenhum</span></label>
+                </div>
+            </div>
+
+            <div id="frequency-wrapper" style="margin-top: 40px; display: none;">
+                <div>
+                    <h1 class="page-title">Com que frequência você treina?</h1>
+                    <p class="page-subtitle">Conte apenas os dias em que você realmente se movimenta.</p>
+                </div>
+                <div class="selectable-options">
+                    <input type="radio" id="freq1" name="exercise_frequency" value="1_2x_week">
+                    <label for="freq1" class="option-card small"><span>1 a 2 vezes por semana</span></label>
+
+                    <input type="radio" id="freq2" name="exercise_frequency" value="3_4x_week">
+                    <label for="freq2" class="option-card small"><span>3 a 4 vezes por semana</span></label>
+
+                    <input type="radio" id="freq3" name="exercise_frequency" value="5_6x_week">
+                    <label for="freq3" class="option-card small"><span>5 a 6 vezes por semana</span></label>
+
+                    <input type="radio" id="freq4" name="exercise_frequency" value="6_7x_week">
+                    <label for="freq4" class="option-card small"><span>6 a 7 vezes por semana</span></label>
+
+                    <input type="radio" id="freq5" name="exercise_frequency" value="7plus_week">
+                    <label for="freq5" class="option-card small"><span>Mais de 7 vezes por semana</span></label>
+                </div>
+            </div>
+        </div>
+        <div class="step-helper">Se você não pratica exercícios hoje, marque "Nenhum".</div>
+    </div>
+
+    <div class="footer-nav">
+        <button type="button" id="save-btn" class="btn-primary">Salvar</button>
+    </div>
+</div>
+
+<!-- Modal de Atividades Customizadas -->
+<div class="modal-overlay" id="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Adicionar Atividade</h2>
+            <button type="button" class="modal-close-btn" id="close-modal-btn">
+                <i class="fa-solid fa-times" id="close-modal-icon"></i>
+            </button>
+        </div>
+        <div class="modal-tags-container" id="custom-activities-list"></div>
+        <div class="modal-input-section">
+            <div class="form-control-wrapper">
+                <input type="text" class="form-control" id="custom-activity-input" placeholder="Ex: Pilates, Dança, Ciclismo">
+            </div>
+            <button type="button" class="modal-add-btn" id="add-activity-btn">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-primary" id="close-modal-footer-btn">Fechar</button>
+        </div>
+    </div>
+</div>
+

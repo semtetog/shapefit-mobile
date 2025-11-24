@@ -172,21 +172,22 @@ class SPARouter {
             this.currentView = null;
 
             // Construir URL completa do fragmento
-            // Para desenvolvimento local (npm run serve), usar caminho relativo
+            // Para desenvolvimento local (npm run serve), usar caminho relativo a partir de www/
             // Para produção, usar BASE_APP_URL se definido
             let fullUrl;
             if (fragment.startsWith('http')) {
                 fullUrl = `${fragment}${queryString}${hash}`;
             } else {
-                // Em desenvolvimento local, usar caminho relativo
+                // Em desenvolvimento local, usar caminho relativo a partir da raiz do servidor (www/)
                 // Em produção, usar BASE_APP_URL se disponível
                 const isLocalDev = window.location.hostname === 'localhost' || 
                                    window.location.hostname === '127.0.0.1' ||
                                    window.location.port === '8100';
                 
                 if (isLocalDev || !window.BASE_APP_URL) {
-                    // Desenvolvimento local - caminho relativo
-                    fullUrl = `../${fragment}${queryString}${hash}`;
+                    // Desenvolvimento local - caminho relativo a partir de www/
+                    // screens/ já está dentro de www/, então usar ./screens/
+                    fullUrl = `./${fragment}${queryString}${hash}`;
                 } else {
                     // Produção - usar BASE_APP_URL
                     fullUrl = `${window.BASE_APP_URL}/${fragment}${queryString}${hash}`;
@@ -264,7 +265,7 @@ class SPARouter {
         const cssPath = cssMap[pageName];
         if (!cssPath) return;
 
-        // Para desenvolvimento local, usar caminho relativo
+        // Para desenvolvimento local, usar caminho relativo a partir de www/
         const isLocalDev = window.location.hostname === 'localhost' || 
                            window.location.hostname === '127.0.0.1' ||
                            window.location.port === '8100';
@@ -273,7 +274,8 @@ class SPARouter {
         if (cssPath.startsWith('http')) {
             fullCssPath = cssPath;
         } else if (isLocalDev || !window.BASE_APP_URL) {
-            fullCssPath = `../${cssPath}`;
+            // assets/ está dentro de www/, então usar ./assets/
+            fullCssPath = `./${cssPath}`;
         } else {
             fullCssPath = `${window.BASE_APP_URL}/${cssPath}`;
         }
@@ -328,7 +330,7 @@ class SPARouter {
         const jsPath = jsMap[pageName];
         if (!jsPath) return;
 
-        // Para desenvolvimento local, usar caminho relativo
+        // Para desenvolvimento local, usar caminho relativo a partir de www/
         const isLocalDev = window.location.hostname === 'localhost' || 
                            window.location.hostname === '127.0.0.1' ||
                            window.location.port === '8100';
@@ -337,7 +339,8 @@ class SPARouter {
         if (jsPath.startsWith('http')) {
             fullJsPath = jsPath;
         } else if (isLocalDev || !window.BASE_APP_URL) {
-            fullJsPath = `../${jsPath}`;
+            // assets/ está dentro de www/, então usar ./assets/
+            fullJsPath = `./${jsPath}`;
         } else {
             fullJsPath = `${window.BASE_APP_URL}/${jsPath}`;
         }

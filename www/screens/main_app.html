@@ -1,0 +1,297 @@
+<div class="app-container" id="dashboard-container" style="display: none;">
+    <header class="header">
+        <div class="header-actions">
+            <a href="./points_history.html" class="points-counter-badge"><i class="fas fa-star"></i><span id="user-points-display">0</span></a>
+            <a href="./edit_profile.html" class="profile-icon" id="profile-icon-link">
+                <i class="fas fa-user"></i>
+            </a>
+        </div>
+    </header>
+
+    <section class="main-carousel">
+        <!-- Trilho móvel que contém todos os slides -->
+        <div class="carousel-track">
+            <div class="lottie-slide" data-link="./explore_recipes.html">
+                <div class="lottie-animation-container"></div>
+            </div>
+            <div class="lottie-slide" data-link="#">
+                <div class="lottie-animation-container"></div>
+            </div>
+            <div class="lottie-slide" data-link="./routine.html">
+                <div class="lottie-animation-container"></div>
+            </div>
+            <div class="lottie-slide" data-link="./progress.html">
+                <div class="lottie-animation-container"></div>
+            </div>
+        </div>
+        
+        <div class="pagination-container"></div>
+    </section>
+
+    <section class="dashboard-grid">
+        <div class="glass-card card-ranking" id="ranking-card" style="display: none;">
+            <a href="./ranking.html" class="ranking-link">
+                <div class="player-info left">
+                    <div class="player-avatar" id="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <span>Você</span>
+                </div>
+                <div class="clash-center">
+                    <span class="clash-title" id="clash-title">Disputa de Pontos</span>
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill" id="ranking-progress-bar" style="width: 0%;"></div>
+                    </div>
+                    <span class="rank-position">Sua Posição: <strong id="my-rank">-</strong></span>
+                </div>
+                <div class="player-info right" id="opponent-info">
+                    <div class="player-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <span id="opponent-name">-</span>
+                </div>
+            </a>
+        </div>
+        
+        <div class="glass-card card-weight" id="weight-card">
+            <span>Carregando...</span>
+        </div>
+
+        <div class="glass-card card-hydration" id="water-card">
+            <div class="hydration-content">
+                <div class="hydration-info">
+                    <h3>Hidratação</h3>
+                    <div class="water-status" id="water-status-display">
+                        <span id="water-amount-display">0</span> / <span id="water-goal-display">0 ml</span>
+                    </div>
+                    <div class="water-controls">
+                        <div class="water-input-row">
+                            <button type="button" id="water-remove-btn" class="circle-btn" aria-label="Remover">−</button>
+                            <button type="button" id="water-add-btn" class="circle-btn accent" aria-label="Adicionar">+</button>
+                        </div>
+                        <div class="inline-input-row">
+                            <input type="number" id="water-amount-input" class="water-number-input" min="0" step="10" value="" placeholder="EX: 250" aria-label="Quantidade consumida">
+                            <div class="water-select-wrapper">
+                                <select id="water-unit-select" class="water-select" aria-label="Unidade">
+                                    <option value="ml" selected>ML</option>
+                                    <option value="l">L</option>
+                                </select>
+                                <i class="fas fa-chevron-down water-select-arrow"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="water-drop-container-svg">
+                    <svg id="animated-water-drop" width="160" height="160" viewBox="0 0 275.785 275.785" xml:space="preserve">
+                        <defs>
+                            <clipPath id="drop-mask">
+                                <path d="M137.893,9.223 c14.177,18.895,91.267,123.692,91.267,169.701c0,50.31-40.952,91.255-91.267,91.255c-50.324,0-91.268-40.945-91.268-91.255 C46.625,132.915,123.712,28.118,137.893,9.223z"/>
+                            </clipPath>
+                            <linearGradient id="water-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#4fc3f7" />
+                                <stop offset="80%" stop-color="#1976d2" />
+                            </linearGradient>
+                            <filter id="water-glow" x="-30%" y="-30%" width="160%" height="160%">
+                                <feGaussianBlur stdDeviation="4" result="blur" />
+                                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                            </filter>
+                        </defs>
+                        <g clip-path="url(#drop-mask)">
+                            <g id="water-level-group" transform="translate(0, 275.785)" filter="url(#water-glow)">
+                                <path id="wave1" d="M -400 10 C -300 15, -300 5, -200 10 C -100 15, -100 5, 0 10 C 100 15, 100 5, 200 10 C 300 15, 300 5, 400 10 L 400 280 H -400 Z" fill="url(#water-gradient)" opacity="0.9"/>
+                                <path id="wave2" d="M -400 5 C -300 10, -300 0, -200 5 C -100 10, -100 0, 0 5 C 100 10, 100 0, 200 5 C 300 10, 300 0, 400 5 L 400 280 H -400 Z" fill="url(#water-gradient)" opacity="0.7"/>
+                            </g>
+                        </g>
+                        <path d="M137.893,9.223 c14.177,18.895,91.267,123.692,91.267,169.701c0,50.31-40.952,91.255-91.267,91.255c-50.324,0-91.268-40.945-91.268-91.255 C46.625,132.915,123.712,28.118,137.893,9.223z" stroke="rgba(255, 255, 255, 0.4)" stroke-width="8" fill="none"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+        
+        <div class="glass-card card-consumption">
+            <div class="card-header">
+                <h3>Seu Consumo Hoje</h3>
+                <a href="./dashboard.html" class="view-all-link">Minha Meta</a>
+            </div>
+            <div class="consumption-content">
+                <!-- Círculo de Calorias (Esquerda) -->
+                <div class="consumption-calories">
+                    <div class="consumption-calories-circle" id="kcal-circle">
+                        <svg viewBox="0 0 40 40" class="circular-chart" preserveAspectRatio="xMidYMid meet" style="overflow: visible;">
+                            <defs>
+                                <linearGradient id="orange-gradient-consumption" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stop-color="#FFAE00" />
+                                    <stop offset="100%" stop-color="#F83600" />
+                                </linearGradient>
+                            </defs>
+                            <circle class="circle-bg" cx="20" cy="20" r="15.9155" />
+                            <circle class="circle" cx="20" cy="20" r="15.9155" stroke="url(#orange-gradient-consumption)" />
+                        </svg>
+                        <div class="circle-content">
+                            <div class="emoji">🔥</div>
+                            <div class="calories-value" id="kcal-value-display">0</div>
+                            <div class="calories-label">kcal</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Macros (Direita) - Layout Horizontal -->
+                <div class="consumption-macros">
+                    <!-- Carboidratos -->
+                    <div class="consumption-macro-item carbs">
+                        <div class="macro-emoji">🍞</div>
+                        <div class="macro-progress-bar">
+                            <div class="macro-progress-fill" id="carbs-progress-bar" style="width: 0%"></div>
+                        </div>
+                        <div class="macro-name">Carbo</div>
+                        <div class="macro-value">
+                            <span id="carbs-value-display">0</span>g / <span class="macro-goal"><span id="carbs-goal-display">0</span>g</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Proteínas -->
+                    <div class="consumption-macro-item protein">
+                        <div class="macro-emoji">🥩</div>
+                        <div class="macro-progress-bar">
+                            <div class="macro-progress-fill" id="protein-progress-bar" style="width: 0%"></div>
+                        </div>
+                        <div class="macro-name">Proteína</div>
+                        <div class="macro-value">
+                            <span id="protein-value-display">0</span>g / <span class="macro-goal"><span id="protein-goal-display">0</span>g</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Gorduras -->
+                    <div class="consumption-macro-item fat">
+                        <div class="macro-emoji">🧈</div>
+                        <div class="macro-progress-bar">
+                            <div class="macro-progress-fill" id="fat-progress-bar" style="width: 0%"></div>
+                        </div>
+                        <div class="macro-name">Gordura</div>
+                        <div class="macro-value">
+                            <span id="fat-value-display">0</span>g / <span class="macro-goal"><span id="fat-goal-display">0</span>g</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card card-missions" id="missions-card" style="display: none;">
+            <div class="card-header">
+                <h3>Jornada Diária</h3>
+                <a href="./routine.html" class="view-all-link">Ver mais</a>
+            </div>
+            <div class="missions-progress">
+                <div class="missions-progress-info">
+                    <span>Progresso</span>
+                    <span id="missions-progress-text">0 de 0</span>
+                </div>
+                <div class="progress-bar-missions"><div class="progress-bar-missions-fill" id="missions-progress-bar" style="width: 0%;"></div></div>
+            </div>
+            
+            <div class="missions-carousel-container" id="missions-carousel">
+                <!-- Missões serão renderizadas via JavaScript -->
+            </div>
+        </div>
+        
+        <!-- Modal de Sono (inicialmente oculto) -->
+        <div class="modal-overlay" id="sleep-modal-main">
+            <div class="modal-content glass-card">
+                <h2>😴 Registrar Sono</h2>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="sleep-time-main">Hora que deitou:</label>
+                        <input type="time" id="sleep-time-main" class="time-input" value="22:00">
+                    </div>
+                    <div class="form-group">
+                        <label for="wake-time-main">Hora que acordou:</label>
+                        <input type="time" id="wake-time-main" class="time-input" value="07:00">
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="primary-button secondary-button" data-action="close-modal">Cancelar</button>
+                    <button type="button" class="primary-button" id="confirm-sleep-main">Registrar Sono</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="glass-card card-meal-cta" id="meal-cta-card">
+            <i class="fas fa-utensils"></i>
+            <h2>Carregando...</h2>
+            <p>O que você vai comer agora?</p>
+            <a href="#" class="primary-button" id="add-meal-btn">Adicionar Refeição</a>
+        </div>
+        
+        <div class="card-suggestions" id="suggestions-card" style="display: none;">
+            <div class="card-header">
+                <h3 id="suggestions-title">Sugestões</h3>
+                <a href="#" class="view-all-link" id="suggestions-view-all">Ver mais</a>
+            </div>
+            <div class="carousel-wrapper">
+                <div class="suggestions-carousel" id="suggestions-carousel">
+                    <!-- Receitas serão renderizadas via JavaScript -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Card de Grupos de Desafio -->
+        <div class="glass-card card-challenges" id="challenges-card" style="display: none;">
+            <div class="card-header">
+                <h3><i class="fas fa-trophy"></i> Grupos de Desafio</h3>
+                <a href="./challenges.html" class="view-all-link" id="challenges-view-all" style="display: none;">Ver todos</a>
+            </div>
+            
+            <div class="challenges-empty-state" id="challenges-empty-state" style="display: none;">
+                <div class="empty-state-icon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <h4>Nenhum grupo de desafio</h4>
+                <p>Você não foi adicionado(a) em nenhum grupo de desafios. Consulte seu nutricionista para mais informações.</p>
+            </div>
+            
+            <div class="challenges-list" id="challenges-list">
+                <!-- Desafios serão renderizados via JavaScript -->
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Modal para atualizar peso -->
+<div class="modal-overlay" id="edit-weight-modal">
+    <div class="modal-content glass-card">
+        <h2>Atualizar seu Peso</h2>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="new-weight-input">Novo peso (kg)</label>
+                <input type="number" id="new-weight-input" class="form-input" placeholder="Ex: 75.5" step="0.1" value="">
+                <small id="weight-error-message" class="error-message" style="display: none;"></small>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="primary-button secondary-button" data-action="close-modal">Cancelar</button>
+                <button id="save-weight-btn" class="primary-button">Salvar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para duração de exercício -->
+<div class="modal-overlay" id="exercise-duration-modal">
+    <div class="modal-content glass-card">
+        <h2>⏱️ Duração do Exercício</h2>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="exercise-duration-input">Quanto tempo durou o exercício?</label>
+                <div class="duration-input-group">
+                    <input type="number" id="exercise-duration-input" class="form-input" placeholder="Ex: 45" min="15" max="300" value="60">
+                    <span class="duration-unit">minutos</span>
+                </div>
+                <small class="form-help">Entre 15 e 300 minutos</small>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="primary-button secondary-button" data-action="close-modal">Cancelar</button>
+                <button type="button" class="primary-button" id="confirm-exercise-duration">Confirmar</button>
+            </div>
+        </div>
+    </div>
+</div>
+

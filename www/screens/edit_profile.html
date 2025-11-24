@@ -1,0 +1,213 @@
+<div class="app-container">
+    <section class="edit-profile-grid">
+        <div class="profile-header">
+            <a href="./more_options.html" class="back-button">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <h1 class="profile-title">
+                <i class="fas fa-user-edit"></i>
+                <span>Editar Perfil</span>
+            </h1>
+        </div>
+
+        <form id="edit-profile-form">
+            <!-- Card de foto de perfil -->
+            <div class="profile-photo-card">
+                <div class="profile-photo-wrapper">
+                    <div id="profile-photo-display" class="profile-photo profile-icon-placeholder">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <input type="file" id="profile-photo-input" accept="image/*" style="display: none;">
+                    <input type="hidden" id="remove-photo-flag" value="0">
+                </div>
+                <p class="photo-upload-text">Clique na foto para alterar</p>
+                <button type="button" id="remove-photo-btn" class="remove-photo-btn" style="display: none;">
+                    <i class="fas fa-trash"></i>
+                    Remover Foto
+                </button>
+            </div>
+
+            <!-- Informações pessoais -->
+            <div class="info-card">
+                <div class="card-header">
+                    <i class="fas fa-user card-icon"></i>
+                    <h3 class="card-title">Informações Pessoais</h3>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="full_name" class="form-label">Nome Completo</label>
+                        <input type="text" id="full_name" name="full_name" class="form-input" required placeholder="Carregando...">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">E-mail</label>
+                        <div class="form-input-readonly" id="email-display">Carregando...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informações físicas -->
+            <div class="info-card">
+                <div class="card-header">
+                    <i class="fas fa-weight card-icon"></i>
+                    <h3 class="card-title">Informações Físicas</h3>
+                </div>
+                <div class="form-grid">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="dob" class="form-label">Data de Nascimento</label>
+                            <input type="date" id="dob" name="dob" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="gender" class="form-label">Gênero</label>
+                            <div class="select-wrapper">
+                                <select id="gender" name="gender" class="form-select" required>
+                                    <option value="male">Masculino</option>
+                                    <option value="female">Feminino</option>
+                                    <option value="other">Outro</option>
+                                </select>
+                                <i class="fas fa-chevron-down select-arrow"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="height_cm" class="form-label">Altura (cm)</label>
+                            <input type="number" id="height_cm" name="height_cm" class="form-input" min="100" max="250" step="0.1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="weight_kg" class="form-label">Peso Atual (kg)</label>
+                            <input type="number" id="weight_kg" name="weight_kg" class="form-input" min="30" max="300" step="0.1" required>
+                            <div id="weight-lock-info" class="weight-lock-info" style="display: none;">
+                                <i class="fas fa-clock"></i>
+                                <span id="weight-lock-text"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="objective" class="form-label">Objetivo Principal</label>
+                        <div class="select-wrapper">
+                            <select id="objective" name="objective" class="form-select" required>
+                                <option value="lose_fat">Emagrecimento</option>
+                                <option value="maintain_weight">Manter Peso</option>
+                                <option value="gain_muscle">Hipertrofia</option>
+                            </select>
+                            <i class="fas fa-chevron-down select-arrow"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estilo de vida -->
+            <div class="info-card">
+                <div class="card-header">
+                    <i class="fas fa-running card-icon"></i>
+                    <h3 class="card-title">Estilo de Vida</h3>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Exercícios Praticados</label>
+                        <a href="edit_exercises.html" class="restrictions-button">
+                            <span id="exercises-display">Nenhum exercício selecionado</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                        <input type="hidden" id="exercise_type" name="exercise_type" value="">
+                    </div>
+                    <div class="form-group">
+                        <label for="exercise_frequency" class="form-label">Frequência de Exercícios</label>
+                        <div class="select-wrapper">
+                            <select id="exercise_frequency" name="exercise_frequency" class="form-select">
+                                <option value="sedentary">Sedentário</option>
+                                <option value="1_2x_week">1 a 2x/semana</option>
+                                <option value="3_4x_week">3 a 4x/semana</option>
+                                <option value="5_6x_week">5 a 6x/semana</option>
+                                <option value="6_7x_week">6 a 7x/semana</option>
+                                <option value="7plus_week">+ de 7x/semana</option>
+                            </select>
+                            <i class="fas fa-chevron-down select-arrow"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Restrições alimentares -->
+            <div class="info-card">
+                <div class="card-header">
+                    <i class="fas fa-ban card-icon"></i>
+                    <h3 class="card-title">Restrições Alimentares</h3>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Selecione suas restrições (opcional)</label>
+                    <button type="button" id="open-restrictions-modal" class="restrictions-button">
+                        <span id="restrictions-selected-count">Nenhuma restrição</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <input type="hidden" id="restrictions-hidden" name="restrictions" value="[]">
+                </div>
+            </div>
+
+            <!-- Status de upload -->
+            <div id="upload-status" class="upload-status" style="display: none;"></div>
+
+            <!-- Botão de salvar -->
+            <button type="submit" class="save-button" id="save-btn">
+                <i class="fas fa-save"></i>
+                Salvar Alterações
+            </button>
+        </form>
+    </section>
+</div>
+
+<!-- Modal de Restrições Alimentares -->
+<div id="restrictions-modal" class="modal-overlay">
+    <div class="restrictions-modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Restrições Alimentares</h3>
+            <button type="button" class="modal-close" id="close-restrictions-modal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="restrictions-grid" id="modal-restrictions-grid">
+            <!-- Restrições serão carregadas dinamicamente -->
+        </div>
+
+        <div class="modal-actions">
+            <button type="button" class="modal-btn modal-btn-secondary" id="cancel-restrictions">
+                Cancelar
+            </button>
+            <button type="button" class="modal-btn modal-btn-primary" id="save-restrictions">
+                Salvar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Crop de Foto -->
+<div id="crop-modal" class="modal-overlay">
+    <div class="crop-modal">
+        <div class="modal-header">
+            <h3 class="modal-title">Ajustar Foto</h3>
+            <button type="button" class="modal-close" id="close-crop-modal">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="crop-container">
+            <img id="crop-background" class="crop-background" src="" alt="Background">
+            <img id="crop-image" class="crop-image" src="" alt="Imagem para cortar">
+            <div class="crop-overlay">
+                <div class="crop-circle"></div>
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button type="button" class="modal-btn modal-btn-secondary" id="cancel-crop">
+                Cancelar
+            </button>
+            <button type="button" class="modal-btn modal-btn-primary" id="save-crop">
+                Salvar
+            </button>
+        </div>
+    </div>
+</div>
+
