@@ -245,25 +245,93 @@ class SPARouter {
     }
 
     async loadPageCSS(pageName) {
-        // Mapear nomes de páginas para arquivos CSS
+        // Mapear nomes de páginas para arquivos CSS (pode ter múltiplos CSS por página)
         const cssMap = {
-            'dashboard': 'assets/css/dashboard_page.css',
-            'diary': 'assets/css/diary_page_specific.css',
-            'progress': 'assets/css/progress_page_specific.css',
-            'routine': 'assets/css/routine_page_specific.css',
-            'more_options': 'assets/css/more_options_page_specific.css',
-            'points_history': 'assets/css/points_history_page_specific.css',
-            'ranking': 'assets/css/ranking_page_specific.css',
-            'content': 'assets/css/content_page_specific.css',
-            'scan_barcode': 'assets/css/scan_barcode_page_specific.css',
-            'edit_profile': 'assets/css/edit_profile_page_specific.css',
-            'login': 'assets/css/auth_login_page.css',
-            'register': 'assets/css/auth_register_page.css'
-            // Adicionar mais conforme necessário
+            'main_app': [
+                'assets/css/main_app_specific.css',
+                'assets/css/main_app_glass_theme.css',
+                'assets/css/pages/_dashboard.css'
+            ],
+            'dashboard': [
+                'assets/css/dashboard_page.css',
+                'assets/css/pages/_dashboard.css'
+            ],
+            'diary': [
+                'assets/css/diary_page_specific.css',
+                'assets/css/diary.css'
+            ],
+            'progress': [
+                'assets/css/progress_page_specific.css',
+                'assets/css/progress_page.css'
+            ],
+            'routine': [
+                'assets/css/routine_page_specific.css',
+                'assets/css/routine_page.css'
+            ],
+            'more_options': [
+                'assets/css/more_options_page_specific.css',
+                'assets/css/more_options.css'
+            ],
+            'points_history': [
+                'assets/css/points_history_page_specific.css',
+                'assets/css/points_history.css'
+            ],
+            'ranking': [
+                'assets/css/ranking_page_specific.css',
+                'assets/css/ranking_page.css'
+            ],
+            'content': [
+                'assets/css/content_page_specific.css'
+            ],
+            'scan_barcode': [
+                'assets/css/scan_barcode_page_specific.css'
+            ],
+            'edit_profile': [
+                'assets/css/edit_profile_page_specific.css',
+                'assets/css/edit_profile.css',
+                'assets/css/profile_overview.css'
+            ],
+            'add_food_to_diary': [
+                'assets/css/add-food-page.css'
+            ],
+            'explore_recipes': [
+                'assets/css/recipe_list_specific.css'
+            ],
+            'favorite_recipes': [
+                'assets/css/recipe_list_specific.css'
+            ],
+            'view_recipe': [
+                'assets/css/recipe_detail_page.css'
+            ],
+            'create_custom_food': [
+                'assets/css/add-food-page.css'
+            ],
+            'edit_meal': [
+                'assets/css/add-food-page.css'
+            ],
+            'measurements_progress': [
+                'assets/css/measurements.css'
+            ],
+            'login': [
+                'assets/css/auth_login_page.css'
+            ],
+            'register': [
+                'assets/css/auth_register_page.css'
+            ],
+            'onboarding': [
+                'assets/css/pages/_onboarding.css'
+            ]
         };
 
-        const cssPath = cssMap[pageName];
-        if (!cssPath) return;
+        const cssPaths = cssMap[pageName];
+        if (!cssPaths || cssPaths.length === 0) return;
+        
+        // Carregar todos os CSS da página
+        const loadPromises = cssPaths.map(cssPath => this.loadSingleCSS(cssPath));
+        await Promise.all(loadPromises);
+    }
+    
+    async loadSingleCSS(cssPath) {
 
         // Para desenvolvimento local, usar caminho relativo a partir de www/
         const isLocalDev = window.location.hostname === 'localhost' || 
@@ -282,7 +350,7 @@ class SPARouter {
 
         // Verificar se já foi carregado
         if (this.loadedStyles.has(fullCssPath)) {
-            return;
+            return Promise.resolve();
         }
 
         // Carregar CSS dinamicamente
@@ -294,7 +362,10 @@ class SPARouter {
                 this.loadedStyles.add(fullCssPath);
                 resolve();
             };
-            link.onerror = reject;
+            link.onerror = () => {
+                console.warn(`[Router] CSS não encontrado: ${fullCssPath}`);
+                resolve(); // Resolver mesmo com erro para não bloquear
+            };
             document.head.appendChild(link);
         });
     }
