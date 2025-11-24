@@ -433,44 +433,15 @@
                 const pageId = self.getPageIdFromUrl(url);
                 if (pageId) {
                     self.navigate(url, true);
-                } else {
-                    window.location.href = url;
                 }
             };
             
             window.goToPage = window.navigateTo;
             
-            // Interceptar window.location.href usando Proxy (quando possível)
-            // Criar um objeto proxy para location que intercepta assignments
-            try {
-                const originalLocation = window.location;
-                
-                // Interceptar location.href = "..." via Object.defineProperty
-                let locationHrefDescriptor = Object.getOwnPropertyDescriptor(window, 'location');
-                if (!locationHrefDescriptor) {
-                    locationHrefDescriptor = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(window), 'location');
-                }
-                
-                // Criar getter/setter customizado para location.href
-                Object.defineProperty(window, '_location', {
-                    value: originalLocation,
-                    writable: false,
-                    configurable: false
-                });
-                
-                // Interceptar assignments diretos a location
-                // Nota: Não podemos substituir window.location completamente por questões de segurança
-                // Mas podemos interceptar através de MutationObserver e event listeners
-            } catch (e) {
-                console.warn('Não foi possível interceptar window.location completamente:', e);
-            }
-            
             // Interceptar chamadas comuns de navegação via função wrapper
             window.redirectTo = function(url) {
                 if (window.SPANavigator) {
                     window.SPANavigator.navigate(url, true);
-                } else {
-                    window.location.href = url;
                 }
             };
             
