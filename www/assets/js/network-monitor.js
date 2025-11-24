@@ -332,15 +332,7 @@
         if (connectionRestored) {
             isOnline = true;
             hideOfflineModal();
-            // Usar SPA para atualizar página atual ao invés de recarregar
-            if (window.SPANavigator && window.SPANavigator.currentPage) {
-                const currentUrl = window.location.pathname.split('/').pop() || 'main_app.html';
-                window.dispatchEvent(new CustomEvent('spa:page-reload', {
-                    detail: { pageId: window.SPANavigator.currentPage, url: currentUrl }
-                }));
-            } else {
-                window.location.reload();
-            }
+            window.location.reload();
         } else {
             // Ainda offline - remover loading e mostrar botão novamente
             retryBtn.classList.remove('loading');
@@ -407,15 +399,7 @@
         window.addEventListener('online', function() {
             console.log('[Network Monitor] Conexão restaurada');
             hideOfflineModal();
-            // Usar SPA para atualizar página atual ao invés de recarregar
-            if (window.SPANavigator && window.SPANavigator.currentPage) {
-                const currentUrl = window.location.pathname.split('/').pop() || 'main_app.html';
-                window.dispatchEvent(new CustomEvent('spa:page-reload', {
-                    detail: { pageId: window.SPANavigator.currentPage, url: currentUrl }
-                }));
-            } else {
-                window.location.reload();
-            }
+            window.location.reload();
         });
         
         window.addEventListener('offline', function() {
@@ -429,15 +413,7 @@
                 console.log('[Network Monitor] Status mudou:', status);
                 if (status.connected) {
                     hideOfflineModal();
-                    // Usar SPA para atualizar página atual ao invés de recarregar
-            if (window.SPANavigator && window.SPANavigator.currentPage) {
-                const currentUrl = window.location.pathname.split('/').pop() || 'main_app.html';
-                window.dispatchEvent(new CustomEvent('spa:page-reload', {
-                    detail: { pageId: window.SPANavigator.currentPage, url: currentUrl }
-                }));
-            } else {
-                window.location.reload();
-            }
+                    window.location.reload();
                 } else {
                     showOfflineModal();
                 }

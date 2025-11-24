@@ -58,6 +58,7 @@
     <!-- Auth Script -->
     <script src="./assets/js/auth.js"></script>
     <script src="./assets/js/common.js"></script>
+    <script src="./assets/js/page-transitions.js"></script>
     
     <style>
         body {
@@ -350,8 +351,7 @@
     <script>
         // Verificar autenticação
         if (!isAuthenticated()) {
-            const targetUrl = './auth/login.html';
-            window.location.href = targetUrl;
+            window.location.href = './auth/login.html';
         }
         
         const contentContainer = document.getElementById('content-container');
@@ -396,8 +396,7 @@
                 
                 if (!result.success) {
                     if (result.message && result.message.includes('Onboarding')) {
-                        const targetUrl = './onboarding/onboarding.html';
-                        window.location.href = targetUrl;
+                        window.location.href = './onboarding/onboarding.html';
                         return;
                     }
                     throw new Error(result.message || 'Erro ao carregar conteúdos');

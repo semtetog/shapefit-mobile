@@ -286,11 +286,7 @@ function initLottieCarousel() {
 
     const link = slides[currentIndex].dataset.link;
     if (link && link !== '#') {
-      if (window.SPANavigator) {
-          window.SPANavigator.navigate(link, true);
-      } else if (window.navigateTo) {
-          window.navigateTo(link);
-      }
+      window.location.href = link;
     }
   });
 

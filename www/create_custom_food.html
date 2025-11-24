@@ -442,8 +442,7 @@ body {
                     if (data.success) {
                         showAlert('success', data.message || 'Alimento salvo com sucesso!');
                         setTimeout(() => {
-                            const targetUrl = './add_food_to_diary.html';
-                            window.location.href = targetUrl;
+                            window.location.href = './add_food_to_diary.html';
                         }, 1500);
                     } else {
                         showAlert('danger', data.message || 'Erro ao salvar o alimento.');

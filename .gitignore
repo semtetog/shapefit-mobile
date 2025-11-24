@@ -54,7 +54,4 @@ npm-debug.log*
 *.apk
 *.aab
 
-# Local dev / playground
-gemini/
-
 

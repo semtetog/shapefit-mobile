@@ -210,12 +210,14 @@
                     console.log('Token salvo:', getAuthToken() ? 'SIM' : 'NÃO');
                     
                     // Redirect based on onboarding status
-                    // Usar navegação SPA quando possível para evitar tela preta
-                    const targetUrl = (result.user && result.user.onboarding_complete)
-                        ? '../main_app.html'
-                        : '../onboarding/onboarding.html';
-                    console.log('Redirecionando para', targetUrl);
-                    window.location.href = targetUrl;
+                    // Usar caminhos relativos para manter dentro do app
+                    if (result.user && result.user.onboarding_complete) {
+                        console.log('Redirecionando para main_app.html');
+                        window.location.href = '../main_app.html';
+                    } else {
+                        console.log('Redirecionando para onboarding');
+                        window.location.href = '../onboarding/onboarding.html';
+                    }
                 } else {
                     // Show error
                     formError.textContent = result.message || 'Email ou senha incorretos.';

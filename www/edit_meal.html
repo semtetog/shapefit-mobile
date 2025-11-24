@@ -475,8 +475,7 @@
     
     if (!mealId) {
         alert('ID da refeição inválido.');
-        const targetUrl = './diary.html';
-        window.location.href = targetUrl;
+        window.location.href = './diary.html';
         return;
     }
     
@@ -517,9 +516,8 @@
             
             if (result.success) {
                 alert(result.message);
-                // Sempre usar caminho relativo para manter dentro do app (preferir SPA)
-                const targetUrl = './diary.html';
-                window.location.href = targetUrl;
+                // Sempre usar caminho relativo para manter dentro do app
+                window.location.href = './diary.html';
             } else {
                 alert(result.message || 'Erro ao excluir refeição.');
             }
@@ -591,11 +589,7 @@
         } catch (error) {
             console.error('Erro ao carregar dados da refeição:', error);
             alert('Erro ao carregar dados da refeição. Redirecionando...');
-            const targetUrl = './diary.html';
-            window.location.href = targetUrl;
-            } else {
-                window.location.href = targetUrl;
-            }
+            window.location.href = './diary.html';
         }
     }
     
@@ -643,9 +637,8 @@ document.getElementById('servings').addEventListener('input', updateNutrition);
             
             if (result.success) {
                 alert(result.message);
-                // Sempre usar caminho relativo para manter dentro do app (preferir SPA)
-                const targetUrl = './diary.html';
-                window.location.href = targetUrl;
+                // Sempre usar caminho relativo para manter dentro do app
+                window.location.href = './diary.html';
             } else {
                 alert(result.message || 'Erro ao atualizar refeição.');
             }

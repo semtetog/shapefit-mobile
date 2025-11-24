@@ -12,22 +12,7 @@
     
     // Verificar autenticação em todas as páginas (exceto login/register)
     const publicPages = ['login.html', 'register.html', 'index.html'];
-    
-    // No SPA, verificar a página atual via SPANavigator
-    let currentPage = 'index.html';
-    if (window.SPANavigator && window.SPANavigator.currentPage) {
-        // Converter pageId para nome de arquivo
-        const pageId = window.SPANavigator.currentPage;
-        if (pageId === 'page-main-app') currentPage = 'main_app.html';
-        else if (pageId === 'page-login') currentPage = 'login.html';
-        else if (pageId === 'page-register') currentPage = 'register.html';
-        else if (pageId.includes('page-')) {
-            currentPage = pageId.replace('page-', '').replace(/-/g, '_') + '.html';
-        }
-    } else {
-        // Fallback: usar location.pathname
-        currentPage = window.location.pathname.split('/').pop() || 'index.html';
-    }
+    const currentPage = window.location.pathname.split('/').pop();
     
     if (!publicPages.includes(currentPage) && typeof requireAuth === 'function') {
         requireAuth().then(authenticated => {
@@ -60,13 +45,7 @@ async function apiRequest(url, options = {}) {
         
         if (response.status === 401) {
             clearAuthToken();
-            const targetUrl = './auth/login.html';
-            // SEMPRE usar SPA
-            if (window.SPANavigator) {
-                window.SPANavigator.navigate(targetUrl, true);
-            } else if (window.navigateTo) {
-                window.navigateTo(targetUrl);
-            }
+            window.location.href = './auth/login.html';
             return null;
         }
         

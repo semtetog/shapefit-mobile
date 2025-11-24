@@ -3,8 +3,7 @@
   "appName": "ShapeFit",
   "webDir": "www",
   "server": {
-    "androidScheme": "https",
-    "iosScheme": "https"
+    "androidScheme": "https"
   },
   "android": {
     "allowMixedContent": false,
