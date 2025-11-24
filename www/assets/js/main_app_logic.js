@@ -75,7 +75,13 @@ async function loadMainAppData() {
         }
         
         // Carregar dados de peso, água, etc. (se necessário)
-        // O script.js já cuida disso via DOMContentLoaded, mas precisamos garantir que seja executado
+        // O script.js já cuida disso via spa:enter-main_app
+        
+        // Aguardar um pouco para garantir que o script.js foi executado
+        setTimeout(() => {
+            // Disparar evento customizado para script.js se necessário
+            window.dispatchEvent(new CustomEvent('main-app-data-loaded', { detail: data }));
+        }, 200);
         
         console.log('Main app data loaded successfully');
         

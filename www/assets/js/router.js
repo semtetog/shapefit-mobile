@@ -395,43 +395,54 @@ class SPARouter {
             'add_food_to_diary': 'assets/js/add_food_logic.js',
             'measurements_progress': 'assets/js/measurements_logic.js',
             'onboarding': 'assets/js/onboarding_logic.js',
-            'main_app': 'assets/js/main_app_logic.js'
+            'main_app': ['assets/js/main_app_logic.js', 'assets/js/script.js']
         };
 
-        const jsPath = jsMap[pageName];
-        if (!jsPath) return;
-
-        // Para desenvolvimento local, usar caminho relativo a partir de www/
-        const isLocalDev = window.location.hostname === 'localhost' || 
-                           window.location.hostname === '127.0.0.1' ||
-                           window.location.port === '8100';
+        const jsPaths = jsMap[pageName];
+        if (!jsPaths) return;
         
-        let fullJsPath;
-        if (jsPath.startsWith('http')) {
-            fullJsPath = jsPath;
-        } else if (isLocalDev || !window.BASE_APP_URL) {
-            // assets/ está dentro de www/, então usar ./assets/
-            fullJsPath = `./${jsPath}`;
-        } else {
-            fullJsPath = `${window.BASE_APP_URL}/${jsPath}`;
-        }
+        // Se for array, carregar todos os JS
+        const jsPathArray = Array.isArray(jsPaths) ? jsPaths : [jsPaths];
+        
+        // Carregar todos os JS da página
+        const loadPromises = jsPathArray.map(jsPath => {
+            // Para desenvolvimento local, usar caminho relativo a partir de www/
+            const isLocalDev = window.location.hostname === 'localhost' || 
+                               window.location.hostname === '127.0.0.1' ||
+                               window.location.port === '8100';
+            
+            let fullJsPath;
+            if (jsPath.startsWith('http')) {
+                fullJsPath = jsPath;
+            } else if (isLocalDev || !window.BASE_APP_URL) {
+                // assets/ está dentro de www/, então usar ./assets/
+                fullJsPath = `./${jsPath}`;
+            } else {
+                fullJsPath = `${window.BASE_APP_URL}/${jsPath}`;
+            }
 
-        // Verificar se já foi carregado
-        if (this.loadedScripts.has(fullJsPath)) {
-            return;
-        }
+            // Verificar se já foi carregado
+            if (this.loadedScripts.has(fullJsPath)) {
+                return Promise.resolve();
+            }
 
-        // Carregar JS dinamicamente
-        return new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = fullJsPath;
-            script.onload = () => {
-                this.loadedScripts.add(fullJsPath);
-                resolve();
-            };
-            script.onerror = reject;
-            document.head.appendChild(script);
+            // Carregar JS dinamicamente
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = fullJsPath;
+                script.onload = () => {
+                    this.loadedScripts.add(fullJsPath);
+                    resolve();
+                };
+                script.onerror = (e) => {
+                    console.warn(`[Router] Erro ao carregar JS: ${fullJsPath}`, e);
+                    resolve(); // Não rejeitar para não bloquear outros JS
+                };
+                document.head.appendChild(script);
+            });
         });
+        
+        return Promise.all(loadPromises);
     }
 
     showError(message) {

@@ -2,7 +2,8 @@
 //         SHAPEFIT - SCRIPT.JS (MASTER SCRIPT PARA DASHBOARD)
 // =========================================================================
 
-document.addEventListener('DOMContentLoaded', function () {
+// Função de inicialização que pode ser chamada via DOMContentLoaded ou SPA
+function initMainAppScript() {
     console.log('ShapeFit Master Script Loaded');
 
     // =========================================================================
@@ -328,4 +329,17 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
+}
+
+// Executar quando DOM estiver pronto (navegação tradicional)
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initMainAppScript);
+} else {
+    initMainAppScript();
+}
+
+// Executar quando main_app for carregada via SPA
+window.addEventListener('spa:enter-main_app', function() {
+    // Aguardar um pouco para garantir que o DOM foi atualizado
+    setTimeout(initMainAppScript, 100);
 });
