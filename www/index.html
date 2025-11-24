@@ -6,7 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no">
     
     <!-- PWA Meta Tags -->
-    <link rel="manifest" href="./manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ShapeFIT">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="ShapeFIT">
+    <meta name="theme-color" content="#101010">
     
     <!-- Script Critical - Viewport e Touch -->
     <script>
@@ -36,8 +41,6 @@
     
     <!-- CSS Principal -->
     <link rel="stylesheet" href="./assets/css/style.css">
-    <!-- CSS SPA -->
-    <link rel="stylesheet" href="./spa-styles.css">
     
     <!-- Variáveis Globais -->
     <script>
@@ -53,6 +56,8 @@
     <script src="./assets/js/auth.js"></script>
     <script src="./assets/js/common.js"></script>
     <script src="./assets/js/app-state.js"></script>
+    
+    <!-- Bottom Nav (fixo) -->
     <script src="./assets/js/bottom-nav.js"></script>
     
     <!-- SPA Navigator - DEVE SER O ÚLTIMO -->
@@ -68,7 +73,7 @@
             margin: 0;
             padding: 0;
             overflow-x: hidden;
-            background: #000;
+            background: #101010; /* Fundo fixo, sem piscar */
         }
         
         body {
@@ -78,23 +83,82 @@
             -webkit-touch-callout: none;
         }
         
-        a, button, .btn, [role="button"] {
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -webkit-tap-highlight-color: transparent;
+        /* Container principal (fixo) */
+        #spa-shell {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background: #101010; /* Fundo fixo */
+        }
+        
+        /* Conteúdo dinâmico (swap) */
+        #spa-container {
+            flex: 1;
+            position: relative;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            transition: opacity 0.2s ease; /* Fade suave sem flicker */
+        }
+        
+        /* Bottom nav fixo fora do container */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(0,0,0,0.9); /* Fundo fixo do nav */
+        }
+        
+        /* Loader */
+        #spa-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: #fff;
+        }
+        
+        /* Evitar flicker no swap */
+        #spa-container.fade-out {
+            opacity: 0;
         }
     </style>
 </head>
 <body>
-    <!-- Loader inicial -->
-    <div id="spa-loader">
-        <p>Carregando...</p>
+    <div id="spa-shell">
+        <!-- Loader -->
+        <div id="spa-loader">
+            <p>Carregando...</p>
+        </div>
+        
+        <!-- Conteúdo dinâmico (páginas são injetadas aqui) -->
+        <div id="spa-container">
+            <!-- Carregado via SPA -->
+        </div>
+        
+        <!-- Bottom Nav (fixo, renderizado pelo bottom-nav.js) -->
+        <!-- O script bottom-nav.js vai inserir aqui, mas fica fora do container para não piscar -->
     </div>
     
-    <!-- Container principal para todas as páginas SPA -->
-    <div id="spa-container">
-        <!-- Páginas serão carregadas dinamicamente aqui -->
-    </div>
-    
+    <script>
+        // Esconder loader após SPA inicializar
+        window.addEventListener('spa:page-loaded', function() {
+            const loader = document.getElementById('spa-loader');
+            if (loader) loader.style.display = 'none';
+        }, { once: true });
+        
+        // Fallback
+        setTimeout(() => {
+            const loader = document.getElementById('spa-loader');
+            if (loader) loader.style.display = 'none';
+        }, 2000);
+    </script>
 </body>
 </html>
