@@ -12,7 +12,7 @@
     "generate:assets": "npx capacitor-assets generate",
     "dev": "powershell -ExecutionPolicy Bypass -File start-dev.ps1",
     "dev:stop": "powershell -ExecutionPolicy Bypass -File stop-dev.ps1",
-    "serve": "npx http-server www -p 8100 -c-1 --cors"
+    "serve": "node serve.js"
   },
   "dependencies": {
     "@capacitor-mlkit/barcode-scanning": "^7.3.0",
