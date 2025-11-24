@@ -141,16 +141,23 @@ const bottomNavCSS = `
     .nav-item {
         flex: 1;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
         text-decoration: none;
         color: var(--text-secondary, #8E8E93);
-        transition: color 0.2s ease;
+        transition: color 0.2s ease, transform 0.2s ease;
         -webkit-tap-highlight-color: transparent;
+        height: 100%;
+        position: relative;
     }
 
     .nav-item i {
         font-size: 1.5rem;
+    }
+    
+    .nav-item:active {
+        transform: scale(0.95);
     }
 
     .nav-item.active {
