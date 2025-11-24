@@ -69,38 +69,49 @@
 
         /**
          * Intercepta cliques em links - PRIORIDADE MÁXIMA
+         * Captura TODOS os tipos de elementos clicáveis
          */
         handleLinkClick(event) {
-            const link = event.target.closest('a');
-            if (!link) return;
-
-            const href = link.getAttribute('href');
-            if (!href) return;
-
-            // Ignorar links externos, âncoras, mailto, tel, etc
-            if (href.startsWith('http://') || 
-                href.startsWith('https://') || 
-                href.startsWith('mailto:') || 
-                href.startsWith('tel:') ||
-                href.startsWith('#') ||
-                href.startsWith('javascript:') ||
-                link.hasAttribute('target') ||
-                link.hasAttribute('download') ||
-                link.hasAttribute('data-no-spa')) {
-                return;
+            // 1. Verificar se é link com href
+            const link = event.target.closest('a[href]');
+            if (link) {
+                const href = link.getAttribute('href');
+                if (href && !this.isExternalLink(href, link)) {
+                    const pageId = this.getPageIdFromUrl(href);
+                    if (pageId) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        event.stopImmediatePropagation();
+                        this.navigate(href, true);
+                        return false;
+                    }
+                }
             }
-
-            // Verificar se é uma página interna
-            const pageId = this.getPageIdFromUrl(href);
-            if (pageId) {
-                // PREVENIR NAVEGAÇÃO PADRÃO IMEDIATAMENTE
-                event.preventDefault();
-                event.stopPropagation();
-                event.stopImmediatePropagation();
-                
-                // Navegar via SPA
-                this.navigate(href, true);
-                return false;
+            
+            // 2. Verificar se tem data-spa-link
+            const spaLink = event.target.closest('[data-spa-link]');
+            if (spaLink) {
+                const href = spaLink.getAttribute('data-spa-link');
+                if (href) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
+                    this.navigate(href, true);
+                    return false;
+                }
+            }
+            
+            // 3. Verificar se tem data-link
+            const dataLink = event.target.closest('[data-link]');
+            if (dataLink) {
+                const href = dataLink.getAttribute('data-link');
+                if (href && this.getPageIdFromUrl(href)) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
+                    this.navigate(href, true);
+                    return false;
+                }
             }
         },
 
@@ -259,64 +270,228 @@
             
             pageEl.appendChild(wrapper);
             
-            // Converter todos os links para usar SPA
+            // Converter TODOS os elementos de navegação para usar SPA
+            // Isso deve ser feito ANTES de qualquer script rodar
             this.convertLinksToSPA(wrapper);
+            
+            // Usar MutationObserver para capturar elementos adicionados dinamicamente
+            this.observeDynamicElements(wrapper);
+        },
+        
+        /**
+         * Observa elementos adicionados dinamicamente e converte para SPA
+         */
+        observeDynamicElements(container) {
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    mutation.addedNodes.forEach((node) => {
+                        if (node.nodeType === 1) { // Element node
+                            // Converter links em elementos recém-adicionados
+                            this.convertLinksToSPA(node);
+                        }
+                    });
+                });
+            });
+            
+            observer.observe(container, {
+                childList: true,
+                subtree: true
+            });
         },
 
         /**
-         * Converte todos os links dentro de um elemento para usar SPA
+         * Converte TODOS os elementos de navegação para usar SPA
+         * Intercepta: href, onclick, data-spa-link, form actions, etc.
          */
         convertLinksToSPA(container) {
+            // 1. Links com href
             const links = container.querySelectorAll('a[href]');
             links.forEach(link => {
                 const href = link.getAttribute('href');
                 if (!href) return;
                 
                 // Ignorar links externos
-                if (href.startsWith('http://') || 
-                    href.startsWith('https://') || 
-                    href.startsWith('mailto:') || 
-                    href.startsWith('tel:') ||
-                    href.startsWith('#') ||
-                    link.hasAttribute('target') ||
-                    link.hasAttribute('download') ||
-                    link.hasAttribute('data-no-spa')) {
+                if (this.isExternalLink(href, link)) {
                     return;
                 }
                 
                 // Verificar se é página interna
                 const pageId = this.getPageIdFromUrl(href);
                 if (pageId) {
-                    // Remover href e usar onclick
-                    link.removeAttribute('href');
-                    link.setAttribute('data-spa-link', href);
-                    link.addEventListener('click', (e) => {
+                    this.convertElementToSPA(link, href);
+                }
+            });
+            
+            // 2. Elementos com data-spa-link
+            const dataLinks = container.querySelectorAll('[data-spa-link]');
+            dataLinks.forEach(el => {
+                const href = el.getAttribute('data-spa-link');
+                if (href && this.getPageIdFromUrl(href)) {
+                    this.convertElementToSPA(el, href);
+                }
+            });
+            
+            // 3. Elementos com onclick que usam location.href
+            const onclickElements = container.querySelectorAll('[onclick]');
+            onclickElements.forEach(el => {
+                const onclickCode = el.getAttribute('onclick');
+                if (!onclickCode) return;
+                
+                // Procurar por location.href, window.location.href, etc.
+                const urlMatch = onclickCode.match(/(?:location|window\.location|document\.location)(?:\.href)?\s*=\s*['"]([^'"]+\.html[^'"]*)['"]/i);
+                if (urlMatch) {
+                    const url = urlMatch[1];
+                    if (this.getPageIdFromUrl(url)) {
+                        // Remover onclick antigo e substituir
+                        el.removeAttribute('onclick');
+                        this.convertElementToSPA(el, url);
+                    }
+                }
+            });
+            
+            // 4. Forms com action
+            const forms = container.querySelectorAll('form[action]');
+            forms.forEach(form => {
+                const action = form.getAttribute('action');
+                if (action && this.getPageIdFromUrl(action)) {
+                    form.addEventListener('submit', (e) => {
                         e.preventDefault();
-                        e.stopPropagation();
-                        this.navigate(href, true);
+                        // Processar form normalmente, depois navegar
+                        const formData = new FormData(form);
+                        // Se houver lógica de submit, executar aqui
+                        // Depois navegar
+                        this.navigate(action, true);
                     }, true);
                 }
             });
+            
+            // 5. Botões com formaction
+            const formButtons = container.querySelectorAll('button[formaction], input[formaction]');
+            formButtons.forEach(btn => {
+                const action = btn.getAttribute('formaction');
+                if (action && this.getPageIdFromUrl(action)) {
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.navigate(action, true);
+                    }, true);
+                }
+            });
+            
+            // 6. Elementos com data-link (outro padrão comum)
+            const dataLinkElements = container.querySelectorAll('[data-link]');
+            dataLinkElements.forEach(el => {
+                const href = el.getAttribute('data-link');
+                if (href && this.getPageIdFromUrl(href)) {
+                    this.convertElementToSPA(el, href);
+                }
+            });
+        },
+        
+        /**
+         * Verifica se um link é externo
+         */
+        isExternalLink(href, element) {
+            return href.startsWith('http://') || 
+                   href.startsWith('https://') || 
+                   href.startsWith('mailto:') || 
+                   href.startsWith('tel:') ||
+                   href.startsWith('#') ||
+                   href.startsWith('javascript:') ||
+                   element.hasAttribute('target') ||
+                   element.hasAttribute('download') ||
+                   element.hasAttribute('data-no-spa');
+        },
+        
+        /**
+         * Converte um elemento para usar navegação SPA
+         */
+        convertElementToSPA(element, url) {
+            // Remover href se existir
+            if (element.hasAttribute('href')) {
+                element.removeAttribute('href');
+            }
+            
+            // Adicionar data-spa-link
+            element.setAttribute('data-spa-link', url);
+            
+            // Adicionar cursor pointer se não tiver
+            if (!element.style.cursor) {
+                element.style.cursor = 'pointer';
+            }
+            
+            // Adicionar listener (usar capture para pegar antes de outros)
+            element.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+                this.navigate(url, true);
+                return false;
+            }, true);
         },
 
         /**
          * Faz patch de window.location.href para usar SPA
+         * Intercepta TODAS as formas de navegação programática
          */
         patchLocationHref() {
+            const self = this;
+            
             // Criar função helper global
             window.navigateTo = (url) => {
-                const pageId = this.getPageIdFromUrl(url);
+                const pageId = self.getPageIdFromUrl(url);
                 if (pageId) {
-                    this.navigate(url, true);
+                    self.navigate(url, true);
                 } else {
                     window.location.href = url;
                 }
             };
             
-            // Interceptar window.location.href usando uma abordagem diferente
-            // Não podemos substituir window.location diretamente, mas podemos
-            // criar uma função helper que as páginas devem usar
             window.goToPage = window.navigateTo;
+            
+            // Interceptar window.location.href usando Proxy (quando possível)
+            // Criar um objeto proxy para location que intercepta assignments
+            try {
+                const originalLocation = window.location;
+                
+                // Interceptar location.href = "..." via Object.defineProperty
+                let locationHrefDescriptor = Object.getOwnPropertyDescriptor(window, 'location');
+                if (!locationHrefDescriptor) {
+                    locationHrefDescriptor = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(window), 'location');
+                }
+                
+                // Criar getter/setter customizado para location.href
+                Object.defineProperty(window, '_location', {
+                    value: originalLocation,
+                    writable: false,
+                    configurable: false
+                });
+                
+                // Interceptar assignments diretos a location
+                // Nota: Não podemos substituir window.location completamente por questões de segurança
+                // Mas podemos interceptar através de MutationObserver e event listeners
+            } catch (e) {
+                console.warn('Não foi possível interceptar window.location completamente:', e);
+            }
+            
+            // Interceptar chamadas comuns de navegação via função wrapper
+            window.redirectTo = function(url) {
+                if (window.SPANavigator) {
+                    window.SPANavigator.navigate(url, true);
+                } else {
+                    window.location.href = url;
+                }
+            };
+            
+            // Interceptar location.replace também
+            const originalReplace = window.location.replace;
+            window.location.replace = function(url) {
+                const pageId = self.getPageIdFromUrl(url);
+                if (pageId) {
+                    self.navigate(url, true);
+                } else {
+                    originalReplace.call(window.location, url);
+                }
+            };
         }
     };
 
