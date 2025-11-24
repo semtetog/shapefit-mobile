@@ -1906,8 +1906,7 @@
 </div>
 
 <script>
-    // (Removed standalone navigation hack to allow page-transitions.js to work)
-
+    if (window.navigator.standalone === true) {document.addEventListener('click', function(event) {var target = event.target; while (target && target.nodeName !== 'A') { target = target.parentNode; } if (target && target.nodeName === 'A' && target.target !== '_blank') {event.preventDefault(); window.location.href = target.href;}}, false);}
 
     function showPointsPopup(message) {
         const popup = document.createElement('div');

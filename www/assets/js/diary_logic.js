@@ -10,12 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
         addMealBtn.addEventListener('click', () => {
             const currentDate = dateSpan ? dateSpan.dataset.date : '';
             // Redireciona para a página de adicionar refeição, passando a data atual
-            const targetUrl = `./add_food_to_diary.html?date=${currentDate}`;
-            if (window.smoothNavigate) {
-                window.smoothNavigate(targetUrl);
-            } else {
-                window.location.href = targetUrl;
-            }
+            window.location.href = `./add_food_to_diary.html?date=${currentDate}`;
         });
     }
 
@@ -34,12 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             const today = getLocalDateString();
             // Usar caminho relativo para manter dentro do app
-            const targetUrl = `./add_food_to_diary.html?date=${today}`;
-            if (window.smoothNavigate) {
-                window.smoothNavigate(targetUrl);
-            } else {
-                window.location.href = targetUrl;
-            }
+            window.location.href = `./add_food_to_diary.html?date=${today}`;
         });
     }
 });

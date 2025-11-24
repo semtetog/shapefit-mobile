@@ -100,39 +100,20 @@ const bottomNavHTML = `
 
 // Função para renderizar o bottom nav
 function renderBottomNav() {
-    // Verificar se body existe
-    if (!document.body) {
-        return;
-    }
-
-    const currentPage = window.location.pathname.split('/').pop() || 'main_app.html';
-    const activeItem = bottomNavMap[currentPage] || 'home';
-
-    // Verificar se já existe (apenas atualizar active)
+    // Verificar se já existe (evitar duplicatas)
     const existingNav = document.querySelector('.bottom-nav');
     if (existingNav) {
-        // Atualizar classe active
-        const navItems = existingNav.querySelectorAll('.nav-item');
-        navItems.forEach(item => {
-            item.classList.remove('active');
-            // Lógica simplificada baseada no href
-            const href = item.getAttribute('href');
-            // Extrair nome do arquivo do href (./page.html -> page.html)
-            const targetPage = href.split('/').pop();
-            
-            // Mapear targetPage para item type
-            const targetItemType = bottomNavMap[targetPage] || '';
-            
-            if (targetItemType === activeItem) {
-                item.classList.add('active');
-            }
-        });
-        return;
+        existingNav.remove();
     }
     
     const existingStyle = document.querySelector('style[data-bottom-nav]');
     if (existingStyle) {
         existingStyle.remove();
+    }
+    
+    // Verificar se body existe
+    if (!document.body) {
+        return;
     }
     
     // Inserir CSS no head

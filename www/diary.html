@@ -562,12 +562,7 @@ async function loadDiaryData(date) {
         
         // Atualizar botão de adicionar
         document.getElementById('add-meal-btn').onclick = () => {
-            const targetUrl = `./add_food_to_diary.html?date=${currentDate}`;
-            if (window.smoothNavigate) {
-                window.smoothNavigate(targetUrl);
-            } else {
-                window.location.href = targetUrl;
-            }
+                        window.location.href = `./add_food_to_diary.html?date=${currentDate}`;
         };
         
     } catch (error) {

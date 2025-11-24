@@ -503,12 +503,7 @@
                         
                         // Usar try-catch no redirecionamento
                         try {
-                            const targetUrl = `create_custom_food.html?${params.toString()}`;
-                            if (window.smoothNavigate) {
-                                window.smoothNavigate(targetUrl);
-                            } else {
-                                window.location.href = targetUrl;
-                            }
+                            window.location.href = `create_custom_food.html?${params.toString()}`;
                         } catch (redirectErr) {
                             console.error('Erro ao redirecionar:', redirectErr);
                             // Fallback: tentar sem parâmetros
@@ -518,12 +513,7 @@
                         // Produto não encontrado
                         const params = new URLSearchParams({ barcode: barcode });
                         try {
-                            const targetUrl = `create_custom_food.html?${params.toString()}`;
-                            if (window.smoothNavigate) {
-                                window.smoothNavigate(targetUrl);
-                            } else {
-                                window.location.href = targetUrl;
-                            }
+                            window.location.href = `create_custom_food.html?${params.toString()}`;
                         } catch (redirectErr) {
                             console.error('Erro ao redirecionar:', redirectErr);
                         }

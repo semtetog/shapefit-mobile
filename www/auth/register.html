@@ -261,11 +261,7 @@
                     setAuthToken(result.token);
                     
                     // Redirect to onboarding
-                    if (window.smoothNavigate) {
-                        window.smoothNavigate('../onboarding/onboarding.html');
-                    } else {
-                        window.location.href = '../onboarding/onboarding.html';
-                    }
+                    window.location.href = '../onboarding/onboarding.html';
                 } else {
                     // Show errors
                     if (result.errors) {

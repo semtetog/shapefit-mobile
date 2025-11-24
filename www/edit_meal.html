@@ -475,11 +475,7 @@
     
     if (!mealId) {
         alert('ID da refeição inválido.');
-        if (window.smoothNavigate) {
-            window.smoothNavigate('./diary.html');
-        } else {
-            window.location.href = './diary.html';
-        }
+        window.location.href = './diary.html';
         return;
     }
     
@@ -521,11 +517,7 @@
             if (result.success) {
                 alert(result.message);
                 // Sempre usar caminho relativo para manter dentro do app
-                if (window.smoothNavigate) {
-                    window.smoothNavigate('./diary.html');
-                } else {
-                    window.location.href = './diary.html';
-                }
+                window.location.href = './diary.html';
             } else {
                 alert(result.message || 'Erro ao excluir refeição.');
             }
@@ -588,11 +580,7 @@
             const backUrl = `./diary.html?date=${mealData.date_consumed}`;
             document.getElementById('back-button').href = backUrl;
             document.getElementById('cancel-btn').onclick = () => {
-                if (window.smoothNavigate) {
-                    window.smoothNavigate(backUrl);
-                } else {
-                    window.location.href = backUrl;
-                }
+                window.location.href = backUrl;
             };
             
             // Mostrar formulário
@@ -601,11 +589,7 @@
         } catch (error) {
             console.error('Erro ao carregar dados da refeição:', error);
             alert('Erro ao carregar dados da refeição. Redirecionando...');
-            if (window.smoothNavigate) {
-                window.smoothNavigate('./diary.html');
-            } else {
-                window.location.href = './diary.html';
-            }
+            window.location.href = './diary.html';
         }
     }
     
@@ -654,11 +638,7 @@ document.getElementById('servings').addEventListener('input', updateNutrition);
             if (result.success) {
                 alert(result.message);
                 // Sempre usar caminho relativo para manter dentro do app
-                if (window.smoothNavigate) {
-                    window.smoothNavigate('./diary.html');
-                } else {
-                    window.location.href = './diary.html';
-                }
+                window.location.href = './diary.html';
             } else {
                 alert(result.message || 'Erro ao atualizar refeição.');
             }
