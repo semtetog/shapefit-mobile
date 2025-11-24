@@ -64,6 +64,12 @@ async function loadMainAppData() {
         
         const data = result.data;
         console.log('Dados recebidos:', data);
+        console.log('Estrutura dos dados:', {
+            hasRanking: !!data.ranking,
+            hasUserPoints: 'user_points' in data,
+            hasUser: !!data.user,
+            keys: Object.keys(data)
+        });
         
         // Renderizar ranking
         console.log('Renderizando ranking...', data.ranking);
@@ -119,16 +125,23 @@ async function loadMainAppData() {
         }
         
         // Atualizar pontos do usuário
-        console.log('Atualizando pontos do usuário...', data.user_points);
-        if (data.user_points !== undefined) {
+        // Pode estar em data.user_points, data.user.points, ou data.points
+        let userPoints = data.user_points || data.user?.points || data.points || data.user?.total_points;
+        console.log('Atualizando pontos do usuário...', userPoints);
+        if (userPoints !== undefined && userPoints !== null) {
             const pointsDisplay = document.getElementById('user-points-display');
             console.log('user-points-display encontrado:', !!pointsDisplay);
             if (pointsDisplay) {
-                pointsDisplay.textContent = data.user_points;
-                console.log('user-points-display atualizado para:', data.user_points);
+                pointsDisplay.textContent = userPoints;
+                console.log('user-points-display atualizado para:', userPoints);
             }
         } else {
-            console.warn('data.user_points não existe');
+            console.warn('Pontos do usuário não encontrados nos dados. Estrutura:', {
+                user_points: data.user_points,
+                'user.points': data.user?.points,
+                points: data.points,
+                'user.total_points': data.user?.total_points
+            });
         }
         
         // Carregar dados de peso, água, etc. (se necessário)
