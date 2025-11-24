@@ -77,6 +77,7 @@
             if (script.src) {
                 // Script externo - verificar se já foi carregado
                 const existing = document.querySelector(`script[src="${script.src}"]`);
+                // NÃO recarregar scripts que já estão no DOM (especialmente auth.js, bottom-nav.js, etc)
                 if (!existing && !window.__spaExecutedScripts.has(script.src)) {
                     window.__spaExecutedScripts.add(script.src);
                     const promise = new Promise((resolve, reject) => {
@@ -88,6 +89,9 @@
                         document.head.appendChild(newScript);
                     });
                     scriptPromises.push(promise);
+                } else if (existing) {
+                    // Script já existe, resolver imediatamente
+                    scriptPromises.push(Promise.resolve());
                 }
             } else {
                 // Script inline - criar hash mais robusto
@@ -168,21 +172,17 @@
             // Preservar bottom-nav (não remover durante navegação)
             const bottomNav = document.querySelector('.bottom-nav');
             
-            // Extrair scripts que estão dentro do conteúdo ANTES de substituir
-            const contentDiv = document.createElement('div');
-            contentDiv.innerHTML = content;
-            const inlineScriptsFromContent = Array.from(contentDiv.querySelectorAll('script:not([src])'));
-            
             // Fade out muito rápido (quase instantâneo para evitar "arrastar")
             currentContainer.style.opacity = '0';
             currentContainer.style.transition = 'opacity 0.1s ease';
             
             await new Promise(resolve => setTimeout(resolve, 100));
             
-            // Substituir conteúdo (scripts inline serão removidos, mas já foram extraídos)
+            // Substituir conteúdo
             currentContainer.innerHTML = content;
             
-            // Remover scripts inline do conteúdo para evitar duplicação
+            // REMOVER TODOS OS SCRIPTS INLINE do conteúdo para evitar re-declarações
+            // Scripts inline devem usar event listeners (spa-page-loaded) para inicialização
             currentContainer.querySelectorAll('script:not([src])').forEach(script => {
                 script.remove();
             });
