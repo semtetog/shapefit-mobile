@@ -1,6 +1,8 @@
 // main_app_logic.js - Lógica da página principal do app
 // Adaptado para eventos SPA
+// Baseado na estrutura do código antigo (wwwantigo/main_app.html)
 
+// Função principal para carregar dados
 async function loadMainAppData() {
     console.log('[main_app_logic] loadMainAppData() chamado!');
     try {
@@ -16,53 +18,35 @@ async function loadMainAppData() {
         }
         
         // Mostrar o container do dashboard
-        // Tentar encontrar o container de várias formas
         let dashboardContainer = document.getElementById('dashboard-container');
-        
-        // Se não encontrar, tentar no spa-container
         if (!dashboardContainer) {
             const spaContainer = document.getElementById('spa-container');
             if (spaContainer) {
                 dashboardContainer = spaContainer.querySelector('#dashboard-container');
             }
         }
-        
-        // Se ainda não encontrar, tentar qualquer app-container
         if (!dashboardContainer) {
             dashboardContainer = document.querySelector('.app-container');
         }
         
-        console.log('Tentando mostrar dashboard-container:', !!dashboardContainer);
+        console.log('[main_app_logic] Dashboard container encontrado:', !!dashboardContainer);
         if (dashboardContainer) {
-            // Remover display: none inline e forçar block
             dashboardContainer.removeAttribute('style');
             dashboardContainer.style.display = 'block';
             dashboardContainer.style.visibility = 'visible';
             dashboardContainer.style.opacity = '1';
-            console.log('dashboard-container display alterado para block');
         } else {
-            console.error('dashboard-container não encontrado! Verificando DOM...');
-            const spaContainer = document.getElementById('spa-container');
-            if (spaContainer) {
-                console.log('spa-container existe, conteúdo:', spaContainer.innerHTML.substring(0, 500));
-            } else {
-                console.error('spa-container também não existe!');
-            }
+            console.error('[main_app_logic] dashboard-container não encontrado!');
+            return;
         }
         
         // Carregar dados do dashboard
         const apiUrl = `${window.BASE_APP_URL}/api/get_dashboard_data.php`;
-        console.log('[main_app_logic] Carregando dados do dashboard...');
-        console.log('[main_app_logic] BASE_APP_URL:', window.BASE_APP_URL);
-        console.log('[main_app_logic] URL da API:', apiUrl);
+        console.log('[main_app_logic] Carregando dados do dashboard...', apiUrl);
         
         const response = await authenticatedFetch(apiUrl);
-        console.log('[main_app_logic] Resposta recebida:', response);
-        console.log('[main_app_logic] Response ok:', response?.ok);
-        console.log('[main_app_logic] Response status:', response?.status);
-        
         if (!response || !response.ok) {
-            console.error('[main_app_logic] Erro ao carregar dados do dashboard - response:', response);
+            console.error('[main_app_logic] Erro ao carregar dados do dashboard');
             if (response) {
                 const errorText = await response.text();
                 console.error('[main_app_logic] Erro da API:', errorText);
@@ -71,194 +55,27 @@ async function loadMainAppData() {
         }
         
         const result = await response.json();
-        console.log('Resultado da API get_dashboard_data:', result);
+        console.log('[main_app_logic] Resultado da API:', result);
         
         if (!result.success) {
-            console.error('Erro na API:', result.message);
+            console.error('[main_app_logic] Erro na API:', result.message);
             return;
         }
         
         const data = result.data;
-        console.log('Dados recebidos:', data);
-        console.log('Estrutura dos dados:', {
-            hasRanking: !!data.ranking,
-            hasUserPoints: 'user_points' in data,
-            hasUser: !!data.user,
-            keys: Object.keys(data)
-        });
+        console.log('[main_app_logic] Dados recebidos:', data);
         
-        // Renderizar ranking
-        console.log('Renderizando ranking...', data.ranking);
-        if (data.ranking) {
-            const rankingCard = document.getElementById('ranking-card');
-            console.log('ranking-card encontrado:', !!rankingCard);
-            if (rankingCard) {
-                rankingCard.style.display = 'block';
-                console.log('ranking-card display alterado para block');
-            }
-            
-            // Atualizar dados do ranking
-            if (data.ranking.my_rank !== undefined) {
-                const myRankEl = document.getElementById('my-rank');
-                console.log('my-rank encontrado:', !!myRankEl, 'valor:', data.ranking.my_rank);
-                if (myRankEl) {
-                    myRankEl.textContent = data.ranking.my_rank;
-                    console.log('my-rank atualizado');
-                }
-            }
-            
-            if (data.ranking.opponent) {
-                console.log('Opponent data:', data.ranking.opponent);
-                const opponentNameEl = document.getElementById('opponent-name');
-                console.log('opponent-name encontrado:', !!opponentNameEl);
-                if (opponentNameEl) {
-                    opponentNameEl.textContent = data.ranking.opponent.name;
-                    console.log('opponent-name atualizado para:', data.ranking.opponent.name);
-                }
-                
-                const opponentInfoEl = document.getElementById('opponent-info');
-                if (opponentInfoEl && data.ranking.opponent.profile_image_filename) {
-                    const avatar = opponentInfoEl.querySelector('.player-avatar');
-                    console.log('avatar encontrado:', !!avatar);
-                    if (avatar) {
-                        const imgUrl = `${window.BASE_APP_URL}/assets/images/users/${data.ranking.opponent.profile_image_filename}`;
-                        avatar.innerHTML = `<img src="${imgUrl}" alt="${data.ranking.opponent.name}">`;
-                        console.log('avatar atualizado com:', imgUrl);
-                    }
-                }
-            }
-            
-            if (data.ranking.progress_percentage !== undefined) {
-                const progressBar = document.getElementById('ranking-progress-bar');
-                console.log('ranking-progress-bar encontrado:', !!progressBar, 'porcentagem:', data.ranking.progress_percentage);
-                if (progressBar) {
-                    progressBar.style.width = `${data.ranking.progress_percentage}%`;
-                    console.log('ranking-progress-bar atualizado');
-                }
-            }
-        } else {
-            console.warn('data.ranking não existe ou está vazio');
-        }
+        // Renderizar dashboard completo (igual ao código antigo)
+        renderDashboard(data);
         
-        // Atualizar pontos do usuário
-        // Pode estar em data.user_points, data.user.points, ou data.points
-        let userPoints = data.user_points || data.user?.points || data.points || data.user?.total_points;
-        console.log('[main_app_logic] Atualizando pontos do usuário...', userPoints);
-        if (userPoints !== undefined && userPoints !== null) {
-            const pointsDisplay = document.getElementById('user-points-display');
-            console.log('[main_app_logic] user-points-display encontrado:', !!pointsDisplay);
-            if (pointsDisplay) {
-                pointsDisplay.textContent = userPoints;
-                console.log('[main_app_logic] user-points-display atualizado para:', userPoints);
+        // Inicializar carrossel de missões após renderizar
+        setTimeout(() => {
+            if (typeof initializeMissionsCarousel === 'function') {
+                initializeMissionsCarousel();
             }
-        } else {
-            console.warn('[main_app_logic] Pontos do usuário não encontrados nos dados. Estrutura:', {
-                user_points: data.user_points,
-                'user.points': data.user?.points,
-                points: data.points,
-                'user.total_points': data.user?.total_points
-            });
-        }
+        }, 100);
         
-        // Renderizar peso (weight_banner)
-        console.log('[main_app_logic] Renderizando peso...', data.weight_banner);
-        if (data.weight_banner) {
-            const weightCard = document.getElementById('weight-card');
-            if (weightCard && data.weight_banner.current_weight) {
-                const weightValueEl = weightCard.querySelector('#current-weight-value') || 
-                                     weightCard.querySelector('.current-weight-value') ||
-                                     weightCard.querySelector('strong');
-                if (weightValueEl) {
-                    const weightValue = data.weight_banner.current_weight;
-                    weightValueEl.textContent = `${weightValue}kg`;
-                    console.log('[main_app_logic] Peso atualizado para:', weightValue);
-                }
-            }
-        }
-        
-        // Renderizar água (daily_summary ou water)
-        console.log('[main_app_logic] Renderizando água...', data.daily_summary, data.water);
-        const waterData = data.daily_summary?.water || data.water || data.daily_summary;
-        if (waterData) {
-            const waterAmountDisplay = document.getElementById('water-amount-display');
-            const waterGoalDisplay = document.getElementById('water-goal-display');
-            const waterGoalDisplayTotal = document.getElementById('water-goal-display-total');
-            
-            // Água consumida
-            const waterConsumed = waterData.consumed || waterData.current || waterData.amount || 0;
-            if (waterAmountDisplay) {
-                waterAmountDisplay.textContent = waterConsumed;
-                console.log('[main_app_logic] Água consumida atualizada para:', waterConsumed);
-            }
-            
-            // Meta de água
-            const waterGoal = waterData.goal || waterData.target || 0;
-            if (waterGoalDisplay) {
-                waterGoalDisplay.textContent = `${waterGoal} ml`;
-            }
-            if (waterGoalDisplayTotal) {
-                waterGoalDisplayTotal.textContent = waterGoal;
-            }
-            
-            // Atualizar visual da água (se houver função updateWaterDrop)
-            if (window.updateWaterDrop && typeof window.updateWaterDrop === 'function') {
-                try {
-                    window.updateWaterDrop(waterConsumed, waterGoal);
-                    console.log('[main_app_logic] Visual da água atualizado');
-                } catch (e) {
-                    console.warn('[main_app_logic] Erro ao atualizar visual da água:', e);
-                }
-            }
-        }
-        
-        // Renderizar foto de perfil do usuário
-        if (data.profile_image) {
-            const profileIconLink = document.getElementById('profile-icon-link');
-            if (profileIconLink) {
-                const img = profileIconLink.querySelector('img');
-                if (img) {
-                    img.src = `${window.BASE_APP_URL}/assets/images/users/${data.profile_image}`;
-                } else {
-                    // Se não tiver img, criar
-                    const newImg = document.createElement('img');
-                    newImg.src = `${window.BASE_APP_URL}/assets/images/users/${data.profile_image}`;
-                    newImg.alt = 'Foto de perfil';
-                    newImg.style.cssText = 'width: 40px; height: 40px; border-radius: 50%; object-fit: cover;';
-                    profileIconLink.innerHTML = '';
-                    profileIconLink.appendChild(newImg);
-                }
-                console.log('[main_app_logic] Foto de perfil atualizada');
-            }
-        }
-        
-        // Inicializar banners (carousel)
-        console.log('[main_app_logic] Inicializando banners...');
-        if (typeof initLottieCarousel === 'function') {
-            setTimeout(() => {
-                try {
-                    initLottieCarousel();
-                    console.log('[main_app_logic] Banners inicializados');
-                } catch (e) {
-                    console.error('[main_app_logic] Erro ao inicializar banners:', e);
-                }
-            }, 300);
-        } else {
-            console.warn('[main_app_logic] initLottieCarousel não está disponível. Verificando se banner-carousel.js foi carregado...');
-            // Tentar carregar banner-carousel.js se não estiver carregado
-            if (!document.querySelector('script[src*="banner-carousel"]')) {
-                const script = document.createElement('script');
-                script.src = './assets/js/banner-carousel.js';
-                script.onload = () => {
-                    console.log('[main_app_logic] banner-carousel.js carregado, inicializando...');
-                    if (typeof initLottieCarousel === 'function') {
-                        setTimeout(() => initLottieCarousel(), 100);
-                    }
-                };
-                document.head.appendChild(script);
-            }
-        }
-        
-        // Disparar evento customizado para script.js e outros listeners
+        // Disparar evento customizado
         setTimeout(() => {
             window.dispatchEvent(new CustomEvent('main-app-data-loaded', { detail: data }));
             console.log('[main_app_logic] Evento main-app-data-loaded disparado');
@@ -267,8 +84,298 @@ async function loadMainAppData() {
         console.log('[main_app_logic] Main app data loaded successfully');
         
     } catch (error) {
-        console.error('Erro ao carregar dados do main_app:', error);
+        console.error('[main_app_logic] Erro ao carregar dados do main_app:', error);
     }
+}
+
+// Função principal de renderização (igual ao código antigo)
+function renderDashboard(data) {
+    console.log('[main_app_logic] renderDashboard() chamado');
+    
+    // Atualizar pontos
+    const pointsDisplay = document.getElementById('user-points-display');
+    if (pointsDisplay && data.points !== undefined) {
+        pointsDisplay.textContent = new Intl.NumberFormat('pt-BR').format(data.points);
+        console.log('[main_app_logic] Pontos atualizados:', data.points);
+    }
+    
+    // Atualizar avatar
+    const profileIcon = document.getElementById('profile-icon-link');
+    if (profileIcon && data.profile_image) {
+        const img = profileIcon.querySelector('img') || document.createElement('img');
+        img.src = `${window.BASE_APP_URL}/assets/images/users/${data.profile_image}`;
+        img.alt = 'Foto de Perfil';
+        img.onerror = function() {
+            this.onerror = null;
+            this.src = `${window.BASE_APP_URL}/assets/images/users/thumb_${data.profile_image}`;
+            this.onerror = function() {
+                this.style.display = 'none';
+                const icon = profileIcon.querySelector('i') || document.createElement('i');
+                icon.className = 'fas fa-user';
+                icon.style.display = 'flex';
+                if (!profileIcon.querySelector('i')) {
+                    profileIcon.appendChild(icon);
+                }
+            };
+        };
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'cover';
+        if (!profileIcon.querySelector('img')) {
+            profileIcon.innerHTML = '';
+            profileIcon.appendChild(img);
+        }
+        console.log('[main_app_logic] Avatar atualizado');
+    }
+    
+    // Renderizar card de peso
+    renderWeightCard(data);
+    
+    // Renderizar hidratação
+    renderHydration(data);
+    
+    // Renderizar consumo
+    renderConsumption(data);
+    
+    // Renderizar rotinas/missões
+    renderRoutines(data);
+    
+    // Renderizar ranking
+    renderRanking(data);
+    
+    // Renderizar sugestões de refeições
+    renderMealSuggestions(data);
+    
+    // Renderizar desafios
+    renderChallenges(data);
+    
+    // Mostrar botão de check-in se disponível
+    if (data.available_checkin) {
+        const checkinBtn = document.getElementById('checkin-floating-btn');
+        const checkinModal = document.getElementById('checkinModal');
+        
+        if (checkinBtn) {
+            checkinBtn.style.display = 'flex';
+        }
+        
+        if (data.available_checkin) {
+            window.checkinData = data.available_checkin;
+            
+            const checkinTitle = document.getElementById('checkin-title');
+            if (checkinTitle && data.available_checkin.name) {
+                checkinTitle.textContent = data.available_checkin.name;
+            }
+            
+            if (checkinModal) {
+                checkinModal.style.display = '';
+            }
+        }
+    } else {
+        const checkinBtn = document.getElementById('checkin-floating-btn');
+        const checkinModal = document.getElementById('checkinModal');
+        if (checkinBtn) checkinBtn.style.display = 'none';
+        if (checkinModal) checkinModal.style.display = 'none';
+    }
+}
+
+// Renderizar card de peso (igual ao código antigo)
+function renderWeightCard(data) {
+    const weightCard = document.getElementById('weight-card');
+    if (!weightCard) return;
+    
+    const weightData = data.weight_banner || {};
+    let currentWeight = weightData.current_weight || '--';
+    if (typeof currentWeight === 'string' && currentWeight.endsWith('kg')) {
+        currentWeight = currentWeight.replace('kg', '').trim();
+    }
+    const daysUntil = weightData.days_until_update || weightData.days_until_next_weight_update || 0;
+    const showEdit = weightData.show_edit_button !== false;
+    
+    let html = '';
+    
+    if (showEdit) {
+        html += `<span>Peso Atual</span>`;
+        html += `<strong id="current-weight-value">${typeof currentWeight === 'number' ? currentWeight.toFixed(1).replace('.', ',') : currentWeight}kg</strong>`;
+        html += `<button data-action="open-weight-modal" class="edit-button" aria-label="Editar peso">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+        </button>`;
+    } else {
+        html += `<span>Próxima atualização em</span>`;
+        html += `<strong class="countdown">${daysUntil} ${daysUntil === 1 ? 'dia' : 'dias'}</strong>`;
+    }
+    
+    weightCard.innerHTML = html;
+    console.log('[main_app_logic] Weight card renderizado');
+}
+
+// Renderizar hidratação (igual ao código antigo)
+function renderHydration(data) {
+    const waterData = data.water || {};
+    const waterConsumed = (waterData.consumed_cups || 0) * (waterData.cup_size_ml || 250);
+    const waterGoal = waterData.goal_ml || 2000;
+    
+    // Atualizar display
+    const waterAmountDisplay = document.getElementById('water-amount-display');
+    const waterGoalDisplay = document.getElementById('water-goal-display');
+    if (waterAmountDisplay) waterAmountDisplay.textContent = Math.round(waterConsumed);
+    if (waterGoalDisplay) waterGoalDisplay.textContent = `${Math.round(waterGoal)} ml`;
+    
+    // Atualizar gota d'água
+    const waterLevelGroup = document.getElementById('water-level-group');
+    if (waterLevelGroup) {
+        const percentage = waterGoal > 0 ? Math.min(waterConsumed / waterGoal, 1) : 0;
+        const dropHeight = 275.785;
+        const yTranslate = dropHeight * (1 - percentage);
+        waterLevelGroup.setAttribute('transform', `translate(0, ${yTranslate})`);
+    }
+    
+    // Atualizar variável global para os controles
+    window.currentWater = waterConsumed;
+    console.log('[main_app_logic] Hidratação renderizada:', { waterConsumed, waterGoal });
+}
+
+// Renderizar consumo (calorias e macros) - igual ao código antigo
+function renderConsumption(data) {
+    const summary = data.daily_summary || {};
+    
+    const kcal = summary.kcal?.consumed || 0;
+    const protein = summary.protein?.consumed || 0;
+    const carbs = summary.carbs?.consumed || 0;
+    const fat = summary.fat?.consumed || 0;
+    
+    const kcalGoal = summary.kcal?.goal || 2000;
+    const proteinGoal = summary.protein?.goal || 150;
+    const carbsGoal = summary.carbs?.goal || 200;
+    const fatGoal = summary.fat?.goal || 65;
+    
+    // Atualizar círculo de calorias
+    updateCaloriesCircle(kcal, kcalGoal);
+    
+    // Atualizar barras de macros
+    updateMacroBar('carbs', carbs, carbsGoal);
+    updateMacroBar('protein', protein, proteinGoal);
+    updateMacroBar('fat', fat, fatGoal);
+    
+    console.log('[main_app_logic] Consumo renderizado');
+}
+
+function updateCaloriesCircle(value, goal) {
+    const circleElement = document.getElementById('kcal-circle');
+    if (!circleElement) return;
+    
+    const percentage = goal > 0 ? Math.min(Math.max(value / goal, 0), 1) : 0;
+    const circle = circleElement.querySelector('.circle');
+    const valueDisplay = document.getElementById('kcal-value-display');
+    
+    if (circle) {
+        const radius = 15.9155;
+        const circumference = 2 * Math.PI * radius;
+        circle.style.strokeDasharray = `${circumference} ${circumference}`;
+        circle.style.strokeDashoffset = circumference - (percentage * circumference);
+        circle.style.visibility = 'visible';
+        circle.style.opacity = '1';
+    }
+    
+    if (valueDisplay) {
+        valueDisplay.textContent = Math.round(value);
+    }
+}
+
+function updateMacroBar(type, value, goal) {
+    const valueEl = document.getElementById(`${type}-value-display`);
+    const goalEl = document.getElementById(`${type}-goal-display`);
+    const progressBar = document.getElementById(`${type}-progress-bar`);
+    
+    if (valueEl) valueEl.textContent = Math.round(value);
+    if (goalEl) goalEl.textContent = Math.round(goal);
+    if (progressBar) {
+        const percentage = goal > 0 ? Math.min(Math.max((value / goal) * 100, 0), 100) : 0;
+        progressBar.style.width = `${percentage}%`;
+    }
+}
+
+// Renderizar rotinas/missões (simplificado - script.js cuida dos detalhes)
+function renderRoutines(data) {
+    const missionsCard = document.getElementById('missions-card');
+    if (!missionsCard) return;
+    
+    const routineData = data.routine || {};
+    const routines = routineData.items || [];
+    const completedCount = routineData.completed_missions || 0;
+    const totalCount = routineData.total_missions || routines.length;
+    
+    // Atualizar progresso
+    const progressText = document.getElementById('missions-progress-text');
+    const progressBar = document.getElementById('missions-progress-bar');
+    if (progressText) progressText.textContent = `${completedCount} de ${totalCount}`;
+    if (progressBar) {
+        const percentage = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+        progressBar.style.width = `${percentage}%`;
+    }
+    
+    // Atualizar variáveis globais
+    if (typeof window !== 'undefined') {
+        window.completedMissionsCount = completedCount;
+        window.totalMissionsCount = totalCount;
+    }
+    
+    if (routines.length === 0) {
+        missionsCard.style.display = 'none';
+        return;
+    }
+    
+    missionsCard.style.display = 'block';
+    console.log('[main_app_logic] Rotinas renderizadas');
+}
+
+// Renderizar ranking (igual ao código antigo)
+function renderRanking(data) {
+    if (!data.ranking) return;
+    
+    const rankingCard = document.getElementById('ranking-card');
+    if (rankingCard) {
+        rankingCard.style.display = 'block';
+    }
+    
+    if (data.ranking.my_rank !== undefined) {
+        const myRankEl = document.getElementById('my-rank');
+        if (myRankEl) myRankEl.textContent = data.ranking.my_rank;
+    }
+    
+    if (data.ranking.opponent) {
+        const opponentNameEl = document.getElementById('opponent-name');
+        if (opponentNameEl) opponentNameEl.textContent = data.ranking.opponent.name;
+        
+        const opponentInfoEl = document.getElementById('opponent-info');
+        if (opponentInfoEl && data.ranking.opponent.profile_image_filename) {
+            const avatar = opponentInfoEl.querySelector('.player-avatar');
+            if (avatar) {
+                const imgUrl = `${window.BASE_APP_URL}/assets/images/users/${data.ranking.opponent.profile_image_filename}`;
+                avatar.innerHTML = `<img src="${imgUrl}" alt="${data.ranking.opponent.name}">`;
+            }
+        }
+    }
+    
+    if (data.ranking.progress_percentage !== undefined) {
+        const progressBar = document.getElementById('ranking-progress-bar');
+        if (progressBar) {
+            progressBar.style.width = `${data.ranking.progress_percentage}%`;
+        }
+    }
+    
+    console.log('[main_app_logic] Ranking renderizado');
+}
+
+// Renderizar sugestões de refeições (placeholder)
+function renderMealSuggestions(data) {
+    // Implementar se necessário
+    console.log('[main_app_logic] Meal suggestions renderizadas');
+}
+
+// Renderizar desafios (placeholder)
+function renderChallenges(data) {
+    // Implementar se necessário
+    console.log('[main_app_logic] Challenges renderizados');
 }
 
 // Verificar se o script foi carregado
@@ -278,35 +385,25 @@ console.log('[main_app_logic] Script carregado!');
 window.addEventListener('spa:enter-main_app', async function(e) {
     console.log('[main_app_logic] Evento spa:enter-main_app disparado!', e.detail);
     
-    // Aguardar um pouco para garantir que o HTML foi inserido no DOM
     setTimeout(async () => {
-        // Verificar se o container existe
         const dashboardContainer = document.getElementById('dashboard-container');
         console.log('[main_app_logic] Dashboard container encontrado:', !!dashboardContainer);
         
         if (!dashboardContainer) {
-            console.error('[main_app_logic] dashboard-container não encontrado no DOM!');
-            // Tentar encontrar no spa-container
             const spaContainer = document.getElementById('spa-container');
             if (spaContainer) {
-                console.log('[main_app_logic] spa-container encontrado, conteúdo:', spaContainer.innerHTML.substring(0, 200));
-                // Tentar encontrar dentro do spa-container
                 const containerInside = spaContainer.querySelector('#dashboard-container');
                 if (containerInside) {
-                    console.log('[main_app_logic] dashboard-container encontrado dentro do spa-container!');
                     await loadMainAppData();
                 } else {
-                    console.error('[main_app_logic] dashboard-container não encontrado nem dentro do spa-container!');
+                    console.error('[main_app_logic] dashboard-container não encontrado!');
                 }
-            } else {
-                console.error('[main_app_logic] spa-container também não existe!');
             }
             return;
         }
         
-        console.log('[main_app_logic] Chamando loadMainAppData()...');
         await loadMainAppData();
-    }, 200); // Aumentar timeout para 200ms
+    }, 200);
 });
 
 // Também escutar routeChanged como fallback
@@ -318,4 +415,3 @@ window.addEventListener('routeChanged', async function(e) {
         }, 200);
     }
 });
-
