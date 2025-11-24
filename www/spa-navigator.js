@@ -383,13 +383,20 @@
                 oldContainer.remove();
             }
             
-            // Criar container para estilos desta página
-            const styleContainer = document.createElement('div');
-            styleContainer.id = styleContainerId;
-            styleContainer.setAttribute('data-page-styles', pageId);
+            // Remover estilos antigos desta página
+            document.querySelectorAll(`[data-page-style="${pageId}"]`).forEach(el => {
+                el.remove();
+            });
             
             // Carregar links CSS
             styles.links.forEach(href => {
+                // Verificar se já existe
+                const existing = document.querySelector(`link[href="${href}"][data-page-style]`);
+                if (existing) {
+                    existing.setAttribute('data-page-style', pageId);
+                    return;
+                }
+                
                 const link = document.createElement('link');
                 link.rel = 'stylesheet';
                 // Resolver caminho relativo
@@ -397,6 +404,10 @@
                 if (href.startsWith('./')) {
                     const basePath = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1);
                     resolvedHref = basePath + href.substring(2);
+                } else if (!href.startsWith('http') && !href.startsWith('/')) {
+                    // Caminho relativo sem ./
+                    const basePath = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1);
+                    resolvedHref = basePath + href;
                 }
                 link.href = resolvedHref;
                 link.setAttribute('data-page-style', pageId);
