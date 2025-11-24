@@ -1,14 +1,14 @@
 /**
  * SPA Navigator - Sistema de navegação sem recarregar WebView
- * Elimina 100% do piscar preto no iOS
+ * CORRIGIDO: Carrega apenas fragmentos HTML, sem scripts
  */
 
 (function() {
     'use strict';
 
     const SPA = {
-        // Cache de páginas carregadas
-        pageCache: new Map(),
+        // Cache de fragmentos HTML carregados
+        fragmentCache: new Map(),
         
         // Página atual
         currentPage: null,
@@ -43,11 +43,11 @@
          * Inicializa o sistema SPA
          */
         init() {
-            // Interceptar todos os cliques em links
+            // Interceptar todos os cliques em links ANTES de qualquer coisa
             document.addEventListener('click', this.handleLinkClick.bind(this), true);
             
-            // Interceptar navegação programática
-            this.interceptProgrammaticNavigation();
+            // Substituir window.location.href globalmente
+            this.patchLocationHref();
             
             // Carregar página inicial
             this.loadInitialPage();
@@ -60,17 +60,15 @@
             const path = window.location.pathname.split('/').pop() || 'main_app.html';
             const pageId = this.pageMap[path] || this.pageMap['main_app.html'];
             
-            // Se já estamos na página correta, apenas mostrar
             if (this.pageMap[path]) {
                 this.showPage(pageId, path);
             } else {
-                // Redirecionar para main_app se não encontrado
                 this.navigate('main_app.html', false);
             }
         },
 
         /**
-         * Intercepta cliques em links
+         * Intercepta cliques em links - PRIORIDADE MÁXIMA
          */
         handleLinkClick(event) {
             const link = event.target.closest('a');
@@ -95,8 +93,14 @@
             // Verificar se é uma página interna
             const pageId = this.getPageIdFromUrl(href);
             if (pageId) {
+                // PREVENIR NAVEGAÇÃO PADRÃO IMEDIATAMENTE
                 event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation();
+                
+                // Navegar via SPA
                 this.navigate(href, true);
+                return false;
             }
         },
 
@@ -158,8 +162,8 @@
             // Carregar conteúdo se ainda não foi carregado
             if (!pageEl.dataset.loaded) {
                 try {
-                    const html = await this.loadPageContent(url);
-                    this.injectPageContent(pageEl, html, url);
+                    const fragment = await this.loadPageFragment(url);
+                    this.injectPageFragment(pageEl, fragment, url);
                     pageEl.dataset.loaded = 'true';
                 } catch (error) {
                     console.error('Erro ao carregar página:', error);
@@ -178,19 +182,25 @@
                 window.BottomNav.render();
             }
 
-            // Disparar evento customizado
+            // Disparar evento customizado para inicialização da página
+            const eventName = `spa:enter-${pageId.replace('page-', '')}`;
+            window.dispatchEvent(new CustomEvent(eventName, {
+                detail: { pageId, url }
+            }));
+
+            // Evento genérico também
             window.dispatchEvent(new CustomEvent('spa:page-changed', {
                 detail: { pageId, url }
             }));
         },
 
         /**
-         * Carrega o conteúdo HTML de uma página
+         * Carrega apenas o FRAGMENTO HTML (sem scripts, sem head, sem body)
          */
-        async loadPageContent(url) {
+        async loadPageFragment(url) {
             // Verificar cache
-            if (this.pageCache.has(url)) {
-                return this.pageCache.get(url);
+            if (this.fragmentCache.has(url)) {
+                return this.fragmentCache.get(url);
             }
 
             // Carregar via fetch
@@ -206,113 +216,94 @@
             }
 
             const html = await response.text();
-            
-            // Cachear
-            this.pageCache.set(url, html);
-            
-            return html;
-        },
-
-        /**
-         * Injeta o conteúdo HTML na página, extraindo apenas o body
-         */
-        injectPageContent(pageEl, html, url) {
             const parser = new DOMParser();
             const doc = parser.parseFromString(html, 'text/html');
             
-            // Extrair conteúdo do body (mas manter estrutura)
-            const bodyContent = doc.body.innerHTML;
+            // Extrair APENAS o conteúdo do .app-container ou .container
+            let fragment = '';
+            const appContainer = doc.querySelector('.app-container');
+            const container = doc.querySelector('.container');
+            const target = appContainer || container;
             
+            if (target) {
+                fragment = target.innerHTML;
+            } else {
+                // Fallback: extrair body mas sem scripts
+                const body = doc.body;
+                if (body) {
+                    // Remover todos os scripts do body antes de extrair
+                    const scripts = body.querySelectorAll('script');
+                    scripts.forEach(script => script.remove());
+                    fragment = body.innerHTML;
+                }
+            }
+            
+            // Cachear fragmento
+            this.fragmentCache.set(url, fragment);
+            
+            return fragment;
+        },
+
+        /**
+         * Injeta o fragmento HTML na página
+         * NÃO executa scripts - apenas injeta HTML
+         */
+        injectPageFragment(pageEl, fragment, url) {
             // Limpar o container
             pageEl.innerHTML = '';
             
             // Criar um wrapper para o conteúdo
             const wrapper = document.createElement('div');
             wrapper.className = 'spa-page-content';
-            wrapper.innerHTML = bodyContent;
+            wrapper.innerHTML = fragment;
             
             pageEl.appendChild(wrapper);
             
-            // Extrair e executar scripts
-            const scripts = Array.from(doc.querySelectorAll('script'));
-            scripts.forEach(oldScript => {
-                const src = oldScript.getAttribute('src');
-                
-                // Ignorar scripts globais que já estão carregados
-                if (src && (
-                    src.includes('www-config.js') ||
-                    src.includes('auth.js') ||
-                    src.includes('common.js') ||
-                    src.includes('bottom-nav.js') ||
-                    src.includes('spa-navigator.js') ||
-                    src.includes('app-state.js')
-                )) {
-                    return;
-                }
-                
-                const newScript = document.createElement('script');
-                if (src) {
-                    // Script externo - usar caminho absoluto se necessário
-                    let scriptSrc = src;
-                    if (src.startsWith('./')) {
-                        // Resolver caminho relativo baseado na URL da página
-                        const basePath = url.substring(0, url.lastIndexOf('/') + 1);
-                        scriptSrc = basePath + src.substring(2);
-                    }
-                    newScript.src = scriptSrc;
-                    newScript.async = true;
-                } else if (oldScript.textContent && oldScript.textContent.trim()) {
-                    // Script inline
-                    newScript.textContent = oldScript.textContent;
-                } else {
-                    return; // Script vazio
-                }
-                
-                // Preservar atributos
-                if (oldScript.type) newScript.type = oldScript.type;
-                if (oldScript.async) newScript.async = true;
-                if (oldScript.defer) newScript.defer = true;
-                
-                pageEl.appendChild(newScript);
-            });
-            
-            // Substituir window.location.href nas páginas carregadas
-            this.patchLocationHref(pageEl);
-            
-            // Disparar DOMContentLoaded para scripts que dependem dele
-            setTimeout(() => {
-                const event = new Event('DOMContentLoaded', { bubbles: true });
-                pageEl.dispatchEvent(event);
-                
-                // Também disparar no document para compatibilidade
-                document.dispatchEvent(new Event('DOMContentLoaded', { bubbles: true }));
-            }, 0);
-        },
-        
-        /**
-         * Faz patch de window.location.href dentro de uma página carregada
-         */
-        patchLocationHref(pageEl) {
-            // Interceptar window.location.href dentro dos scripts da página
-            // Isso é feito automaticamente pelo handleLinkClick para links
-            // Para navegação programática, vamos criar uma função helper
-            if (!window.goToPage) {
-                window.goToPage = (url) => {
-                    if (window.SPANavigator) {
-                        window.SPANavigator.navigate(url, true);
-                    } else {
-                        window.location.href = url;
-                    }
-                };
-            }
+            // Converter todos os links para usar SPA
+            this.convertLinksToSPA(wrapper);
         },
 
         /**
-         * Intercepta navegação programática
-         * Cria função helper para substituir window.location.href
+         * Converte todos os links dentro de um elemento para usar SPA
          */
-        interceptProgrammaticNavigation() {
-            // Criar função helper global para navegação
+        convertLinksToSPA(container) {
+            const links = container.querySelectorAll('a[href]');
+            links.forEach(link => {
+                const href = link.getAttribute('href');
+                if (!href) return;
+                
+                // Ignorar links externos
+                if (href.startsWith('http://') || 
+                    href.startsWith('https://') || 
+                    href.startsWith('mailto:') || 
+                    href.startsWith('tel:') ||
+                    href.startsWith('#') ||
+                    link.hasAttribute('target') ||
+                    link.hasAttribute('download') ||
+                    link.hasAttribute('data-no-spa')) {
+                    return;
+                }
+                
+                // Verificar se é página interna
+                const pageId = this.getPageIdFromUrl(href);
+                if (pageId) {
+                    // Remover href e usar onclick
+                    link.removeAttribute('href');
+                    link.setAttribute('data-spa-link', href);
+                    link.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.navigate(href, true);
+                    }, true);
+                }
+            });
+        },
+
+        /**
+         * Faz patch de window.location.href para usar SPA
+         */
+        patchLocationHref() {
+            // Criar função helper global
             window.navigateTo = (url) => {
                 const pageId = this.getPageIdFromUrl(url);
                 if (pageId) {
@@ -322,9 +313,10 @@
                 }
             };
             
-            // Interceptar window.location.href usando Proxy (se suportado)
-            // Nota: Não podemos substituir window.location diretamente por questões de segurança
-            // Mas podemos interceptar através dos event listeners e função helper
+            // Interceptar window.location.href usando uma abordagem diferente
+            // Não podemos substituir window.location diretamente, mas podemos
+            // criar uma função helper que as páginas devem usar
+            window.goToPage = window.navigateTo;
         }
     };
 
@@ -340,7 +332,6 @@
         if (event.state && event.state.page) {
             SPA.showPage(event.state.page, event.state.url);
         } else {
-            // Recarregar página inicial
             SPA.loadInitialPage();
         }
     });
@@ -353,4 +344,3 @@
         SPA.navigate(url, true);
     };
 })();
-

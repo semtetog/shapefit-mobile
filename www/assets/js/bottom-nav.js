@@ -90,17 +90,17 @@ const bottomNavCSS = `
     </style>
 `;
 
-// HTML do bottom nav - usando navegação SPA
+// HTML do bottom nav - usando navegação SPA (SEM href)
 function buildBottomNavHTML() {
     const activeItem = getBottomNavActiveItem();
     
-    // Função helper para criar link SPA
+    // Função helper para criar link SPA SEM href
     const createNavLink = (href, icon, itemKey) => {
         const isActive = activeItem === itemKey;
-        // Usar onclick para navegação SPA, mas manter href para fallback
-        return `<a href="${href}" 
+        // SEM href - apenas data attribute e onclick
+        return `<a data-spa-link="${href}" 
                     class="nav-item ${isActive ? 'active' : ''}" 
-                    onclick="if(window.SPANavigator){window.SPANavigator.navigate('${href}', true); return false;}">
+                    onclick="if(window.SPANavigator){window.SPANavigator.navigate('${href}', true);} return false;">
                     <i class="${icon}"></i>
                 </a>`;
     };
