@@ -200,28 +200,42 @@
                     // Criar hash robusto do script (usar mais caracteres para melhor unicidade)
                     const scriptHash = btoa(scriptText.substring(0, Math.min(500, scriptText.length))).substring(0, 80);
                     
-                    // Só executar se não foi executado antes
-                    if (!window.__spaExecutedScripts.has(scriptHash)) {
-                        window.__spaExecutedScripts.add(scriptHash);
+                    // Verificar se script já foi executado
+                    if (window.__spaExecutedScripts.has(scriptHash)) {
+                        console.log('[SPA] Script inline já executado, pulando');
+                        script.remove();
+                        return;
+                    }
+                    
+                    // Verificar se funções principais já existem (para scripts do main_app)
+                    // Se já existem, não executar novamente
+                    const hasMainAppFunctions = typeof window.showCurrentMission !== 'undefined' && 
+                                                typeof window.initializeMissionsCarousel !== 'undefined';
+                    if (hasMainAppFunctions && scriptText.includes('showCurrentMission') && scriptText.includes('initializeMissionsCarousel')) {
+                        console.log('[SPA] Funções do main_app já existem, pulando script');
+                        script.remove();
+                        return;
+                    }
+                    
+                    // Marcar como executado ANTES de executar
+                    window.__spaExecutedScripts.add(scriptHash);
+                    
+                    try {
+                        // Executar script diretamente para que funções fiquem no escopo global
+                        const scriptElement = document.createElement('script');
+                        scriptElement.textContent = scriptText;
+                        document.body.appendChild(scriptElement);
                         
-                        try {
-                            // Executar script diretamente para que funções fiquem no escopo global
-                            // Isso é necessário para funções como showCurrentMission, initializeMissionsCarousel, etc
-                            const scriptElement = document.createElement('script');
-                            scriptElement.textContent = scriptText;
-                            document.body.appendChild(scriptElement);
-                            
-                            // Remover após execução (pequeno delay para garantir execução)
-                            setTimeout(() => {
-                                if (scriptElement.parentNode) {
-                                    scriptElement.parentNode.removeChild(scriptElement);
-                                }
-                            }, 100);
-                        } catch (e) {
-                            console.error('[SPA] Erro ao executar script inline:', e);
-                        }
-                    } else {
-                        console.log('[SPA] Script inline já foi executado, pulando:', scriptHash.substring(0, 20));
+                        // Remover após execução (pequeno delay para garantir execução)
+                        setTimeout(() => {
+                            if (scriptElement.parentNode) {
+                                scriptElement.parentNode.removeChild(scriptElement);
+                            }
+                        }, 100);
+                    } catch (e) {
+                        console.error('[SPA] Erro ao executar script inline:', e);
+                        // Remover do cache se deu erro
+                        window.__spaExecutedScripts.delete(scriptHash);
                     }
                 }
                 // Remover script do DOM original
