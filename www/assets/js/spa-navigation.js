@@ -78,19 +78,29 @@
                 // Script externo - verificar se já foi carregado
                 const existing = document.querySelector(`script[src="${script.src}"]`);
                 // NÃO recarregar scripts que já estão no DOM (especialmente auth.js, bottom-nav.js, etc)
-                if (!existing && !window.__spaExecutedScripts.has(script.src)) {
-                    window.__spaExecutedScripts.add(script.src);
-                    const promise = new Promise((resolve, reject) => {
-                        const newScript = document.createElement('script');
-                        newScript.src = script.src;
-                        newScript.async = false;
-                        newScript.onload = resolve;
-                        newScript.onerror = reject;
-                        document.head.appendChild(newScript);
-                    });
-                    scriptPromises.push(promise);
-                } else if (existing) {
+                if (existing) {
                     // Script já existe, resolver imediatamente
+                    scriptPromises.push(Promise.resolve());
+                } else if (!window.__spaExecutedScripts.has(script.src)) {
+                    // Normalizar src para evitar duplicatas (remover query strings para comparação)
+                    const normalizedSrc = script.src.split('?')[0];
+                    if (!window.__spaExecutedScripts.has(normalizedSrc)) {
+                        window.__spaExecutedScripts.add(normalizedSrc);
+                        window.__spaExecutedScripts.add(script.src); // Adicionar também a versão com query
+                        
+                        const promise = new Promise((resolve, reject) => {
+                            const newScript = document.createElement('script');
+                            newScript.src = script.src;
+                            newScript.async = false;
+                            newScript.onload = resolve;
+                            newScript.onerror = reject;
+                            document.head.appendChild(newScript);
+                        });
+                        scriptPromises.push(promise);
+                    } else {
+                        scriptPromises.push(Promise.resolve());
+                    }
+                } else {
                     scriptPromises.push(Promise.resolve());
                 }
             } else {
@@ -187,29 +197,31 @@
             inlineScripts.forEach(script => {
                 const scriptText = script.textContent.trim();
                 if (scriptText) {
-                    // Criar hash robusto do script
-                    const scriptHash = btoa(scriptText.substring(0, Math.min(300, scriptText.length))).substring(0, 60);
+                    // Criar hash robusto do script (usar mais caracteres para melhor unicidade)
+                    const scriptHash = btoa(scriptText.substring(0, Math.min(500, scriptText.length))).substring(0, 80);
                     
                     // Só executar se não foi executado antes
                     if (!window.__spaExecutedScripts.has(scriptHash)) {
                         window.__spaExecutedScripts.add(scriptHash);
                         
                         try {
-                            // Executar script diretamente (sem IIFE) para que funções fiquem no escopo global
-                            // Mas usar eval em contexto isolado para evitar problemas
+                            // Executar script diretamente para que funções fiquem no escopo global
+                            // Isso é necessário para funções como showCurrentMission, initializeMissionsCarousel, etc
                             const scriptElement = document.createElement('script');
                             scriptElement.textContent = scriptText;
                             document.body.appendChild(scriptElement);
                             
-                            // Remover após execução
+                            // Remover após execução (pequeno delay para garantir execução)
                             setTimeout(() => {
                                 if (scriptElement.parentNode) {
                                     scriptElement.parentNode.removeChild(scriptElement);
                                 }
-                            }, 50);
+                            }, 100);
                         } catch (e) {
                             console.error('[SPA] Erro ao executar script inline:', e);
                         }
+                    } else {
+                        console.log('[SPA] Script inline já foi executado, pulando:', scriptHash.substring(0, 20));
                     }
                 }
                 // Remover script do DOM original
