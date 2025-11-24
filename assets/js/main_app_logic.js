@@ -13,8 +13,18 @@ async function loadMainAppData() {
         
         // Mostrar o container do dashboard
         const dashboardContainer = document.getElementById('dashboard-container');
+        console.log('Tentando mostrar dashboard-container:', !!dashboardContainer);
         if (dashboardContainer) {
             dashboardContainer.style.display = 'block';
+            console.log('dashboard-container display alterado para block');
+        } else {
+            console.error('dashboard-container não encontrado!');
+            // Tentar encontrar qualquer container
+            const appContainer = document.querySelector('.app-container');
+            console.log('app-container encontrado:', !!appContainer);
+            if (appContainer) {
+                appContainer.style.display = 'block';
+            }
         }
         
         // Carregar dados do dashboard
@@ -92,6 +102,24 @@ async function loadMainAppData() {
 
 window.addEventListener('spa:enter-main_app', async function() {
     console.log('Main app page loaded via SPA');
-    await loadMainAppData();
+    
+    // Aguardar um pouco para garantir que o HTML foi inserido no DOM
+    setTimeout(async () => {
+        // Verificar se o container existe
+        const dashboardContainer = document.getElementById('dashboard-container');
+        console.log('Dashboard container encontrado:', !!dashboardContainer);
+        
+        if (!dashboardContainer) {
+            console.error('dashboard-container não encontrado no DOM!');
+            // Tentar encontrar no spa-container
+            const spaContainer = document.getElementById('spa-container');
+            if (spaContainer) {
+                console.log('spa-container encontrado, conteúdo:', spaContainer.innerHTML.substring(0, 200));
+            }
+            return;
+        }
+        
+        await loadMainAppData();
+    }, 100);
 });
 
