@@ -64,16 +64,21 @@
         };
     }
     
+    // Cache global de scripts já executados (persiste entre navegações)
+    if (!window.__spaExecutedScripts) {
+        window.__spaExecutedScripts = new Set();
+    }
+    
     // Executar scripts da nova página
     function executeScripts(scripts) {
         const scriptPromises = [];
-        const executedInlineScripts = new Set(); // Rastrear scripts inline já executados
         
         scripts.forEach((script, index) => {
             if (script.src) {
                 // Script externo - verificar se já foi carregado
                 const existing = document.querySelector(`script[src="${script.src}"]`);
-                if (!existing) {
+                if (!existing && !window.__spaExecutedScripts.has(script.src)) {
+                    window.__spaExecutedScripts.add(script.src);
                     const promise = new Promise((resolve, reject) => {
                         const newScript = document.createElement('script');
                         newScript.src = script.src;
@@ -85,18 +90,19 @@
                     scriptPromises.push(promise);
                 }
             } else {
-                // Script inline - criar hash para evitar re-execução
-                const scriptHash = script.textContent.substring(0, 100); // Primeiros 100 chars como hash
+                // Script inline - criar hash mais robusto
+                const scriptText = script.textContent.trim();
+                const scriptHash = btoa(scriptText.substring(0, Math.min(200, scriptText.length))).substring(0, 50);
                 
-                if (!executedInlineScripts.has(scriptHash)) {
-                    executedInlineScripts.add(scriptHash);
+                if (!window.__spaExecutedScripts.has(scriptHash)) {
+                    window.__spaExecutedScripts.add(scriptHash);
                     
                     try {
-                        // Envolver em IIFE para evitar conflitos de escopo
+                        // Envolver em IIFE para evitar conflitos de escopo e re-declarações
                         const wrappedCode = `
                             (function() {
                                 try {
-                                    ${script.textContent}
+                                    ${scriptText}
                                 } catch(e) {
                                     console.error('[SPA] Erro ao executar script inline:', e);
                                 }
@@ -105,9 +111,7 @@
                         
                         const newScript = document.createElement('script');
                         newScript.textContent = wrappedCode;
-                        // Adicionar ao body para executar no contexto correto
                         document.body.appendChild(newScript);
-                        // Remover após execução para não poluir o DOM
                         setTimeout(() => {
                             if (newScript.parentNode) {
                                 newScript.parentNode.removeChild(newScript);

@@ -657,7 +657,12 @@
                 'week': 'Total vs Meta - Esta Semana',
                 'month': 'Total vs Meta - Este Mês'
             };
-            document.getElementById('period-subtitle').textContent = subtitles[period];
+            const subtitleEl = document.getElementById('period-subtitle');
+            if (!subtitleEl) {
+                console.warn('[Progress] Elemento period-subtitle não encontrado');
+                return;
+            }
+            subtitleEl.textContent = subtitles[period];
             
             renderProgressCards(period);
         }
