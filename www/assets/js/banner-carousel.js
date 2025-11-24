@@ -1,12 +1,15 @@
-(function() {
 if (window.__BANNER_CAROUSEL_LOADED) {
-    return;
-}
-window.__BANNER_CAROUSEL_LOADED = true;
+  console.log('[Banner Carousel] Script já carregado, reutilizando instância existente.');
+  if (typeof window.initLottieCarousel === "function") {
+    window.initLottieCarousel();
+  }
+} else {
+  window.__BANNER_CAROUSEL_LOADED = true;
 
 // banner-carousel.js (VERSÃO FINAL, ESTÁVEL E COM LOOP SIMPLES)
 
 // Variáveis globais para controle de limpeza
+// Evitar re-declaração em navegação SPA
 if (typeof window.globalCarouselInterval === 'undefined') {
     window.globalCarouselInterval = null;
 }
@@ -150,9 +153,6 @@ function initLottieCarousel() {
         }
     });
 
-window.initLottieCarousel = initLottieCarousel;
-
-})();
     // Atualiza paginação APENAS se não estiver inicializando
     if (!isInitializing) {
         updatePagination();
@@ -542,3 +542,6 @@ window.addEventListener('spa-page-loaded', function(e) {
     }
   }
 });
+
+window.initLottieCarousel = initLottieCarousel;
+}
