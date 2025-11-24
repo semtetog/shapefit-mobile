@@ -1,0 +1,61 @@
+/**
+ * CSS para sistema SPA - Páginas container
+ * Elimina piscar preto no iOS
+ */
+
+/* Container principal de páginas */
+#spa-container {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+/* Páginas individuais */
+.spa-page {
+    display: none;
+    width: 100%;
+    min-height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+    will-change: opacity;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+/* Página ativa */
+.spa-page.active {
+    display: block;
+    position: relative;
+    opacity: 1;
+    z-index: 1;
+}
+
+/* Conteúdo da página */
+.spa-page-content {
+    width: 100%;
+    min-height: 100vh;
+}
+
+/* Prevenir flash durante transição */
+body.spa-navigating {
+    overflow: hidden;
+}
+
+/* Garantir que páginas não sejam visíveis durante carregamento */
+.spa-page:not(.active) {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Otimização para iOS - prevenir repaint */
+.spa-page {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-perspective: 1000;
+    perspective: 1000;
+}
+

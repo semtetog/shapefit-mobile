@@ -18,6 +18,18 @@ const bottomNavMap = {
 };
 
 function getBottomNavActiveItem() {
+    // Se estiver usando SPA, verificar página atual
+    if (window.SPANavigator && window.SPANavigator.currentPage) {
+        const pageId = window.SPANavigator.currentPage;
+        // Mapear pageId para item ativo
+        if (pageId === 'page-main-app') return 'home';
+        if (pageId === 'page-progress') return 'stats';
+        if (pageId === 'page-diary' || pageId === 'page-add-food' || pageId === 'page-edit-meal') return 'diary';
+        if (pageId === 'page-explore-recipes' || pageId === 'page-favorite-recipes' || pageId === 'page-view-recipe') return 'explore';
+        if (pageId === 'page-more-options' || pageId === 'page-edit-profile') return 'settings';
+    }
+    
+    // Fallback: usar pathname
     const currentPage = window.location.pathname.split('/').pop() || 'main_app.html';
     return bottomNavMap[currentPage] || 'home';
 }
@@ -78,26 +90,28 @@ const bottomNavCSS = `
     </style>
 `;
 
-// HTML do bottom nav - usando caminhos relativos
+// HTML do bottom nav - usando navegação SPA
 function buildBottomNavHTML() {
     const activeItem = getBottomNavActiveItem();
+    
+    // Função helper para criar link SPA
+    const createNavLink = (href, icon, itemKey) => {
+        const isActive = activeItem === itemKey;
+        // Usar onclick para navegação SPA, mas manter href para fallback
+        return `<a href="${href}" 
+                    class="nav-item ${isActive ? 'active' : ''}" 
+                    onclick="if(window.SPANavigator){window.SPANavigator.navigate('${href}', true); return false;}">
+                    <i class="${icon}"></i>
+                </a>`;
+    };
+    
     return `
         <nav class="bottom-nav">
-            <a href="./main_app.html" class="nav-item ${activeItem === 'home' ? 'active' : ''}">
-                <i class="fas fa-home"></i>
-            </a>
-            <a href="./progress.html" class="nav-item ${activeItem === 'stats' ? 'active' : ''}">
-                <i class="fas fa-chart-line"></i>
-            </a>
-            <a href="./diary.html" class="nav-item ${activeItem === 'diary' ? 'active' : ''}">
-                <i class="fas fa-book"></i>
-            </a>
-            <a href="./explore_recipes.html" class="nav-item ${activeItem === 'explore' ? 'active' : ''}">
-                <i class="fas fa-utensils"></i>
-            </a>
-            <a href="./more_options.html" class="nav-item ${activeItem === 'settings' ? 'active' : ''}">
-                <i class="fas fa-cog"></i>
-            </a>
+            ${createNavLink('./main_app.html', 'fas fa-home', 'home')}
+            ${createNavLink('./progress.html', 'fas fa-chart-line', 'stats')}
+            ${createNavLink('./diary.html', 'fas fa-book', 'diary')}
+            ${createNavLink('./explore_recipes.html', 'fas fa-utensils', 'explore')}
+            ${createNavLink('./more_options.html', 'fas fa-cog', 'settings')}
         </nav>
     `;
 }
@@ -168,3 +182,8 @@ window.addEventListener('load', function() {
 // Expor uma API simples para o SPA/router poder re-renderizar o bottom nav
 window.BottomNav = window.BottomNav || {};
 window.BottomNav.render = renderBottomNav;
+
+// Escutar mudanças de página SPA
+window.addEventListener('spa:page-changed', function() {
+    renderBottomNav();
+});
