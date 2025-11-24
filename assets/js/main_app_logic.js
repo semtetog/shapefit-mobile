@@ -231,6 +231,33 @@ async function loadMainAppData() {
             }
         }
         
+        // Inicializar banners (carousel)
+        console.log('[main_app_logic] Inicializando banners...');
+        if (typeof initLottieCarousel === 'function') {
+            setTimeout(() => {
+                try {
+                    initLottieCarousel();
+                    console.log('[main_app_logic] Banners inicializados');
+                } catch (e) {
+                    console.error('[main_app_logic] Erro ao inicializar banners:', e);
+                }
+            }, 300);
+        } else {
+            console.warn('[main_app_logic] initLottieCarousel não está disponível. Verificando se banner-carousel.js foi carregado...');
+            // Tentar carregar banner-carousel.js se não estiver carregado
+            if (!document.querySelector('script[src*="banner-carousel"]')) {
+                const script = document.createElement('script');
+                script.src = './assets/js/banner-carousel.js';
+                script.onload = () => {
+                    console.log('[main_app_logic] banner-carousel.js carregado, inicializando...');
+                    if (typeof initLottieCarousel === 'function') {
+                        setTimeout(() => initLottieCarousel(), 100);
+                    }
+                };
+                document.head.appendChild(script);
+            }
+        }
+        
         // Disparar evento customizado para script.js e outros listeners
         setTimeout(() => {
             window.dispatchEvent(new CustomEvent('main-app-data-loaded', { detail: data }));
