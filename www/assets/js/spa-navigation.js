@@ -233,7 +233,7 @@
             const { content, scripts, title, inlineStyles } = extractPageContent(html);
             
             // Encontrar o container atual
-            const currentContainer = document.querySelector('.app-container, .container');
+            let currentContainer = document.querySelector('.app-container, .container');
             if (!currentContainer) {
                 throw new Error('Container não encontrado');
             }
@@ -241,30 +241,48 @@
             // Preservar bottom-nav (não remover durante navegação)
             const bottomNav = document.querySelector('.bottom-nav');
             
-            // SEM FADE - troca instantânea para evitar "piscar" (estilo PWA)
-            // Não alterar opacity, apenas trocar conteúdo diretamente
+            // TÉCNICA DOUBLE BUFFERING - evitar "piscar" (estilo framework)
+            // Criar container temporário invisível para novo conteúdo
+            const newContainer = document.createElement('div');
+            newContainer.className = currentContainer.className;
+            newContainer.style.cssText = currentContainer.style.cssText;
+            newContainer.style.position = 'absolute';
+            newContainer.style.top = '0';
+            newContainer.style.left = '0';
+            newContainer.style.width = '100%';
+            newContainer.style.height = '100%';
+            newContainer.style.opacity = '0';
+            newContainer.style.pointerEvents = 'none';
+            newContainer.style.visibility = 'hidden';
             
-            // Limpar elementos duplicados ANTES de substituir conteúdo
+            // Inserir novo container no mesmo pai do container atual
+            const parent = currentContainer.parentNode;
+            parent.appendChild(newContainer);
+            
+            // Limpar elementos duplicados ANTES de inserir conteúdo
             cleanupPageElements();
             
             // Se está voltando para main_app, limpar completamente o carrossel ANTES de inserir novo conteúdo
             const pageName = url.split('/').pop().split('?')[0];
             if (pageName === 'main_app.html' || pageName === 'dashboard.html') {
-                const existingCarousel = currentContainer.querySelector('.main-carousel');
+                const existingCarousel = newContainer.querySelector('.main-carousel');
                 if (existingCarousel) {
                     console.log('[SPA] Removendo carrossel antigo antes de inserir novo conteúdo');
                     existingCarousel.remove();
                 }
             }
             
-            // Substituir conteúdo (troca instantânea - estilo PWA)
-            currentContainer.innerHTML = content;
+            // Inserir novo conteúdo no container temporário
+            newContainer.innerHTML = content;
             
-            // Scroll para o topo após inserir conteúdo
-            currentContainer.scrollTop = 0;
+            // Scroll para o topo no novo container
+            newContainer.scrollTop = 0;
             
             // Limpar novamente após inserir conteúdo (pode ter criado duplicatas)
             cleanupPageElements();
+            
+            // Forçar reflow para garantir que novo conteúdo está renderizado
+            newContainer.offsetHeight;
             
             // Executar scripts inline MAS apenas uma vez (usando hash)
             // Isso garante que funções sejam definidas, mas evita re-declarações
@@ -317,6 +335,32 @@
                 script.remove();
             });
             
+            // Executar APENAS scripts externos no novo container (scripts inline serão ignorados para evitar re-declarações)
+            // Scripts inline devem usar event listeners (spa-page-loaded) para inicialização
+            const externalScriptsOnly = scripts.filter(script => script.src);
+            await executeScripts(externalScriptsOnly);
+            
+            // Pequeno delay para garantir que scripts externos carregaram
+            await new Promise(resolve => setTimeout(resolve, 50));
+            
+            // SWAP INSTANTÂNEO - trocar containers sem "piscar"
+            // Usar requestAnimationFrame para garantir que está no próximo frame
+            requestAnimationFrame(() => {
+                // Tornar novo container visível
+                newContainer.style.opacity = '1';
+                newContainer.style.visibility = 'visible';
+                newContainer.style.pointerEvents = 'auto';
+                newContainer.style.position = 'relative';
+                
+                // Remover container antigo
+                if (currentContainer.parentNode) {
+                    currentContainer.parentNode.removeChild(currentContainer);
+                }
+                
+                // Atualizar referência
+                currentContainer = newContainer;
+            });
+            
             // Garantir que bottom-nav ainda está no body (caso tenha sido removido)
             if (bottomNav && !document.body.contains(bottomNav)) {
                 document.body.appendChild(bottomNav);
@@ -328,17 +372,6 @@
             // Atualizar título
             document.title = title;
             
-            // Scroll para o topo (já feito antes, mas garantir novamente)
-            currentContainer.scrollTop = 0;
-            
-            // Executar APENAS scripts externos (scripts inline serão ignorados para evitar re-declarações)
-            // Scripts inline devem usar event listeners (spa-page-loaded) para inicialização
-            const externalScriptsOnly = scripts.filter(script => script.src);
-            await executeScripts(externalScriptsOnly);
-            
-            // Pequeno delay para garantir que scripts externos carregaram
-            await new Promise(resolve => setTimeout(resolve, 100));
-            
             // Disparar eventos para que as páginas saibam que foram carregadas
             // Primeiro DOMContentLoaded (para compatibilidade)
             const domContentLoadedEvent = new Event('DOMContentLoaded', { bubbles: true, cancelable: true });
@@ -348,8 +381,6 @@
             window.dispatchEvent(new CustomEvent('spa-page-loaded', { 
                 detail: { url, isSPANavigation: true } 
             }));
-            
-            // Conteúdo já está visível (sem fade - estilo PWA fluido)
             // Forçar re-execução de códigos de inicialização para páginas específicas
             const pageName = url.split('/').pop().split('?')[0];
             setTimeout(() => {
@@ -488,6 +519,8 @@
         .container {
             /* Sem transição de opacity - troca instantânea (estilo PWA) */
             will-change: contents;
+            /* Garantir que container sempre está visível durante swap */
+            transition: none !important;
         }
         
         body.page-transitioning {
