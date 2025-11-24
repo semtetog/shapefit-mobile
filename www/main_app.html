@@ -4571,6 +4571,17 @@ window.addEventListener('spa-page-loaded', function(e) {
                             const data = result.data;
                             renderDashboard(data);
                             dashboardContainer.style.display = 'block';
+                            
+                            // Re-inicializar banners após carregar dados
+                            if (typeof tryInitCarousel === 'function') {
+                                setTimeout(() => {
+                                    tryInitCarousel();
+                                }, 300);
+                            } else if (typeof initLottieCarousel === 'function') {
+                                setTimeout(() => {
+                                    initLottieCarousel();
+                                }, 300);
+                            }
                         } catch (error) {
                             console.error('Erro ao recarregar dashboard via SPA:', error);
                         }

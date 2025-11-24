@@ -374,11 +374,10 @@ function initLottieCarousel() {
   });
 }
 
-// Aguarda o window.load para garantir que todos os scripts carregaram
-window.addEventListener('load', () => {
-  console.log('[Banner Carousel] Window load event - verificando se o carrossel existe...');
+// Função para inicializar o carrossel (reutilizável)
+function tryInitCarousel() {
+  console.log('[Banner Carousel] Tentando inicializar carrossel...');
   
-  // CORREÇÃO: Só tenta iniciar o carrossel se o elemento existir na página
   const carousel = document.querySelector('.main-carousel');
   if (carousel) {
     // Aguardar um pouco mais para garantir que Lottie.js carregou
@@ -397,5 +396,24 @@ window.addEventListener('load', () => {
     }
   } else {
     console.log('[Banner Carousel] Container .main-carousel não encontrado nesta página. Script inativo.');
+  }
+}
+
+// Aguarda o window.load para garantir que todos os scripts carregaram
+window.addEventListener('load', () => {
+  console.log('[Banner Carousel] Window load event - verificando se o carrossel existe...');
+  tryInitCarousel();
+});
+
+// Suporte para navegação SPA - re-inicializar quando main_app for carregado via SPA
+window.addEventListener('spa-page-loaded', function(e) {
+  if (e.detail && e.detail.isSPANavigation) {
+    const pageName = window.location.pathname.split('/').pop();
+    if (pageName === 'main_app.html' || pageName === 'dashboard.html') {
+      console.log('[Banner Carousel] Página main_app carregada via SPA - re-inicializando carrossel...');
+      setTimeout(() => {
+        tryInitCarousel();
+      }, 200);
+    }
   }
 });
