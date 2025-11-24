@@ -2,9 +2,13 @@
 // Adaptado para eventos SPA
 
 async function loadMainAppData() {
+    console.log('[main_app_logic] loadMainAppData() chamado!');
     try {
+        console.log('[main_app_logic] Verificando autenticação...');
         const authenticated = await requireAuth();
+        console.log('[main_app_logic] Autenticado:', authenticated);
         if (!authenticated) {
+            console.warn('[main_app_logic] Usuário não autenticado, redirecionando para login');
             if (window.router) {
                 window.router.navigate('/login');
             }
@@ -47,10 +51,22 @@ async function loadMainAppData() {
         }
         
         // Carregar dados do dashboard
-        console.log('Carregando dados do dashboard...');
-        const response = await authenticatedFetch(`${window.BASE_APP_URL}/api/get_dashboard_data.php`);
+        const apiUrl = `${window.BASE_APP_URL}/api/get_dashboard_data.php`;
+        console.log('[main_app_logic] Carregando dados do dashboard...');
+        console.log('[main_app_logic] BASE_APP_URL:', window.BASE_APP_URL);
+        console.log('[main_app_logic] URL da API:', apiUrl);
+        
+        const response = await authenticatedFetch(apiUrl);
+        console.log('[main_app_logic] Resposta recebida:', response);
+        console.log('[main_app_logic] Response ok:', response?.ok);
+        console.log('[main_app_logic] Response status:', response?.status);
+        
         if (!response || !response.ok) {
-            console.error('Erro ao carregar dados do dashboard - response:', response);
+            console.error('[main_app_logic] Erro ao carregar dados do dashboard - response:', response);
+            if (response) {
+                const errorText = await response.text();
+                console.error('[main_app_logic] Erro da API:', errorText);
+            }
             return;
         }
         
@@ -160,26 +176,51 @@ async function loadMainAppData() {
     }
 }
 
-window.addEventListener('spa:enter-main_app', async function() {
-    console.log('Main app page loaded via SPA');
+// Verificar se o script foi carregado
+console.log('[main_app_logic] Script carregado!');
+
+// Listener para evento SPA
+window.addEventListener('spa:enter-main_app', async function(e) {
+    console.log('[main_app_logic] Evento spa:enter-main_app disparado!', e.detail);
     
     // Aguardar um pouco para garantir que o HTML foi inserido no DOM
     setTimeout(async () => {
         // Verificar se o container existe
         const dashboardContainer = document.getElementById('dashboard-container');
-        console.log('Dashboard container encontrado:', !!dashboardContainer);
+        console.log('[main_app_logic] Dashboard container encontrado:', !!dashboardContainer);
         
         if (!dashboardContainer) {
-            console.error('dashboard-container não encontrado no DOM!');
+            console.error('[main_app_logic] dashboard-container não encontrado no DOM!');
             // Tentar encontrar no spa-container
             const spaContainer = document.getElementById('spa-container');
             if (spaContainer) {
-                console.log('spa-container encontrado, conteúdo:', spaContainer.innerHTML.substring(0, 200));
+                console.log('[main_app_logic] spa-container encontrado, conteúdo:', spaContainer.innerHTML.substring(0, 200));
+                // Tentar encontrar dentro do spa-container
+                const containerInside = spaContainer.querySelector('#dashboard-container');
+                if (containerInside) {
+                    console.log('[main_app_logic] dashboard-container encontrado dentro do spa-container!');
+                    await loadMainAppData();
+                } else {
+                    console.error('[main_app_logic] dashboard-container não encontrado nem dentro do spa-container!');
+                }
+            } else {
+                console.error('[main_app_logic] spa-container também não existe!');
             }
             return;
         }
         
+        console.log('[main_app_logic] Chamando loadMainAppData()...');
         await loadMainAppData();
-    }, 100);
+    }, 200); // Aumentar timeout para 200ms
+});
+
+// Também escutar routeChanged como fallback
+window.addEventListener('routeChanged', async function(e) {
+    if (e.detail?.pageName === 'main_app') {
+        console.log('[main_app_logic] routeChanged detectado para main_app!', e.detail);
+        setTimeout(async () => {
+            await loadMainAppData();
+        }, 200);
+    }
 });
 
