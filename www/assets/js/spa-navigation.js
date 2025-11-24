@@ -267,6 +267,8 @@
                 }
             }
             
+            // Armazenar pageName para uso posterior
+            
             // Inserir novo conteúdo no container temporário
             newContainer.innerHTML = content;
             
@@ -378,7 +380,7 @@
                 detail: { url, isSPANavigation: true } 
             }));
             // Forçar re-execução de códigos de inicialização para páginas específicas
-            const pageName = url.split('/').pop().split('?')[0];
+            // pageName já foi declarado acima
             setTimeout(() => {
                 // Para main_app.html - forçar re-execução do código de carregamento
                 if (pageName === 'main_app.html' || pageName === 'dashboard.html') {
