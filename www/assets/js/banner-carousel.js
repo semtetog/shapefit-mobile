@@ -1,20 +1,28 @@
 // banner-carousel.js (VERSÃO FINAL, ESTÁVEL E COM LOOP SIMPLES)
 
 // Variáveis globais para controle de limpeza
-let globalCarouselInterval = null;
-let globalLoadedAnimations = [];
+// Evitar re-declaração em navegação SPA
+if (typeof window.globalCarouselInterval === 'undefined') {
+    window.globalCarouselInterval = null;
+}
+if (typeof window.globalLoadedAnimations === 'undefined') {
+    window.globalLoadedAnimations = [];
+}
+let globalCarouselInterval = window.globalCarouselInterval;
+let globalLoadedAnimations = window.globalLoadedAnimations;
 
 function initLottieCarousel() {
   console.log('[Banner Carousel] Inicializando com loop estável...');
   
   // LIMPAR ANIMAÇÕES E TIMERS ANTIGOS ANTES DE INICIALIZAR
-  if (globalCarouselInterval) {
-    clearInterval(globalCarouselInterval);
-    globalCarouselInterval = null;
+  if (window.globalCarouselInterval) {
+    clearInterval(window.globalCarouselInterval);
+    window.globalCarouselInterval = null;
   }
+  globalCarouselInterval = window.globalCarouselInterval;
   
   // Destruir todas as animações Lottie antigas
-  globalLoadedAnimations.forEach(anim => {
+  window.globalLoadedAnimations.forEach(anim => {
     if (anim && typeof anim.destroy === 'function') {
       try {
         anim.destroy();
@@ -23,7 +31,8 @@ function initLottieCarousel() {
       }
     }
   });
-  globalLoadedAnimations = [];
+  window.globalLoadedAnimations = [];
+  globalLoadedAnimations = window.globalLoadedAnimations;
   
   if (typeof lottie === 'undefined') {
     console.error('[Banner Carousel] Biblioteca lottie-web não foi carregada!');
@@ -282,13 +291,15 @@ function initLottieCarousel() {
     // Timer automático sempre faz loop infinito
     carouselInterval = setInterval(nextSlide, DURATION);
     // Atualizar referência global
-    globalCarouselInterval = carouselInterval;
+    window.globalCarouselInterval = carouselInterval;
+    globalCarouselInterval = window.globalCarouselInterval;
   }
   
   function stopCarouselTimer() { 
     clearInterval(carouselInterval);
-    if (globalCarouselInterval) {
-      clearInterval(globalCarouselInterval);
+    if (window.globalCarouselInterval) {
+      clearInterval(window.globalCarouselInterval);
+      window.globalCarouselInterval = null;
       globalCarouselInterval = null;
     }
   }
@@ -415,7 +426,8 @@ function initLottieCarousel() {
         console.log(`[Banner Carousel] Animação ${index} carregada.`);
         loadedAnimations[index] = anim;
         // Atualizar referência global
-        globalLoadedAnimations[index] = anim;
+        window.globalLoadedAnimations[index] = anim;
+        globalLoadedAnimations[index] = window.globalLoadedAnimations[index];
         
         // Se é o primeiro slide e ainda está visível, garante que está tocando
         if (index === 0 && currentIndex === 0) {
@@ -492,7 +504,8 @@ window.addEventListener('spa-page-loaded', function(e) {
           }
         }
       });
-      globalLoadedAnimations = [];
+      window.globalLoadedAnimations = [];
+      globalLoadedAnimations = window.globalLoadedAnimations;
       
       // Limpar paginação antiga E containers de animação
       const carousel = document.querySelector('.main-carousel');

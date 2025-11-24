@@ -1,6 +1,15 @@
 // bottom-nav.js - Componente de navegação inferior para páginas HTML
 // Funciona como um "include" - usado em todas as páginas HTML
 
+// Evitar re-declaração em navegação SPA
+if (typeof window.__bottomNavInitialized !== 'undefined') {
+    // Já foi inicializado, apenas atualizar item ativo se necessário
+    if (typeof updateActiveItem === 'function') {
+        updateActiveItem();
+    }
+} else {
+    window.__bottomNavInitialized = true;
+
 // Mapeamento de páginas para itens ativos
 const bottomNavMap = {
     'main_app.html': 'home',
@@ -170,3 +179,5 @@ window.addEventListener('load', function() {
         renderBottomNav();
     }
 });
+
+} // Fim do bloco de verificação de inicialização

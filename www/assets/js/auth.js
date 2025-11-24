@@ -1,7 +1,11 @@
 // auth.js - Sistema de autenticação para páginas HTML
 // Este arquivo gerencia tokens e autenticação para o Capacitor
 
-const AUTH_TOKEN_KEY = 'shapefit_auth_token';
+// Evitar re-declaração em navegação SPA
+if (typeof window.AUTH_TOKEN_KEY === 'undefined') {
+    window.AUTH_TOKEN_KEY = 'shapefit_auth_token';
+}
+const AUTH_TOKEN_KEY = window.AUTH_TOKEN_KEY;
 // Não declarar BASE_APP_URL aqui - usar window.BASE_APP_URL diretamente
 
 /**
