@@ -1,26 +1,62 @@
 // bottom-nav.js - Componente de navegação inferior para páginas HTML
 // Funciona como um "include" - usado em todas as páginas HTML
 
-// Mapeamento de páginas para itens ativos
+// Mapeamento de páginas para itens ativos (suporta com e sem .html)
 const bottomNavMap = {
+    'main_app': 'home',
     'main_app.html': 'home',
+    'dashboard': 'home',
+    'dashboard.html': 'home',
+    'progress': 'stats',
     'progress.html': 'stats',
+    'diary': 'diary',
     'diary.html': 'diary',
+    'add_food_to_diary': 'diary',
     'add_food_to_diary.html': 'diary',
+    'meal_types_overview': 'diary',
     'meal_types_overview.html': 'diary',
+    'explore_recipes': 'explore',
     'explore_recipes.html': 'explore',
+    'favorite_recipes': 'explore',
     'favorite_recipes.html': 'explore',
+    'view_recipe': 'explore',
     'view_recipe.html': 'explore',
+    'profile_overview': 'settings',
     'profile_overview.html': 'settings',
+    'more_options': 'settings',
     'more_options.html': 'settings',
     'more_options.php': 'settings',
+    'edit_profile': 'settings',
+    'edit_profile.html': 'settings',
+    'ranking': 'home',
     'ranking.html': 'home'
 };
 
 // Detectar página atual (compatível com SPA e navegação tradicional)
-const bottomNavCurrentPage = window.location.pathname.split('/').pop() || 'main_app.html';
-// Para SPA, verificar também a rota atual
-let bottomNavActiveItem = bottomNavMap[bottomNavCurrentPage] || 'home';
+const getCurrentPageName = () => {
+    const path = window.location.pathname;
+    const pageName = path.split('/').pop() || 'main_app';
+    return pageName.replace('.html', '');
+};
+
+let bottomNavActiveItem = 'home';
+
+// Função para atualizar item ativo baseado no pageName
+function updateActiveItemFromPageName(pageName) {
+    if (!pageName) return;
+    
+    // Remover .html se existir
+    const cleanPageName = pageName.replace('.html', '');
+    
+    // Tentar mapear
+    let mappedItem = bottomNavMap[cleanPageName] || bottomNavMap[`${cleanPageName}.html`];
+    
+    if (mappedItem) {
+        bottomNavActiveItem = mappedItem;
+        updateActiveNavItem();
+        console.log('[Bottom Nav] Item ativo atualizado:', { pageName: cleanPageName, activeItem: bottomNavActiveItem });
+    }
+}
 
 // Atualizar item ativo quando rota mudar (SPA)
 if (window.addEventListener) {
@@ -28,61 +64,43 @@ if (window.addEventListener) {
         const pageName = e.detail?.pageName || '';
         const route = e.detail?.route || '';
         
-        // Tentar mapear pelo pageName primeiro (mais confiável)
-        let mappedItem = null;
+        // Usar pageName primeiro (mais confiável)
         if (pageName) {
-            // Tentar com .html
-            mappedItem = bottomNavMap[`${pageName}.html`];
-            // Se não encontrar, tentar sem extensão
-            if (!mappedItem) {
-                mappedItem = bottomNavMap[pageName];
-            }
-        }
-        
-        // Se ainda não encontrou, tentar pela rota
-        if (!mappedItem && route) {
+            updateActiveItemFromPageName(pageName);
+        } else if (route) {
+            // Se não tiver pageName, tentar extrair da rota
             const routeName = route.split('/').pop() || route;
-            mappedItem = bottomNavMap[routeName] || bottomNavMap[route];
+            updateActiveItemFromPageName(routeName);
         }
-        
-        // Atualizar item ativo
-        bottomNavActiveItem = mappedItem || 'home';
-        
-        // Atualizar visualmente
-        updateActiveNavItem();
-        
-        console.log('[Bottom Nav] Rota mudou:', { pageName, route, activeItem: bottomNavActiveItem });
+    });
+    
+    // Atualizar na carga inicial também
+    window.addEventListener('DOMContentLoaded', function() {
+        const currentPage = getCurrentPageName();
+        updateActiveItemFromPageName(currentPage);
+    });
+    
+    // Atualizar quando window.load também (fallback)
+    window.addEventListener('load', function() {
+        const currentPage = getCurrentPageName();
+        updateActiveItemFromPageName(currentPage);
     });
 }
 
 function updateActiveNavItem() {
     const navItems = document.querySelectorAll('.bottom-nav .nav-item');
     navItems.forEach(item => {
-        const route = item.getAttribute('data-route') || item.getAttribute('href') || '';
-        // Extrair o nome da rota (sem /)
-        const routeName = route.replace(/^\//, '').split('/')[0] || '';
+        const itemType = item.getAttribute('data-item') || '';
         
-        // Mapear rota para item
-        let itemType = '';
-        if (routeName === 'main_app' || routeName === 'dashboard' || routeName === '') {
-            itemType = 'home';
-        } else if (routeName === 'progress') {
-            itemType = 'stats';
-        } else if (routeName === 'diary' || routeName === 'add_food_to_diary') {
-            itemType = 'diary';
-        } else if (routeName === 'explore_recipes' || routeName === 'favorite_recipes' || routeName === 'view_recipe') {
-            itemType = 'explore';
-        } else if (routeName === 'more_options' || routeName === 'profile_overview' || routeName === 'edit_profile') {
-            itemType = 'settings';
-        }
-        
-        // Atualizar classe active
+        // Atualizar classe active baseado no itemType e bottomNavActiveItem
         if (itemType === bottomNavActiveItem) {
             item.classList.add('active');
         } else {
             item.classList.remove('active');
         }
     });
+    
+    console.log('[Bottom Nav] Atualizado - item ativo:', bottomNavActiveItem);
 }
 
 // Base URL para os links
@@ -140,26 +158,28 @@ const bottomNavCSS = `
     </style>
 `;
 
-// HTML do bottom nav
-const bottomNavHTML = `
+// HTML do bottom nav (será gerado dinamicamente para sempre ter o item correto)
+function getBottomNavHTML() {
+    return `
     <nav class="bottom-nav">
-        <a href="/main_app" class="nav-item ${bottomNavActiveItem === 'home' ? 'active' : ''}" data-route="/main_app">
+        <a href="/main_app" class="nav-item" data-route="/main_app" data-item="home">
             <i class="fas fa-home"></i>
         </a>
-        <a href="/progress" class="nav-item ${bottomNavActiveItem === 'stats' ? 'active' : ''}" data-route="/progress">
+        <a href="/progress" class="nav-item" data-route="/progress" data-item="stats">
             <i class="fas fa-chart-line"></i>
         </a>
-        <a href="/diary" class="nav-item ${bottomNavActiveItem === 'diary' ? 'active' : ''}" data-route="/diary">
+        <a href="/diary" class="nav-item" data-route="/diary" data-item="diary">
             <i class="fas fa-book"></i>
         </a>
-        <a href="/explore_recipes" class="nav-item ${bottomNavActiveItem === 'explore' ? 'active' : ''}" data-route="/explore_recipes">
+        <a href="/explore_recipes" class="nav-item" data-route="/explore_recipes" data-item="explore">
             <i class="fas fa-utensils"></i>
         </a>
-        <a href="/more_options" class="nav-item ${bottomNavActiveItem === 'settings' ? 'active' : ''}" data-route="/more_options">
+        <a href="/more_options" class="nav-item" data-route="/more_options" data-item="settings">
             <i class="fas fa-cog"></i>
         </a>
     </nav>
 `;
+}
 
 // Função para renderizar o bottom nav
 function renderBottomNav() {
@@ -190,11 +210,14 @@ function renderBottomNav() {
     
     // Inserir HTML no body
     const navDiv = document.createElement('div');
-    navDiv.innerHTML = bottomNavHTML;
+    navDiv.innerHTML = getBottomNavHTML();
     const navElement = navDiv.querySelector('nav');
     if (navElement) {
         document.body.appendChild(navElement);
     }
+    
+    // Atualizar item ativo após renderizar
+    updateActiveNavItem();
 }
 
 // Renderizar quando o DOM estiver pronto
