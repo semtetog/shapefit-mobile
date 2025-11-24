@@ -15,6 +15,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     
     <!-- CSS -->
+    <link rel="stylesheet" href="./assets/css/style.css">
+    
     <script>
         // BASE_APP_URL já foi definido pelo www-config.js
         // Se não foi definido (fallback), usar URL local
@@ -25,6 +27,7 @@
             }
         }
     </script>
+    <script src="./assets/js/auth.js"></script>
     
     <style>
 /* CSS do layout nativo para mobile - Edit Profile */
@@ -1507,7 +1510,11 @@
                         // Chamar API para remover foto
                         const token = getAuthToken();
                         if (!token) {
-                            window.location.href = './login.html';
+                            if (window.smoothNavigate) {
+                                window.smoothNavigate('./auth/login.html');
+                            } else {
+                                window.location.href = './auth/login.html';
+                            }
                             return;
                         }
                         
@@ -1522,7 +1529,11 @@
                         
                         if (removeResponse.status === 401) {
                             clearAuthToken();
-                            window.location.href = './login.html';
+                            if (window.smoothNavigate) {
+                                window.smoothNavigate('./auth/login.html');
+                            } else {
+                                window.location.href = './auth/login.html';
+                            }
                             return;
                         }
                         
@@ -1552,7 +1563,11 @@
                         // Para FormData, não definir Content-Type (deixa o browser definir automaticamente)
                         const token = getAuthToken();
                         if (!token) {
-                            window.location.href = './login.html';
+                            if (window.smoothNavigate) {
+                                window.smoothNavigate('./auth/login.html');
+                            } else {
+                                window.location.href = './auth/login.html';
+                            }
                             return;
                         }
                         
@@ -1573,7 +1588,11 @@
                         // Se receber 401, redirecionar para login
                         if (photoResponse.status === 401) {
                             clearAuthToken();
-                            window.location.href = './login.html';
+                            if (window.smoothNavigate) {
+                                window.smoothNavigate('./auth/login.html');
+                            } else {
+                                window.location.href = './auth/login.html';
+                            }
                             return;
                         }
                         

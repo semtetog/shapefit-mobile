@@ -56,6 +56,8 @@
     </script>
     
     <!-- Auth Script -->
+    <script src="./assets/js/auth.js"></script>
+    <script src="./assets/js/common.js"></script>
     <script src="./assets/js/page-transitions.js"></script>
     
     <style>
@@ -405,7 +407,7 @@
     <script>
         // Verificar autenticação
         if (!isAuthenticated()) {
-            window.location.href = './login.html';
+            window.location.href = './auth/login.html';
         }
         
         const contentContainer = document.getElementById('content-container');
@@ -450,7 +452,7 @@
                 
                 if (!result.success) {
                     if (result.message && result.message.includes('Onboarding')) {
-                        window.location.href = './onboarding.html';
+                        window.location.href = './onboarding/onboarding.html';
                         return;
                     }
                     if (result.message && result.message.includes('não encontrado')) {

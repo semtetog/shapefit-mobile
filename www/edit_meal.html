@@ -57,6 +57,9 @@
         }
     </script>
     
+    <!-- Auth Script -->
+    <script src="./assets/js/auth.js"></script>
+    
     <style>
         body {
             -webkit-user-select: none;
@@ -472,7 +475,11 @@
     
     if (!mealId) {
         alert('ID da refeição inválido.');
-        window.location.href = './diary.html';
+        if (window.smoothNavigate) {
+            window.smoothNavigate('./diary.html');
+        } else {
+            window.location.href = './diary.html';
+        }
         return;
     }
     
@@ -514,7 +521,11 @@
             if (result.success) {
                 alert(result.message);
                 // Sempre usar caminho relativo para manter dentro do app
-                window.location.href = './diary.html';
+                if (window.smoothNavigate) {
+                    window.smoothNavigate('./diary.html');
+                } else {
+                    window.location.href = './diary.html';
+                }
             } else {
                 alert(result.message || 'Erro ao excluir refeição.');
             }
@@ -577,7 +588,11 @@
             const backUrl = `./diary.html?date=${mealData.date_consumed}`;
             document.getElementById('back-button').href = backUrl;
             document.getElementById('cancel-btn').onclick = () => {
-                window.location.href = backUrl;
+                if (window.smoothNavigate) {
+                    window.smoothNavigate(backUrl);
+                } else {
+                    window.location.href = backUrl;
+                }
             };
             
             // Mostrar formulário
@@ -586,7 +601,11 @@
         } catch (error) {
             console.error('Erro ao carregar dados da refeição:', error);
             alert('Erro ao carregar dados da refeição. Redirecionando...');
-            window.location.href = './diary.html';
+            if (window.smoothNavigate) {
+                window.smoothNavigate('./diary.html');
+            } else {
+                window.location.href = './diary.html';
+            }
         }
     }
     
@@ -635,7 +654,11 @@ document.getElementById('servings').addEventListener('input', updateNutrition);
             if (result.success) {
                 alert(result.message);
                 // Sempre usar caminho relativo para manter dentro do app
-                window.location.href = './diary.html';
+                if (window.smoothNavigate) {
+                    window.smoothNavigate('./diary.html');
+                } else {
+                    window.location.href = './diary.html';
+                }
             } else {
                 alert(result.message || 'Erro ao atualizar refeição.');
             }

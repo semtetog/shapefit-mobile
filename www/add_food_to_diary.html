@@ -1695,7 +1695,13 @@ async function submitAllMeals() {
             showPendingFeedback('Refeições registradas com sucesso! Redirecionando...', true);
             // Sempre usar caminho relativo para manter dentro do app
             const redirectUrl = `./diary.html?date=${encodeURIComponent(pendingItems[0].date_consumed)}`;
-            setTimeout(() => window.location.href = redirectUrl, 500);
+            setTimeout(() => {
+                if (window.smoothNavigate) {
+                    window.smoothNavigate(redirectUrl);
+                } else {
+                    window.location.href = redirectUrl;
+                }
+            }, 500);
             return;
         }
 

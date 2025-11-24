@@ -213,10 +213,18 @@
                     // Usar caminhos relativos para manter dentro do app
                     if (result.user && result.user.onboarding_complete) {
                         console.log('Redirecionando para main_app.html');
-                        window.location.href = '../main_app.html';
+                        if (window.smoothNavigate) {
+                            window.smoothNavigate('../main_app.html');
+                        } else {
+                            window.location.href = '../main_app.html';
+                        }
                     } else {
                         console.log('Redirecionando para onboarding');
-                        window.location.href = '../onboarding/onboarding.html';
+                        if (window.smoothNavigate) {
+                            window.smoothNavigate('../onboarding/onboarding.html');
+                        } else {
+                            window.location.href = '../onboarding/onboarding.html';
+                        }
                     }
                 } else {
                     // Show error

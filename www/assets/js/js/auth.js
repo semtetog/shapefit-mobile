@@ -65,8 +65,8 @@ async function requireAuth() {
     if (!authenticated) {
         // Se BASE_APP_URL não está definido, tentar detectar
         const baseUrl = window.BASE_APP_URL || (window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/'));
-        console.log('Redirecionando para login:', `${baseUrl}/login.html`);
-        window.location.href = `${baseUrl}/login.html`;
+        console.log('Redirecionando para login:', `${baseUrl}/auth/login.html`);
+        window.location.href = `${baseUrl}/auth/login.html`;
         return false;
     }
     return true;
@@ -162,7 +162,7 @@ async function authenticatedFetch(url, options = {}) {
         console.error('Token inválido (401) - redirecionando para login');
         clearAuthToken();
         const baseUrl = window.BASE_APP_URL || (window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/'));
-        window.location.href = `${baseUrl}/login.html`;
+        window.location.href = `${baseUrl}/auth/login.html`;
         return null;
     }
     

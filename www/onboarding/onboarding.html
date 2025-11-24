@@ -1,7 +1,7 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <script src="./www-config.js"></script>
+    <script src="../www-config.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Questionário - ShapeFIT</title>
@@ -9,6 +9,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- Auth Script -->
+    <script src="../assets/js/auth.js"></script>
     
     <style>
         :root {
@@ -738,7 +741,7 @@
         // BASE_APP_URL já foi definido pelo www-config.js
         // Se não foi definido (fallback), usar URL local
         if (!window.BASE_APP_URL) {
-            window.BASE_APP_URL = window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/');
+            window.BASE_APP_URL = window.location.origin + window.location.pathname.split('/').slice(0, -2).join('/');
             if (window.BASE_APP_URL.endsWith('/')) {
                 window.BASE_APP_URL = window.BASE_APP_URL.slice(0, -1);
             }
@@ -753,7 +756,7 @@
 
         // Verificar autenticação
         if (!getAuthToken()) {
-            window.location.href = './login.html';
+            window.location.href = '../auth/login.html';
         }
     </script>
 </head>
@@ -1813,7 +1816,7 @@
                                 setAuthToken(result.token);
                             }
                             // Sempre usar caminho relativo para manter dentro do app
-                            window.location.href = './dashboard.html';
+                            window.location.href = '../dashboard.html';
                         } else {
                             alert(result.message || 'Erro ao processar onboarding. Tente novamente.');
                             actionBtn.disabled = false;
@@ -1888,7 +1891,7 @@
             if (exitBtn) {
                 exitBtn.addEventListener('click', () => {
                     // Sempre redirecionar para dashboard quando clicar em sair
-                    window.location.href = './dashboard.html';
+                    window.location.href = '../dashboard.html';
                 });
             }
 
@@ -1900,4 +1903,3 @@
     </script>
 </body>
 </html>
-

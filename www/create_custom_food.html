@@ -23,6 +23,7 @@
             window.BASE_APP_URL = window.BASE_APP_URL.slice(0, -1);
         }
     </script>
+    <script src="./assets/js/auth.js"></script>
     
     <style>
 /* === CREATE CUSTOM FOOD PAGE - ESTILO MODERNO E MOBILE === */
@@ -441,7 +442,11 @@ body {
                     if (data.success) {
                         showAlert('success', data.message || 'Alimento salvo com sucesso!');
                         setTimeout(() => {
-                            window.location.href = './add_food_to_diary.html';
+                            if (window.smoothNavigate) {
+                                window.smoothNavigate('./add_food_to_diary.html');
+                            } else {
+                                window.location.href = './add_food_to_diary.html';
+                            }
                         }, 1500);
                     } else {
                         showAlert('danger', data.message || 'Erro ao salvar o alimento.');

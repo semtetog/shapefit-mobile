@@ -57,6 +57,9 @@
         }
     </script>
     
+    <!-- Auth Script -->
+    <script src="./assets/js/auth.js"></script>
+    
     <style>
         body {
             -webkit-user-select: none;
@@ -1702,7 +1705,7 @@ html, body {
                                 if (typeof clearAuthToken === 'function') {
                                     clearAuthToken();
                                 }
-                                window.location.href = './login.html';
+                                window.location.href = './auth/login.html';
                                 return;
                             }
                             

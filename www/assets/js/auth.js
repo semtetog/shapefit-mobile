@@ -78,7 +78,11 @@ async function requireAuth() {
     if (!authenticated) {
         // Usar caminho relativo para manter dentro do app
         console.log('Redirecionando para login');
-        window.location.href = './login.html';
+        if (window.smoothNavigate) {
+            window.smoothNavigate('./auth/login.html');
+        } else {
+            window.location.href = './auth/login.html';
+        }
         return false;
     }
     return true;
@@ -174,7 +178,11 @@ async function authenticatedFetch(url, options = {}) {
         console.error('Token inválido (401) - redirecionando para login');
         clearAuthToken();
         // Usar caminho relativo para manter dentro do app
-        window.location.href = './login.html';
+        if (window.smoothNavigate) {
+            window.smoothNavigate('./auth/login.html');
+        } else {
+            window.location.href = './auth/login.html';
+        }
         return null;
     }
     

@@ -2,7 +2,7 @@
   "name": "ShapeFIT - Seu Personal Trainer",
   "short_name": "ShapeFIT",
   "description": "Aplicativo completo de fitness e nutrição",
-  "start_url": "/login.html",
+  "start_url": "/auth/login.html",
   "scope": "/",
   "display": "standalone",
   "background_color": "#101010",

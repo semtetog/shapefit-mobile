@@ -61,6 +61,7 @@
     </script>
     
     <!-- Auth Script -->
+    <script src="./assets/js/auth.js"></script>
     <!-- App State - Gerencia estado para evitar recarregamentos -->
     <script src="./assets/js/app-state.js"></script>
 
@@ -561,7 +562,12 @@ async function loadDiaryData(date) {
         
         // Atualizar botão de adicionar
         document.getElementById('add-meal-btn').onclick = () => {
-                        window.location.href = `./add_food_to_diary.html?date=${currentDate}`;
+            const targetUrl = `./add_food_to_diary.html?date=${currentDate}`;
+            if (window.smoothNavigate) {
+                window.smoothNavigate(targetUrl);
+            } else {
+                window.location.href = targetUrl;
+            }
         };
         
     } catch (error) {

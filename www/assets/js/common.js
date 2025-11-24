@@ -45,7 +45,7 @@ async function apiRequest(url, options = {}) {
         
         if (response.status === 401) {
             clearAuthToken();
-            window.location.href = './login.html';
+            window.location.href = './auth/login.html';
             return null;
         }
         
