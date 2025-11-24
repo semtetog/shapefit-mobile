@@ -70,69 +70,151 @@ function initMainAppScript() {
     const dashboardGrid = document.querySelector('.dashboard-grid');
     if (dashboardGrid) {
         
-        // --- LÓGICA DE HIDRATAÇÃO ---
+        // --- LÓGICA DE HIDRATAÇÃO (igual ao código antigo) ---
         const waterCard = document.getElementById('water-card');
         if (waterCard) {
-            const increaseBtn = document.getElementById('increase-water');
-            const decreaseBtn = document.getElementById('decrease-water');
-            const waterAmountDisplay = document.getElementById('water-amount-display');
-            const waterGoalDisplay = document.getElementById('water-goal-display-total');
             const waterLevelGroup = document.getElementById('water-level-group');
+            let waterAmountDisplay = document.getElementById('water-amount-display');
+            let waterAmountInput = document.getElementById('water-amount-input');
+            let waterAddBtn = document.getElementById('water-add-btn');
+            let waterRemoveBtn = document.getElementById('water-remove-btn');
+            let waterUnitSelect = document.getElementById('water-unit-select');
 
-            if (increaseBtn && decreaseBtn && waterAmountDisplay && waterGoalDisplay && waterLevelGroup) {
-                let currentCups = parseInt(waterAmountDisplay.textContent, 10);
-                const goalCups = parseInt(waterGoalDisplay.textContent, 10);
-                const maxWaterHeight = 140;
-                let debounceTimer;
+            window.currentWater = window.currentWater || 0;
+            const waterGoal = 2000;
+            const CUP_SIZE_ML = 250;
+            const dropHeight = 275.785; 
 
-                const updateWaterVisuals = () => {
-                    const percentage = goalCups > 0 ? Math.min(currentCups / goalCups, 1) : 0;
-                    const translateY = maxWaterHeight - (percentage * maxWaterHeight);
-                    waterLevelGroup.style.transition = 'transform 0.7s cubic-bezier(0.25, 1, 0.5, 1)';
-                    waterLevelGroup.style.transform = `translate(0, ${translateY})`;
-                    waterAmountDisplay.textContent = currentCups;
-                };
+            function updateWaterDrop(animated = true) {
+                if (!waterLevelGroup || !waterAmountDisplay) {
+                    console.warn('[Water Drop] Elementos não encontrados');
+                    return;
+                }
                 
-                const updateWaterOnServer = (newAmount) => {
-                    clearTimeout(debounceTimer);
-                    debounceTimer = setTimeout(async () => {
-                        try {
-                            const response = await fetch('/api/update_water.php', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                                body: `water_consumed=${newAmount}&csrf_token=${csrfToken}`
-                            });
-                            const result = await response.json();
-                            if (result.success) {
-                                if (result.points_awarded !== 0) {
-                                    showSinglePopup(result.points_awarded, result.points_awarded > 0 ? 'gain' : 'loss');
-                                }
-                                updateUserPointsDisplay(result.new_total_points);
-                            } else {
-                                showAppNotification(result.message || 'Erro ao salvar.', 'error');
-                            }
-                        } catch (error) {
-                            showAppNotification('Erro de conexão.', 'error');
+                const percentage = waterGoal > 0 ? Math.min(window.currentWater / waterGoal, 1) : 0;
+                const yTranslate = dropHeight * (1 - percentage);
+                
+                if (!animated) {
+                    waterLevelGroup.style.transition = 'none';
+                }
+                
+                waterLevelGroup.setAttribute('transform', `translate(0, ${yTranslate})`);
+
+                if (!animated) {
+                    setTimeout(() => {
+                        waterLevelGroup.style.transition = 'transform 0.7s cubic-bezier(0.65, 0, 0.35, 1)';
+                    }, 50);
+                }
+                waterAmountDisplay.textContent = Math.round(window.currentWater);
+            }
+
+            function updateWaterOnServer() {
+                const waterInCups = Math.round(window.currentWater / CUP_SIZE_ML);
+                
+                authenticatedFetch(`${window.BASE_APP_URL}/api/update_water.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        water_consumed: waterInCups
+                    })
+                })
+                .then(async response => {
+                    if (!response || !response.ok) {
+                        throw new Error(`Erro: ${response?.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        if (data.points_awarded != 0 && data.points_awarded > 0) {
+                            showSinglePopup(data.points_awarded, 'gain');
                         }
-                    }, 500);
-                };
-
-                increaseBtn.addEventListener('click', () => {
-                    currentCups++;
-                    updateWaterVisuals();
-                    updateWaterOnServer(currentCups);
+                        if (data.new_total_points !== undefined) {
+                            updateUserPointsDisplay(data.new_total_points);
+                        }
+                    }
+                })
+                .catch(err => {
+                    console.error('Erro ao atualizar água:', err);
                 });
+            }
+            
+            function clampToNonNegativeInteger(value) { 
+                value = Number(value) || 0; 
+                return value < 0 ? 0 : value; 
+            }
+            
+            function parseAmountToMl(amountValue) {
+                const raw = String(amountValue || '').trim().toLowerCase();
+                if (raw.endsWith('l') || (waterUnitSelect && waterUnitSelect.value === 'l')) {
+                    const n = parseFloat(raw.replace('l', '')) || 0;
+                    return Math.max(0, Math.round(n * 1000));
+                }
+                return Math.max(0, Math.round(parseFloat(raw) || 0));
+            }
 
-                decreaseBtn.addEventListener('click', () => {
-                    if (currentCups > 0) {
-                        currentCups--;
-                        updateWaterVisuals();
-                        updateWaterOnServer(currentCups);
+            function addMlAndUpdate(mlToAdd) {
+                if (mlToAdd <= 0) return;
+                window.currentWater = clampToNonNegativeInteger(window.currentWater + mlToAdd);
+                updateWaterDrop();
+                updateWaterOnServer();
+            }
+
+            function subMlAndUpdate(mlToSub) {
+                if (mlToSub <= 0) return;
+                window.currentWater = clampToNonNegativeInteger(window.currentWater - mlToSub);
+                updateWaterDrop();
+                updateWaterOnServer();
+            }
+
+            function updateControlsEnabled() {
+                const amountMl = parseAmountToMl(waterAmountInput && waterAmountInput.value);
+                const hasAmount = amountMl > 0;
+                if (waterAddBtn) waterAddBtn.disabled = !hasAmount;
+                if (waterRemoveBtn) waterRemoveBtn.disabled = !hasAmount;
+            }
+
+            if (waterAddBtn) {
+                waterAddBtn.addEventListener('click', () => {
+                    let amountMl = parseAmountToMl(waterAmountInput && waterAmountInput.value);
+                    if (amountMl <= 0) return;
+                    addMlAndUpdate(amountMl);
+                    if (waterAmountInput) { 
+                        waterAmountInput.value = ''; 
+                        updateControlsEnabled(); 
                     }
                 });
-
-                setTimeout(updateWaterVisuals, 100);
             }
+
+            if (waterRemoveBtn) {
+                waterRemoveBtn.addEventListener('click', () => {
+                    let amountMl = parseAmountToMl(waterAmountInput && waterAmountInput.value);
+                    if (amountMl <= 0) return;
+                    subMlAndUpdate(amountMl);
+                    if (waterAmountInput) { 
+                        waterAmountInput.value = ''; 
+                        updateControlsEnabled(); 
+                    }
+                });
+            }
+
+            // Habilita/desabilita botões conforme o usuário digita
+            if (waterAmountInput) {
+                waterAmountInput.addEventListener('input', updateControlsEnabled);
+            }
+            if (waterUnitSelect) {
+                waterUnitSelect.addEventListener('change', updateControlsEnabled);
+            }
+
+            // Re-atualizar referências após navegação SPA
+            waterLevelGroup = document.getElementById('water-level-group');
+            waterAmountDisplay = document.getElementById('water-amount-display');
+            if (waterLevelGroup && waterAmountDisplay) {
+                updateWaterDrop(false);
+            }
+            updateControlsEnabled();
         }
 
         // --- LÓGICA DOS CÍRCULOS DE PROGRESSO ---

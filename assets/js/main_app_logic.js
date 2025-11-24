@@ -294,7 +294,7 @@ function updateMacroBar(type, value, goal) {
     }
 }
 
-// Renderizar rotinas/missões (script.js cuida da renderização completa do HTML)
+// Renderizar rotinas/missões (igual ao código antigo - renderiza HTML completo)
 function renderRoutines(data) {
     const missionsCard = document.getElementById('missions-card');
     if (!missionsCard) return;
@@ -319,13 +319,123 @@ function renderRoutines(data) {
         window.totalMissionsCount = totalCount;
     }
     
+    // Renderizar slides de missões
+    const missionsCarousel = document.getElementById('missions-carousel');
+    if (!missionsCarousel) return;
+    
     if (routines.length === 0) {
         missionsCard.style.display = 'none';
         return;
     }
     
     missionsCard.style.display = 'block';
-    console.log('[main_app_logic] Rotinas renderizadas - script.js vai renderizar o HTML completo');
+    
+    // Função helper para escape HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    let html = '';
+    const pendingRoutines = routines.filter(r => r.completion_status != 1);
+    let firstPendingIndex = -1;
+    
+    routines.forEach((routine, index) => {
+        const isCompleted = routine.completion_status == 1;
+        if (!isCompleted && firstPendingIndex === -1) {
+            firstPendingIndex = index;
+        }
+    });
+    
+    routines.forEach((routine, index) => {
+        const isCompleted = routine.completion_status == 1;
+        const missionId = routine.id || `routine_${index}`;
+        const title = routine.title || 'Tarefa';
+        const icon = routine.icon_class || 'fa-check-circle';
+        const isExercise = routine.is_exercise == 1;
+        const exerciseType = routine.exercise_type || '';
+        
+        // Determinar se precisa de duração ou sono
+        let isDuration = false;
+        let isSleep = false;
+        
+        if (String(missionId).indexOf('onboarding_') === 0) {
+            isDuration = true;
+        } else if (isExercise) {
+            if (exerciseType === 'sleep') {
+                isSleep = true;
+            } else if (exerciseType === 'duration') {
+                isDuration = true;
+            }
+        } else if (title.toLowerCase().indexOf('sono') !== -1) {
+            isSleep = true;
+        }
+        
+        const displayMissionId = isExercise && exerciseType === 'duration' ? `onboarding_${title}` : missionId;
+        const isFirstPending = index === firstPendingIndex && !isCompleted;
+        
+        html += `
+            <div class="mission-slide ${isFirstPending ? 'active' : ''}" data-mission-id="${displayMissionId}" data-completed="${isCompleted ? '1' : '0'}">
+                <div class="mission-icon">
+                    <i class="fas ${icon}"></i>
+                </div>
+                <div class="mission-details">
+                    <h4>${escapeHtml(title)}</h4>
+                    <small class="mission-duration-display" style="display: none;"></small>
+                </div>
+                <div class="mission-actions">
+                    <button class="mission-action-btn skip-btn" aria-label="Pular Missão"><i class="fas fa-times"></i></button>
+                    ${isDuration ? `
+                        <button class="mission-action-btn duration-btn" aria-label="Definir Duração" data-mission-id="${displayMissionId}">
+                            <i class="fas fa-clock"></i>
+                        </button>
+                        <button class="mission-action-btn complete-btn disabled" aria-label="Completar Missão">
+                            <i class="fas fa-check"></i>
+                        </button>
+                    ` : isSleep ? `
+                        <button class="mission-action-btn sleep-btn" aria-label="Registrar Sono" data-mission-id="${displayMissionId}">
+                            <i class="fas fa-clock"></i>
+                        </button>
+                        <button class="mission-action-btn complete-btn disabled" aria-label="Completar Missão">
+                            <i class="fas fa-check"></i>
+                        </button>
+                    ` : `
+                        <button class="mission-action-btn complete-btn" aria-label="Completar Missão">
+                            <i class="fas fa-check"></i>
+                        </button>
+                    `}
+                </div>
+            </div>
+        `;
+    });
+    
+    // Adicionar card de conclusão se todas completas
+    if (completedCount === totalCount && totalCount > 0) {
+        html += `
+            <div class="mission-slide completion-message" id="all-missions-completed-card">
+                <div class="mission-details"><h4>Parabéns!</h4><p>Você completou sua jornada de hoje.</p></div>
+            </div>
+        `;
+    }
+    
+    // Limpar e adicionar novo HTML
+    missionsCarousel.innerHTML = html;
+    
+    // Reconfigurar event listeners e variáveis após renderizar (script.js cuida disso)
+    // Mas vamos garantir que as variáveis globais estejam disponíveis
+    if (typeof window !== 'undefined') {
+        window.missionSlides = Array.from(missionsCarousel.querySelectorAll('.mission-slide:not(.completion-message)'));
+        window.completionCard = document.getElementById('all-missions-completed-card');
+        window.pendingSlides = window.missionSlides.filter(slide => slide.dataset.completed === '0');
+    }
+    
+    // Chamar showCurrentMission se existir (do script.js)
+    if (typeof window.showCurrentMission === 'function') {
+        window.showCurrentMission();
+    }
+    
+    console.log('[main_app_logic] Rotinas renderizadas com HTML completo');
 }
 
 // Renderizar ranking (igual ao código antigo)
