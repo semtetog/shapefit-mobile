@@ -186,13 +186,21 @@ async function authenticatedFetch(url, options = {}) {
     return response;
 }
 
-// Exportar funções para uso global
+// Exportar funções para uso global - IMEDIATAMENTE
 window.getAuthToken = getAuthToken;
 window.setAuthToken = setAuthToken;
 window.clearAuthToken = clearAuthToken;
 window.isAuthenticated = isAuthenticated;
 window.requireAuth = requireAuth;
 window.authenticatedFetch = authenticatedFetch;
+
+// Sinalizar que auth.js está pronto
+console.log('[auth.js] Funções exportadas para window:', {
+    getAuthToken: typeof window.getAuthToken,
+    requireAuth: typeof window.requireAuth,
+    authenticatedFetch: typeof window.authenticatedFetch
+});
+window.__AUTH_JS_READY = true;
 
 // Carregar page-transitions.js automaticamente se disponível
 (function() {

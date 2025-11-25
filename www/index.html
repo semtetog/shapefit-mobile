@@ -95,8 +95,30 @@
         console.log('[Index] BASE_APP_URL definido como:', window.BASE_APP_URL);
     </script>
     
-    <!-- Scripts Globais -->
-    <script src="./assets/js/auth.js"></script>
+    <!-- Scripts Globais - SEM async/defer para garantir ordem -->
+    <script src="./assets/js/auth.js" onload="console.log('[Index] auth.js carregado'); window.__AUTH_JS_LOADED = true;" onerror="console.error('[Index] Erro ao carregar auth.js')"></script>
+    <script>
+        // Aguardar auth.js estar pronto antes de continuar
+        if (typeof window.getAuthToken === 'undefined' || typeof window.requireAuth === 'undefined') {
+            console.warn('[Index] auth.js ainda não expôs funções, aguardando...');
+            // Aguardar até 2 segundos
+            let waitCount = 0;
+            const checkAuth = setInterval(() => {
+                waitCount++;
+                if (typeof window.getAuthToken !== 'undefined' && typeof window.requireAuth !== 'undefined') {
+                    clearInterval(checkAuth);
+                    console.log('[Index] auth.js funções disponíveis!');
+                    window.__AUTH_JS_READY = true;
+                } else if (waitCount > 20) {
+                    clearInterval(checkAuth);
+                    console.error('[Index] Timeout aguardando auth.js');
+                }
+            }, 100);
+        } else {
+            console.log('[Index] auth.js já está pronto!');
+            window.__AUTH_JS_READY = true;
+        }
+    </script>
     <script src="./assets/js/spa-navigation.js"></script>
     <script src="./assets/js/app-state.js"></script>
     <script src="./assets/js/bottom-nav.js"></script>
@@ -243,6 +265,7 @@
                                     console.log('[Index] getAuthToken:', typeof window.getAuthToken);
                                     console.log('[Index] requireAuth:', typeof window.requireAuth);
                                     console.log('[Index] authenticatedFetch:', typeof window.authenticatedFetch);
+                                    console.log('[Index] __AUTH_JS_READY:', window.__AUTH_JS_READY);
                                     
                                     let authReady = false;
                                     const maxWait = 5000; // 5 segundos máximo
@@ -256,39 +279,53 @@
                                             console.log('[Index] auth.js está pronto!');
                                             break;
                                         }
+                                        // Se __AUTH_JS_READY estiver definido mas funções não, aguardar um pouco mais
+                                        if (window.__AUTH_JS_READY && typeof window.getAuthToken === 'undefined') {
+                                            console.log('[Index] auth.js carregado mas funções ainda não disponíveis, aguardando...');
+                                        }
                                         await new Promise(resolve => setTimeout(resolve, 100));
                                     }
                                     
                                     if (!authReady) {
-                                        console.error('[Index] auth.js não carregou a tempo! Tentando carregar manualmente...');
+                                        console.error('[Index] auth.js não carregou a tempo!');
+                                        console.error('[Index] Tentando verificar se auth.js existe no DOM...');
+                                        const authScript = document.querySelector('script[src*="auth.js"]');
+                                        if (authScript) {
+                                            console.error('[Index] auth.js encontrado no DOM mas funções não disponíveis');
+                                            console.error('[Index] Tentando recarregar...');
+                                            // Remover e recarregar
+                                            authScript.remove();
+                                        }
                                         // Tentar carregar auth.js manualmente
-                                        await new Promise((resolve, reject) => {
-                                            const authScript = document.createElement('script');
-                                            authScript.src = './assets/js/auth.js';
-                                            authScript.async = false;
-                                            authScript.onload = () => {
+                                        await new Promise((resolve) => {
+                                            const newAuthScript = document.createElement('script');
+                                            newAuthScript.src = './assets/js/auth.js';
+                                            newAuthScript.async = false;
+                                            newAuthScript.onload = () => {
                                                 setTimeout(() => {
                                                     console.log('[Index] auth.js carregado manualmente');
                                                     resolve();
-                                                }, 300); // Aguardar execução
+                                                }, 500); // Aguardar execução
                                             };
-                                            authScript.onerror = () => {
+                                            newAuthScript.onerror = () => {
                                                 console.error('[Index] Erro ao carregar auth.js manualmente');
                                                 resolve(); // Continuar mesmo com erro
                                             };
-                                            document.head.appendChild(authScript);
+                                            document.head.appendChild(newAuthScript);
                                         });
                                     }
                                     
                                     // Verificar novamente
                                     if (typeof window.getAuthToken === 'undefined' || typeof window.requireAuth === 'undefined') {
-                                        console.error('[Index] ERRO: auth.js ainda não está disponível após tentativas!');
+                                        console.error('[Index] ERRO CRÍTICO: auth.js ainda não está disponível após tentativas!');
                                         console.error('[Index] getAuthToken:', typeof window.getAuthToken);
                                         console.error('[Index] requireAuth:', typeof window.requireAuth);
+                                        console.error('[Index] authenticatedFetch:', typeof window.authenticatedFetch);
                                     } else {
-                                        console.log('[Index] auth.js confirmado disponível');
+                                        console.log('[Index] ✅ auth.js confirmado disponível');
                                         console.log('[Index] getAuthToken:', typeof window.getAuthToken);
                                         console.log('[Index] requireAuth:', typeof window.requireAuth);
+                                        console.log('[Index] authenticatedFetch:', typeof window.authenticatedFetch);
                                     }
                                     
                                     for (let i = 0; i < scripts.length; i++) {
