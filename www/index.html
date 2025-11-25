@@ -92,6 +92,7 @@
                 window.BASE_APP_URL = window.BASE_APP_URL.slice(0, -1);
             }
         }
+        console.log('[Index] BASE_APP_URL definido como:', window.BASE_APP_URL);
     </script>
     
     <!-- Scripts Globais -->
@@ -231,6 +232,29 @@
                                 
                                 // Carregar scripts sequencialmente para garantir ordem
                                 async function loadScriptsSequentially() {
+                                    // Garantir que BASE_APP_URL está definido
+                                    if (!window.BASE_APP_URL) {
+                                        window.BASE_APP_URL = 'https://appshapefit.com';
+                                        console.log('[Index] BASE_APP_URL definido como fallback:', window.BASE_APP_URL);
+                                    }
+                                    
+                                    // Garantir que auth.js está carregado
+                                    if (typeof getAuthToken === 'undefined') {
+                                        console.log('[Index] Aguardando auth.js...');
+                                        await new Promise(resolve => {
+                                            const checkAuth = setInterval(() => {
+                                                if (typeof getAuthToken !== 'undefined') {
+                                                    clearInterval(checkAuth);
+                                                    resolve();
+                                                }
+                                            }, 50);
+                                            setTimeout(() => {
+                                                clearInterval(checkAuth);
+                                                resolve();
+                                            }, 2000);
+                                        });
+                                    }
+                                    
                                     for (let i = 0; i < scripts.length; i++) {
                                         const script = scripts[i];
                                         if (script.src) {
@@ -261,7 +285,7 @@
                                     console.log('[Index] Todos os scripts carregados');
                                     
                                     // Aguardar um pouco para garantir que tudo está pronto
-                                    await new Promise(resolve => setTimeout(resolve, 200));
+                                    await new Promise(resolve => setTimeout(resolve, 300));
                                     
                                     // Disparar eventos para scripts da página
                                     // Primeiro DOMContentLoaded (para compatibilidade)
