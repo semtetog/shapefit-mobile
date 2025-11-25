@@ -461,22 +461,48 @@ async function tryInitCarousel() {
   
   // Aguardar Lottie.js estar disponível
   let lottieReady = false;
-  const maxWait = 5000; // 5 segundos
+  const maxWait = 10000; // 10 segundos (CDN pode ser lento)
   const startTime = Date.now();
   
+  console.log('[Banner Carousel] Verificando Lottie.js...');
+  console.log('[Banner Carousel] window.lottie:', typeof window.lottie);
+  console.log('[Banner Carousel] lottie (global):', typeof lottie);
+  
   while (!lottieReady && (Date.now() - startTime) < maxWait) {
-    if (typeof window.lottie !== 'undefined' || typeof lottie !== 'undefined') {
+    // Verificar tanto window.lottie quanto lottie global
+    const lottieAvailable = typeof window.lottie !== 'undefined' || typeof lottie !== 'undefined' || window.lottie;
+    if (lottieAvailable) {
       lottieReady = true;
-      console.log('[Banner Carousel] Lottie.js encontrado!');
+      console.log('[Banner Carousel] ✅ Lottie.js encontrado!');
       break;
     }
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, 200));
   }
   
   if (lottieReady) {
     initLottieCarousel();
   } else {
-    console.error('[Banner Carousel] Lottie.js não foi encontrado após 5 segundos. Verifique se o script está carregando corretamente.');
+    console.error('[Banner Carousel] ❌ Lottie.js não foi encontrado após 10 segundos.');
+    console.error('[Banner Carousel] Verificando se o script está no DOM...');
+    const lottieScript = document.querySelector('script[src*="lottie"]');
+    if (lottieScript) {
+      console.error('[Banner Carousel] Script Lottie.js encontrado no DOM mas não carregou.');
+      console.error('[Banner Carousel] Tentando recarregar...');
+      // Tentar recarregar
+      lottieScript.remove();
+      const newLottieScript = document.createElement('script');
+      newLottieScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js';
+      newLottieScript.onload = () => {
+        console.log('[Banner Carousel] Lottie.js recarregado com sucesso!');
+        setTimeout(() => tryInitCarousel(), 500);
+      };
+      newLottieScript.onerror = () => {
+        console.error('[Banner Carousel] Erro ao recarregar Lottie.js');
+      };
+      document.head.appendChild(newLottieScript);
+    } else {
+      console.error('[Banner Carousel] Script Lottie.js não encontrado no DOM!');
+    }
   }
 }
 
