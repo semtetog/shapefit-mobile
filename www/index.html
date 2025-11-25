@@ -207,19 +207,31 @@
                                 const content = appContainer.innerHTML;
                                 console.log('[Index] Conteúdo extraído, tamanho:', content.length);
                                 
-                                // Inserir conteúdo
-                                spaContainer.innerHTML = content;
-                                
-                                // Executar scripts da página
+                                // Extrair scripts ANTES de inserir conteúdo
                                 const scripts = Array.from(appContainer.querySelectorAll('script'));
                                 console.log('[Index] Scripts encontrados:', scripts.length);
+                                
+                                // Inserir conteúdo (sem scripts)
+                                const tempDiv = document.createElement('div');
+                                tempDiv.innerHTML = content;
+                                const scriptsInContent = tempDiv.querySelectorAll('script');
+                                scriptsInContent.forEach(s => s.remove()); // Remover scripts do conteúdo
+                                spaContainer.innerHTML = tempDiv.innerHTML;
+                                
+                                // Executar scripts DEPOIS de inserir conteúdo
+                                const scriptPromises = [];
                                 scripts.forEach((script, index) => {
                                     if (script.src) {
                                         console.log(`[Index] Carregando script externo ${index + 1}:`, script.src);
-                                        const newScript = document.createElement('script');
-                                        newScript.src = script.src;
-                                        newScript.async = false;
-                                        document.head.appendChild(newScript);
+                                        const promise = new Promise((resolve, reject) => {
+                                            const newScript = document.createElement('script');
+                                            newScript.src = script.src;
+                                            newScript.async = false;
+                                            newScript.onload = resolve;
+                                            newScript.onerror = reject;
+                                            document.head.appendChild(newScript);
+                                        });
+                                        scriptPromises.push(promise);
                                     } else if (script.textContent.trim()) {
                                         console.log(`[Index] Executando script inline ${index + 1}`);
                                         const newScript = document.createElement('script');
@@ -227,20 +239,27 @@
                                         document.body.appendChild(newScript);
                                     }
                                 });
-                            }
-                            
-                            // Disparar eventos para scripts da página
-                            setTimeout(() => {
-                                // Primeiro DOMContentLoaded (para compatibilidade)
-                                const domContentLoadedEvent = new Event('DOMContentLoaded', { bubbles: true, cancelable: true });
-                                document.dispatchEvent(domContentLoadedEvent);
                                 
-                                // Depois spa-page-loaded
-                                window.dispatchEvent(new CustomEvent('spa-page-loaded', {
-                                    detail: { url: pageToLoad, isSPANavigation: false }
-                                }));
-                                console.log('[Index] Eventos disparados (DOMContentLoaded + spa-page-loaded)');
-                            }, 200);
+                                // Aguardar scripts externos carregarem
+                                Promise.all(scriptPromises).then(() => {
+                                    console.log('[Index] Todos os scripts carregados');
+                                    
+                                    // Disparar eventos para scripts da página
+                                    setTimeout(() => {
+                                        // Primeiro DOMContentLoaded (para compatibilidade)
+                                        const domContentLoadedEvent = new Event('DOMContentLoaded', { bubbles: true, cancelable: true });
+                                        document.dispatchEvent(domContentLoadedEvent);
+                                        
+                                        // Depois spa-page-loaded
+                                        window.dispatchEvent(new CustomEvent('spa-page-loaded', {
+                                            detail: { url: pageToLoad, isSPANavigation: false }
+                                        }));
+                                        console.log('[Index] Eventos disparados (DOMContentLoaded + spa-page-loaded)');
+                                    }, 100);
+                                }).catch(error => {
+                                    console.error('[Index] Erro ao carregar scripts:', error);
+                                });
+                            }
                             
                             // Atualizar URL sem recarregar
                             window.history.replaceState({ url: pageToLoad }, '', pageToLoad);
