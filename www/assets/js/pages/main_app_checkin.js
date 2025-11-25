@@ -1161,26 +1161,34 @@ function animatePointsCount(element, startValue, endValue, duration) {
 // ========================================
 (async function() {
     // Aguardar auth.js estar disponível
-    if (typeof getAuthToken === 'undefined') {
+    if (typeof window.getAuthToken === 'undefined' || typeof window.requireAuth === 'undefined') {
         console.log('[main_app_checkin] Aguardando auth.js...');
         await new Promise(resolve => {
             const checkAuth = setInterval(() => {
-                if (typeof getAuthToken !== 'undefined') {
+                if (typeof window.getAuthToken !== 'undefined' && typeof window.requireAuth !== 'undefined') {
                     clearInterval(checkAuth);
+                    console.log('[main_app_checkin] auth.js está pronto!');
                     resolve();
                 }
             }, 50);
-            // Timeout após 2 segundos
+            // Timeout após 5 segundos
             setTimeout(() => {
                 clearInterval(checkAuth);
+                console.warn('[main_app_checkin] Timeout aguardando auth.js');
                 resolve();
-            }, 2000);
+            }, 5000);
         });
+    }
+    
+    // Garantir BASE_APP_URL
+    if (!window.BASE_APP_URL) {
+        window.BASE_APP_URL = 'https://appshapefit.com';
+        console.log('[main_app_checkin] BASE_APP_URL definido como fallback');
     }
     
     const BASE_URL = window.BASE_APP_URL;
     console.log('BASE_URL:', BASE_URL);
-    console.log('Token no localStorage:', typeof getAuthToken !== 'undefined' && getAuthToken() ? 'SIM' : 'NÃO');
+    console.log('Token no localStorage:', typeof window.getAuthToken !== 'undefined' && window.getAuthToken() ? 'SIM' : 'NÃO');
     
     // Verificar se há token na URL (vindo do login.php)
     const urlParams = new URLSearchParams(window.location.search);
@@ -1195,7 +1203,11 @@ function animatePointsCount(element, startValue, endValue, duration) {
     
     // Verificar autenticação
     console.log('Verificando autenticação...');
-    const authenticated = await requireAuth();
+    if (typeof window.requireAuth === 'undefined') {
+        console.error('[main_app_checkin] requireAuth não está disponível!');
+        return;
+    }
+    const authenticated = await window.requireAuth();
     console.log('Autenticado?', authenticated);
     if (!authenticated) {
         console.log('Não autenticado, redirecionando...');

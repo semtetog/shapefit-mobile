@@ -238,21 +238,57 @@
                                         console.log('[Index] BASE_APP_URL definido como fallback:', window.BASE_APP_URL);
                                     }
                                     
-                                    // Garantir que auth.js está carregado
-                                    if (typeof getAuthToken === 'undefined') {
-                                        console.log('[Index] Aguardando auth.js...');
-                                        await new Promise(resolve => {
-                                            const checkAuth = setInterval(() => {
-                                                if (typeof getAuthToken !== 'undefined') {
-                                                    clearInterval(checkAuth);
+                                    // CRÍTICO: Garantir que auth.js está carregado e executado
+                                    console.log('[Index] Verificando auth.js...');
+                                    console.log('[Index] getAuthToken:', typeof window.getAuthToken);
+                                    console.log('[Index] requireAuth:', typeof window.requireAuth);
+                                    console.log('[Index] authenticatedFetch:', typeof window.authenticatedFetch);
+                                    
+                                    let authReady = false;
+                                    const maxWait = 5000; // 5 segundos máximo
+                                    const startTime = Date.now();
+                                    
+                                    while (!authReady && (Date.now() - startTime) < maxWait) {
+                                        if (typeof window.getAuthToken !== 'undefined' && 
+                                            typeof window.requireAuth !== 'undefined' && 
+                                            typeof window.authenticatedFetch !== 'undefined') {
+                                            authReady = true;
+                                            console.log('[Index] auth.js está pronto!');
+                                            break;
+                                        }
+                                        await new Promise(resolve => setTimeout(resolve, 100));
+                                    }
+                                    
+                                    if (!authReady) {
+                                        console.error('[Index] auth.js não carregou a tempo! Tentando carregar manualmente...');
+                                        // Tentar carregar auth.js manualmente
+                                        await new Promise((resolve, reject) => {
+                                            const authScript = document.createElement('script');
+                                            authScript.src = './assets/js/auth.js';
+                                            authScript.async = false;
+                                            authScript.onload = () => {
+                                                setTimeout(() => {
+                                                    console.log('[Index] auth.js carregado manualmente');
                                                     resolve();
-                                                }
-                                            }, 50);
-                                            setTimeout(() => {
-                                                clearInterval(checkAuth);
-                                                resolve();
-                                            }, 2000);
+                                                }, 300); // Aguardar execução
+                                            };
+                                            authScript.onerror = () => {
+                                                console.error('[Index] Erro ao carregar auth.js manualmente');
+                                                resolve(); // Continuar mesmo com erro
+                                            };
+                                            document.head.appendChild(authScript);
                                         });
+                                    }
+                                    
+                                    // Verificar novamente
+                                    if (typeof window.getAuthToken === 'undefined' || typeof window.requireAuth === 'undefined') {
+                                        console.error('[Index] ERRO: auth.js ainda não está disponível após tentativas!');
+                                        console.error('[Index] getAuthToken:', typeof window.getAuthToken);
+                                        console.error('[Index] requireAuth:', typeof window.requireAuth);
+                                    } else {
+                                        console.log('[Index] auth.js confirmado disponível');
+                                        console.log('[Index] getAuthToken:', typeof window.getAuthToken);
+                                        console.log('[Index] requireAuth:', typeof window.requireAuth);
                                     }
                                     
                                     for (let i = 0; i < scripts.length; i++) {
