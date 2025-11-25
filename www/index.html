@@ -229,13 +229,18 @@
                                 });
                             }
                             
-                            // Disparar evento para scripts da página
+                            // Disparar eventos para scripts da página
                             setTimeout(() => {
+                                // Primeiro DOMContentLoaded (para compatibilidade)
+                                const domContentLoadedEvent = new Event('DOMContentLoaded', { bubbles: true, cancelable: true });
+                                document.dispatchEvent(domContentLoadedEvent);
+                                
+                                // Depois spa-page-loaded
                                 window.dispatchEvent(new CustomEvent('spa-page-loaded', {
                                     detail: { url: pageToLoad, isSPANavigation: false }
                                 }));
-                                console.log('[Index] Evento spa-page-loaded disparado');
-                            }, 100);
+                                console.log('[Index] Eventos disparados (DOMContentLoaded + spa-page-loaded)');
+                            }, 200);
                             
                             // Atualizar URL sem recarregar
                             window.history.replaceState({ url: pageToLoad }, '', pageToLoad);
