@@ -180,12 +180,77 @@
     <!-- Script para carregar main_app.html inicialmente -->
     <script>
         // Função para carregar página inicial
-        function loadInitialPage() {
+        async function loadInitialPage() {
             const spaContainer = document.getElementById('spa-container');
             if (!spaContainer) {
                 setTimeout(loadInitialPage, 100);
                 return;
             }
+            
+            // Garantir que BASE_APP_URL está definido antes de prosseguir
+            if (typeof window.BASE_APP_URL === 'undefined') {
+                console.warn('[Index] BASE_APP_URL ainda não definido, aguardando www-config.js...');
+                setTimeout(loadInitialPage, 50);
+                return;
+            }
+            console.log('[Index] BASE_APP_URL definido como:', window.BASE_APP_URL);
+            
+            // CRÍTICO: Aguardar auth.js estar 100% pronto
+            console.log('[Index] Verificando auth.js...');
+            console.log('[Index] getAuthToken:', typeof window.getAuthToken);
+            console.log('[Index] requireAuth:', typeof window.requireAuth);
+            console.log('[Index] authenticatedFetch:', typeof window.authenticatedFetch);
+            
+            if (typeof window.getAuthToken === 'undefined' || typeof window.requireAuth === 'undefined' || typeof window.authenticatedFetch === 'undefined') {
+                console.warn('[Index] auth.js ainda não está pronto, aguardando...');
+                // Aguardar até 10 segundos
+                let waitCount = 0;
+                const maxWait = 100; // 10 segundos
+                while (waitCount < maxWait && (typeof window.getAuthToken === 'undefined' || typeof window.requireAuth === 'undefined' || typeof window.authenticatedFetch === 'undefined')) {
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    waitCount++;
+                }
+                
+                // Verificar novamente
+                if (typeof window.getAuthToken === 'undefined' || typeof window.requireAuth === 'undefined' || typeof window.authenticatedFetch === 'undefined') {
+                    console.error('[Index] ERRO CRÍTICO: auth.js não está disponível após 10 segundos!');
+                    console.error('[Index] Tentando recarregar auth.js...');
+                    
+                    // Tentar recarregar auth.js
+                    const existingAuthScript = document.querySelector('script[src*="auth.js"]');
+                    if (existingAuthScript) {
+                        existingAuthScript.remove();
+                    }
+                    
+                    await new Promise((resolve) => {
+                        const authScript = document.createElement('script');
+                        authScript.src = './assets/js/auth.js';
+                        authScript.async = false;
+                        authScript.onload = () => {
+                            setTimeout(() => {
+                                console.log('[Index] auth.js recarregado');
+                                resolve();
+                            }, 500);
+                        };
+                        authScript.onerror = () => {
+                            console.error('[Index] Erro ao recarregar auth.js');
+                            resolve();
+                        };
+                        document.head.insertBefore(authScript, document.head.firstChild);
+                    });
+                }
+            }
+            
+            // Verificação final
+            if (typeof window.getAuthToken === 'undefined' || typeof window.requireAuth === 'undefined' || typeof window.authenticatedFetch === 'undefined') {
+                console.error('[Index] ERRO FATAL: auth.js não está disponível! Não é possível continuar.');
+                return;
+            }
+            
+            console.log('[Index] ✅ auth.js confirmado pronto!');
+            console.log('[Index] getAuthToken:', typeof window.getAuthToken);
+            console.log('[Index] requireAuth:', typeof window.requireAuth);
+            console.log('[Index] authenticatedFetch:', typeof window.authenticatedFetch);
             
             // Verificar se já estamos em uma página específica (via URL)
             const currentPath = window.location.pathname;
