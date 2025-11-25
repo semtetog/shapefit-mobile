@@ -461,16 +461,21 @@ async function tryInitCarousel() {
   
   // Aguardar Lottie.js estar disponível
   let lottieReady = false;
-  const maxWait = 10000; // 10 segundos (CDN pode ser lento)
+  const maxWait = 15000; // 15 segundos (CDN pode ser muito lento)
   const startTime = Date.now();
   
   console.log('[Banner Carousel] Verificando Lottie.js...');
   console.log('[Banner Carousel] window.lottie:', typeof window.lottie);
   console.log('[Banner Carousel] lottie (global):', typeof lottie);
+  console.log('[Banner Carousel] window.__LOTTIE_LOADED:', window.__LOTTIE_LOADED);
+  
+  // Verificar se o script está no DOM
+  const lottieScript = document.querySelector('script[src*="lottie"]');
+  console.log('[Banner Carousel] Script Lottie.js no DOM:', lottieScript ? 'SIM' : 'NÃO');
   
   while (!lottieReady && (Date.now() - startTime) < maxWait) {
     // Verificar tanto window.lottie quanto lottie global
-    const lottieAvailable = typeof window.lottie !== 'undefined' || typeof lottie !== 'undefined' || window.lottie;
+    const lottieAvailable = typeof window.lottie !== 'undefined' || typeof lottie !== 'undefined' || (window.lottie && typeof window.lottie.loadAnimation !== 'undefined');
     if (lottieAvailable) {
       lottieReady = true;
       console.log('[Banner Carousel] ✅ Lottie.js encontrado!');
@@ -482,26 +487,43 @@ async function tryInitCarousel() {
   if (lottieReady) {
     initLottieCarousel();
   } else {
-    console.error('[Banner Carousel] ❌ Lottie.js não foi encontrado após 10 segundos.');
+    console.error('[Banner Carousel] ❌ Lottie.js não foi encontrado após 15 segundos.');
     console.error('[Banner Carousel] Verificando se o script está no DOM...');
-    const lottieScript = document.querySelector('script[src*="lottie"]');
     if (lottieScript) {
       console.error('[Banner Carousel] Script Lottie.js encontrado no DOM mas não carregou.');
-      console.error('[Banner Carousel] Tentando recarregar...');
-      // Tentar recarregar
+      console.error('[Banner Carousel] Tentando recarregar de CDN alternativo...');
+      // Tentar recarregar de um CDN alternativo
       lottieScript.remove();
       const newLottieScript = document.createElement('script');
-      newLottieScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js';
+      newLottieScript.src = 'https://unpkg.com/lottie-web@5.12.2/build/player/lottie.min.js';
       newLottieScript.onload = () => {
-        console.log('[Banner Carousel] Lottie.js recarregado com sucesso!');
+        console.log('[Banner Carousel] Lottie.js recarregado com sucesso do unpkg!');
         setTimeout(() => tryInitCarousel(), 500);
       };
       newLottieScript.onerror = () => {
-        console.error('[Banner Carousel] Erro ao recarregar Lottie.js');
+        console.error('[Banner Carousel] Erro ao recarregar Lottie.js do unpkg');
+        // Tentar CDN original novamente
+        const originalLottieScript = document.createElement('script');
+        originalLottieScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js';
+        originalLottieScript.onload = () => {
+          console.log('[Banner Carousel] Lottie.js recarregado do cdnjs!');
+          setTimeout(() => tryInitCarousel(), 500);
+        };
+        document.head.appendChild(originalLottieScript);
       };
       document.head.appendChild(newLottieScript);
     } else {
-      console.error('[Banner Carousel] Script Lottie.js não encontrado no DOM!');
+      console.error('[Banner Carousel] Script Lottie.js não encontrado no DOM! Carregando agora...');
+      const newLottieScript = document.createElement('script');
+      newLottieScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js';
+      newLottieScript.onload = () => {
+        console.log('[Banner Carousel] Lottie.js carregado!');
+        setTimeout(() => tryInitCarousel(), 500);
+      };
+      newLottieScript.onerror = () => {
+        console.error('[Banner Carousel] Erro ao carregar Lottie.js');
+      };
+      document.head.appendChild(newLottieScript);
     }
   }
 }

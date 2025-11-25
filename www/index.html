@@ -78,7 +78,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     
     <!-- Lottie.js para animações dos banners -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js" onload="console.log('[Index] Lottie.js carregado')" onerror="console.error('[Index] Erro ao carregar Lottie.js')"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js" onload="console.log('[Index] Lottie.js carregado'); window.__LOTTIE_LOADED = true;" onerror="console.error('[Index] Erro ao carregar Lottie.js'); window.__LOTTIE_LOADED = false;"></script>
     
     <!-- CSS Principal Global -->
     <link rel="stylesheet" href="./assets/css/style.css">
@@ -260,73 +260,24 @@
                                         console.log('[Index] BASE_APP_URL definido como fallback:', window.BASE_APP_URL);
                                     }
                                     
-                                    // CRÍTICO: Garantir que auth.js está carregado e executado
-                                    console.log('[Index] Verificando auth.js...');
-                                    console.log('[Index] getAuthToken:', typeof window.getAuthToken);
-                                    console.log('[Index] requireAuth:', typeof window.requireAuth);
-                                    console.log('[Index] authenticatedFetch:', typeof window.authenticatedFetch);
-                                    console.log('[Index] __AUTH_JS_READY:', window.__AUTH_JS_READY);
-                                    
-                                    let authReady = false;
-                                    const maxWait = 5000; // 5 segundos máximo
-                                    const startTime = Date.now();
-                                    
-                                    while (!authReady && (Date.now() - startTime) < maxWait) {
-                                        if (typeof window.getAuthToken !== 'undefined' && 
-                                            typeof window.requireAuth !== 'undefined' && 
-                                            typeof window.authenticatedFetch !== 'undefined') {
-                                            authReady = true;
-                                            console.log('[Index] auth.js está pronto!');
-                                            break;
+                                    // auth.js JÁ DEVE ESTAR PRONTO (verificado em loadInitialPage)
+                                    // Mas vamos verificar novamente por segurança
+                                    if (typeof window.getAuthToken === 'undefined' || typeof window.requireAuth === 'undefined' || typeof window.authenticatedFetch === 'undefined') {
+                                        console.error('[Index] ERRO: auth.js não está disponível em loadScriptsSequentially!');
+                                        console.error('[Index] Isso não deveria acontecer. Aguardando...');
+                                        let waitCount = 0;
+                                        while (waitCount < 50 && (typeof window.getAuthToken === 'undefined' || typeof window.requireAuth === 'undefined' || typeof window.authenticatedFetch === 'undefined')) {
+                                            await new Promise(resolve => setTimeout(resolve, 100));
+                                            waitCount++;
                                         }
-                                        // Se __AUTH_JS_READY estiver definido mas funções não, aguardar um pouco mais
-                                        if (window.__AUTH_JS_READY && typeof window.getAuthToken === 'undefined') {
-                                            console.log('[Index] auth.js carregado mas funções ainda não disponíveis, aguardando...');
-                                        }
-                                        await new Promise(resolve => setTimeout(resolve, 100));
                                     }
                                     
-                                    if (!authReady) {
-                                        console.error('[Index] auth.js não carregou a tempo!');
-                                        console.error('[Index] Tentando verificar se auth.js existe no DOM...');
-                                        const authScript = document.querySelector('script[src*="auth.js"]');
-                                        if (authScript) {
-                                            console.error('[Index] auth.js encontrado no DOM mas funções não disponíveis');
-                                            console.error('[Index] Tentando recarregar...');
-                                            // Remover e recarregar
-                                            authScript.remove();
-                                        }
-                                        // Tentar carregar auth.js manualmente
-                                        await new Promise((resolve) => {
-                                            const newAuthScript = document.createElement('script');
-                                            newAuthScript.src = './assets/js/auth.js';
-                                            newAuthScript.async = false;
-                                            newAuthScript.onload = () => {
-                                                setTimeout(() => {
-                                                    console.log('[Index] auth.js carregado manualmente');
-                                                    resolve();
-                                                }, 500); // Aguardar execução
-                                            };
-                                            newAuthScript.onerror = () => {
-                                                console.error('[Index] Erro ao carregar auth.js manualmente');
-                                                resolve(); // Continuar mesmo com erro
-                                            };
-                                            document.head.appendChild(newAuthScript);
-                                        });
+                                    if (typeof window.getAuthToken === 'undefined' || typeof window.requireAuth === 'undefined' || typeof window.authenticatedFetch === 'undefined') {
+                                        console.error('[Index] ERRO CRÍTICO: auth.js não está disponível! Não é possível carregar scripts da página.');
+                                        return;
                                     }
                                     
-                                    // Verificar novamente
-                                    if (typeof window.getAuthToken === 'undefined' || typeof window.requireAuth === 'undefined') {
-                                        console.error('[Index] ERRO CRÍTICO: auth.js ainda não está disponível após tentativas!');
-                                        console.error('[Index] getAuthToken:', typeof window.getAuthToken);
-                                        console.error('[Index] requireAuth:', typeof window.requireAuth);
-                                        console.error('[Index] authenticatedFetch:', typeof window.authenticatedFetch);
-                                    } else {
-                                        console.log('[Index] ✅ auth.js confirmado disponível');
-                                        console.log('[Index] getAuthToken:', typeof window.getAuthToken);
-                                        console.log('[Index] requireAuth:', typeof window.requireAuth);
-                                        console.log('[Index] authenticatedFetch:', typeof window.authenticatedFetch);
-                                    }
+                                    console.log('[Index] ✅ auth.js confirmado disponível antes de carregar scripts da página');
                                     
                                     for (let i = 0; i < scripts.length; i++) {
                                         const script = scripts[i];
