@@ -156,29 +156,56 @@
     
     <!-- Script para carregar main_app.html inicialmente -->
     <script>
-        // Carregar main_app.html quando o DOM estiver pronto
-        document.addEventListener('DOMContentLoaded', function() {
+        // Função para carregar página inicial
+        function loadInitialPage() {
             const spaContainer = document.getElementById('spa-container');
-            if (spaContainer) {
-                // Verificar se já estamos em uma página específica (via URL)
-                const currentPath = window.location.pathname;
-                const pageName = currentPath.split('/').pop();
-                
-                // Se não for index.html ou vazio, carregar a página correspondente
-                let pageToLoad = './main_app.html';
-                if (pageName && pageName !== 'index.html' && pageName !== '') {
-                    pageToLoad = './' + pageName;
-                }
-                
-                // Usar o spa-navigation para carregar a página (já está inicializado)
+            if (!spaContainer) {
+                setTimeout(loadInitialPage, 100);
+                return;
+            }
+            
+            // Verificar se já estamos em uma página específica (via URL)
+            const currentPath = window.location.pathname;
+            const pageName = currentPath.split('/').pop();
+            
+            // Se não for index.html ou vazio, carregar a página correspondente
+            let pageToLoad = './main_app.html';
+            if (pageName && pageName !== 'index.html' && pageName !== '' && pageName.endsWith('.html')) {
+                pageToLoad = './' + pageName;
+            }
+            
+            // Aguardar um pouco para garantir que spa-navigation está pronto
+            setTimeout(() => {
+                // Tentar usar spa-navigation se disponível
                 if (window.spaNavigate) {
                     window.spaNavigate(pageToLoad);
                 } else {
-                    // Fallback: carregar diretamente
+                    // Fallback: carregar diretamente usando a mesma lógica do spa-navigation
                     fetch(pageToLoad)
                         .then(response => response.text())
                         .then(html => {
-                            spaContainer.innerHTML = html;
+                            // Extrair conteúdo do app-container
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const appContainer = doc.querySelector('.app-container, .container');
+                            const content = appContainer ? appContainer.innerHTML : html;
+                            
+                            // Inserir conteúdo
+                            spaContainer.innerHTML = content;
+                            
+                            // Executar scripts da página
+                            const scripts = Array.from(appContainer ? appContainer.querySelectorAll('script') : doc.querySelectorAll('script'));
+                            scripts.forEach(script => {
+                                if (script.src) {
+                                    const newScript = document.createElement('script');
+                                    newScript.src = script.src;
+                                    document.head.appendChild(newScript);
+                                } else if (script.textContent.trim()) {
+                                    const newScript = document.createElement('script');
+                                    newScript.textContent = script.textContent;
+                                    document.body.appendChild(newScript);
+                                }
+                            });
                             
                             // Disparar evento para scripts da página
                             window.dispatchEvent(new CustomEvent('spa-page-loaded', {
@@ -192,8 +219,15 @@
                             console.error('Erro ao carregar página:', error);
                         });
                 }
-            }
-        });
+            }, 200);
+        }
+        
+        // Aguardar DOM e scripts globais carregarem
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', loadInitialPage);
+        } else {
+            loadInitialPage();
+        }
     </script>
 </head>
 <body>
