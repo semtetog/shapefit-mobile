@@ -311,7 +311,7 @@ function loadCheckinProgress() {
     formData.append('action', 'load_progress');
     formData.append('config_id', checkinData.id);
     
-    authenticatedFetch(`${window.BASE_APP_URL}/api/checkin.php`, {
+    window.authenticatedFetch(`${window.BASE_APP_URL}/api/checkin.php`, {
         method: 'POST',
         body: formData
     })
@@ -830,7 +830,7 @@ function markCheckinComplete() {
     formData.append('config_id', checkinData.id);
     formData.append('responses', JSON.stringify(checkinResponses));
     
-    authenticatedFetch(`${window.BASE_APP_URL}/api/checkin.php`, {
+    window.authenticatedFetch(`${window.BASE_APP_URL}/api/checkin.php`, {
         method: 'POST',
         body: formData
     })
@@ -1217,7 +1217,7 @@ function animatePointsCount(element, startValue, endValue, duration) {
     try {
         // Carregar dados do dashboard
         console.log('Carregando dashboard de:', `${BASE_URL}/api/get_dashboard_data.php`);
-        const response = await authenticatedFetch(`${BASE_URL}/api/get_dashboard_data.php`);
+        const response = await window.authenticatedFetch(`${BASE_URL}/api/get_dashboard_data.php`);
         if (!response) {
             console.error('Response é null - token inválido ou erro de autenticação');
             return;
@@ -1294,11 +1294,11 @@ window.addEventListener('spa-page-loaded', function(e) {
                 setTimeout(() => {
                     (async function() {
                         const BASE_URL = window.BASE_APP_URL;
-                        const authenticated = await requireAuth();
+                        const authenticated = await window.requireAuth();
                         if (!authenticated) return;
                         
                         try {
-                            const response = await authenticatedFetch(`${BASE_URL}/api/get_dashboard_data.php`);
+                            const response = await window.authenticatedFetch(`${BASE_URL}/api/get_dashboard_data.php`);
                             if (!response) return;
                             
                             const result = await response.json();
@@ -2042,7 +2042,7 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 // IMPORTANTE: Não enviar data do cliente - o servidor deve usar sua própria data/hora
                 // para validar a restrição de 7 dias. Isso previne que usuários burlem mudando a data do celular.
-                const response = await authenticatedFetch(`${window.BASE_APP_URL}/api/update_weight.php`, {
+                const response = await window.authenticatedFetch(`${window.BASE_APP_URL}/api/update_weight.php`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
