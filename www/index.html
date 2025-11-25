@@ -174,6 +174,8 @@
                 pageToLoad = './' + pageName;
             }
             
+            console.log('[Index] Carregando página inicial:', pageToLoad);
+            
             // Aguardar um pouco para garantir que spa-navigation está pronto
             setTimeout(() => {
                 // Tentar usar spa-navigation se disponível
@@ -181,42 +183,65 @@
                     window.spaNavigate(pageToLoad);
                 } else {
                     // Fallback: carregar diretamente usando a mesma lógica do spa-navigation
+                    console.log('[Index] Usando fallback para carregar:', pageToLoad);
                     fetch(pageToLoad)
-                        .then(response => response.text())
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP ${response.status}`);
+                            }
+                            return response.text();
+                        })
                         .then(html => {
+                            console.log('[Index] HTML recebido, tamanho:', html.length);
+                            
                             // Extrair conteúdo do app-container
                             const parser = new DOMParser();
                             const doc = parser.parseFromString(html, 'text/html');
                             const appContainer = doc.querySelector('.app-container, .container');
-                            const content = appContainer ? appContainer.innerHTML : html;
                             
-                            // Inserir conteúdo
-                            spaContainer.innerHTML = content;
-                            
-                            // Executar scripts da página
-                            const scripts = Array.from(appContainer ? appContainer.querySelectorAll('script') : doc.querySelectorAll('script'));
-                            scripts.forEach(script => {
-                                if (script.src) {
-                                    const newScript = document.createElement('script');
-                                    newScript.src = script.src;
-                                    document.head.appendChild(newScript);
-                                } else if (script.textContent.trim()) {
-                                    const newScript = document.createElement('script');
-                                    newScript.textContent = script.textContent;
-                                    document.body.appendChild(newScript);
-                                }
-                            });
+                            if (!appContainer) {
+                                console.error('[Index] app-container não encontrado no HTML recebido');
+                                // Se não encontrou app-container, pode ser que o HTML já seja o fragmento
+                                spaContainer.innerHTML = html;
+                            } else {
+                                const content = appContainer.innerHTML;
+                                console.log('[Index] Conteúdo extraído, tamanho:', content.length);
+                                
+                                // Inserir conteúdo
+                                spaContainer.innerHTML = content;
+                                
+                                // Executar scripts da página
+                                const scripts = Array.from(appContainer.querySelectorAll('script'));
+                                console.log('[Index] Scripts encontrados:', scripts.length);
+                                scripts.forEach((script, index) => {
+                                    if (script.src) {
+                                        console.log(`[Index] Carregando script externo ${index + 1}:`, script.src);
+                                        const newScript = document.createElement('script');
+                                        newScript.src = script.src;
+                                        newScript.async = false;
+                                        document.head.appendChild(newScript);
+                                    } else if (script.textContent.trim()) {
+                                        console.log(`[Index] Executando script inline ${index + 1}`);
+                                        const newScript = document.createElement('script');
+                                        newScript.textContent = script.textContent;
+                                        document.body.appendChild(newScript);
+                                    }
+                                });
+                            }
                             
                             // Disparar evento para scripts da página
-                            window.dispatchEvent(new CustomEvent('spa-page-loaded', {
-                                detail: { url: pageToLoad, isSPANavigation: false }
-                            }));
+                            setTimeout(() => {
+                                window.dispatchEvent(new CustomEvent('spa-page-loaded', {
+                                    detail: { url: pageToLoad, isSPANavigation: false }
+                                }));
+                                console.log('[Index] Evento spa-page-loaded disparado');
+                            }, 100);
                             
                             // Atualizar URL sem recarregar
                             window.history.replaceState({ url: pageToLoad }, '', pageToLoad);
                         })
                         .catch(error => {
-                            console.error('Erro ao carregar página:', error);
+                            console.error('[Index] Erro ao carregar página:', error);
                         });
                 }
             }, 200);
