@@ -10,15 +10,9 @@
     let spaContainerCounter = 0;
     
     // Páginas que devem usar navegação normal (não AJAX)
-    // main_app.html sempre recarrega completamente (não pode ser fragmento SPA)
+    // Agora todas as páginas são fragmentos SPA, então não há exclusões
     const excludedPages = [
-        '/auth/login.html',
-        '/auth/register.html',
-        '/onboarding/onboarding.html',
-        '/main_app.html',
-        'main_app.html',
-        '/dashboard.html',
-        'dashboard.html'
+        // Nenhuma página excluída - todas são fragmentos SPA
     ];
     
     // Verificar se a página atual deve ser excluída
@@ -85,40 +79,58 @@
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
         
-        // Extrair o conteúdo do app-container
-        const appContainer = doc.querySelector('.app-container, .container');
-        const content = appContainer ? appContainer.innerHTML : '';
+        // Verificar se é um fragmento SPA (começa com <div class="app-container">)
+        // ou uma página completa HTML
+        let appContainer = doc.querySelector('.app-container, .container');
+        let content = '';
+        let allScripts = [];
+        let inlineStyles = [];
         
-        // Extrair TODOS os scripts (incluindo os que estão dentro do app-container)
-        // Primeiro pegar scripts do head
-        const headScripts = Array.from(doc.head.querySelectorAll('script'));
-        // Depois pegar scripts do body (incluindo dentro do app-container)
-        const bodyScripts = Array.from(doc.body.querySelectorAll('script'));
-        // Combinar todos, removendo duplicatas por src
-        const allScripts = [];
+        if (appContainer) {
+            // É um fragmento SPA - extrair conteúdo diretamente
+            content = appContainer.innerHTML;
+            
+            // Extrair scripts do app-container
+            const containerScripts = Array.from(appContainer.querySelectorAll('script'));
+            allScripts = containerScripts;
+            
+            // Extrair estilos do app-container
+            inlineStyles = Array.from(appContainer.querySelectorAll('style'));
+        } else {
+            // É uma página completa HTML - usar método antigo
+            appContainer = doc.querySelector('.app-container, .container');
+            content = appContainer ? appContainer.innerHTML : '';
+            
+            // Extrair scripts do head e body
+            const headScripts = Array.from(doc.head.querySelectorAll('script'));
+            const bodyScripts = Array.from(doc.body.querySelectorAll('script'));
+            allScripts = [...headScripts, ...bodyScripts];
+            
+            // Extrair estilos
+            inlineStyles = Array.from(doc.querySelectorAll('style'));
+        }
+        
+        // Remover duplicatas de scripts por src
         const seenSrcs = new Set();
-        
-        [...headScripts, ...bodyScripts].forEach(script => {
+        const uniqueScripts = [];
+        allScripts.forEach(script => {
             if (script.src) {
                 if (!seenSrcs.has(script.src)) {
                     seenSrcs.add(script.src);
-                    allScripts.push(script);
+                    uniqueScripts.push(script);
                 }
             } else {
                 // Script inline - sempre incluir
-                allScripts.push(script);
+                uniqueScripts.push(script);
             }
         });
         
         // Extrair título
         const title = doc.querySelector('title')?.textContent || document.title;
         
-        // Extrair estilos inline específicos da página
-        const inlineStyles = Array.from(doc.querySelectorAll('style'));
-        
         return {
             content,
-            scripts: allScripts,
+            scripts: uniqueScripts,
             title,
             inlineStyles
         };

@@ -4,10 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ShapeFit</title>
-    <script src="./www-config.js"></script>
     <script>
-        // Redirecionar para main_app.html
-        window.location.href = './main_app.html';
+        // Carregar layout.html e depois inicializar SPA
+        fetch('./layout.html')
+            .then(response => response.text())
+            .then(html => {
+                document.open();
+                document.write(html);
+                document.close();
+                
+                // Após carregar layout, inicializar SPA carregando main_app
+                window.addEventListener('DOMContentLoaded', function() {
+                    // Carregar main_app.html no container SPA
+                    const spaContainer = document.getElementById('spa-container');
+                    if (spaContainer) {
+                        fetch('./main_app.html')
+                            .then(response => response.text())
+                            .then(html => {
+                                spaContainer.innerHTML = html;
+                                
+                                // Disparar evento para scripts da página
+                                window.dispatchEvent(new CustomEvent('spa-page-loaded', {
+                                    detail: { url: './main_app.html', isSPANavigation: false }
+                                }));
+                                
+                                // Atualizar URL sem recarregar
+                                window.history.replaceState({ url: './main_app.html' }, '', './main_app.html');
+                            })
+                            .catch(error => {
+                                console.error('Erro ao carregar main_app.html:', error);
+                            });
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Erro ao carregar layout.html:', error);
+                // Fallback: redirecionar para main_app.html
+                window.location.href = './main_app.html';
+            });
     </script>
 </head>
 <body>

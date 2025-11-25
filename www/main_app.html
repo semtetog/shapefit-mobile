@@ -1,109 +1,5 @@
-﻿<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <script src="./www-config.js"></script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no">
-    
-    <!-- PWA Meta Tags -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="ShapeFIT">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="ShapeFIT">
-    <meta name="theme-color" content="transparent">
-    
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="./manifest.json">
-    
-    <!-- Script Critical -->
-    <script>
-        function setRealViewportHeight() { 
-            const vh = window.innerHeight * 0.01; 
-            document.documentElement.style.setProperty('--vh', `${vh}px`); 
-        }
-        setRealViewportHeight();
-        window.addEventListener('resize', setRealViewportHeight);
-        window.addEventListener('orientationchange', function() {
-            setTimeout(setRealViewportHeight, 100);
-        });
-        
-        if (window.visualViewport) {
-            const updateKeyboardOffset = () => {
-                const viewportHeight = window.visualViewport.height;
-                const offset = Math.max(0, window.innerHeight - viewportHeight);
-                document.documentElement.style.setProperty('--keyboard-offset', `${offset}px`);
-            };
-            
-            window.visualViewport.addEventListener('resize', updateKeyboardOffset);
-            window.visualViewport.addEventListener('scroll', updateKeyboardOffset);
-            window.addEventListener('orientationchange', updateKeyboardOffset);
-            updateKeyboardOffset();
-        }
-        
-        document.addEventListener('touchmove', function(event) {
-            const checkinModal = document.getElementById('checkinModal');
-            const isModalOpen = checkinModal && checkinModal.classList.contains('active');
-            
-            if (isModalOpen) {
-                const insideMessages = event.target.closest('#checkinMessages');
-                if (insideMessages) {
-                    // Permitir scroll dentro do chat
-                    return;
-                }
-                
-                const insideModal = event.target.closest('#checkinModal');
-                if (insideModal) {
-                    // Dentro do modal mas fora das mensagens -> bloquear
-                    event.preventDefault();
-                    return;
-                }
-            }
-            
-            const scrollable = event.target.closest('.app-container, .container');
-            if (!scrollable) {
-                event.preventDefault();
-            }
-        }, { passive: false });
-    </script>
-    
-    <title>Dashboard - ShapeFIT</title>
-    
-    <!-- Fontes -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Ícones -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    
-    <!-- Lottie.js para animações dos banners -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
-    
-    <!-- CSS Principal -->
-    <link rel="stylesheet" href="./assets/css/style.css">
-    <link rel="stylesheet" href="./assets/css/pages/_dashboard.css">
-    
-    <!-- Variáveis Globais -->
-    <script>
-        // BASE_APP_URL já foi definido pelo www-config.js
-        // Se não foi definido (fallback), usar URL local
-        if (!window.BASE_APP_URL) {
-            window.BASE_APP_URL = window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/');
-            if (window.BASE_APP_URL.endsWith('/')) {
-                window.BASE_APP_URL = window.BASE_APP_URL.slice(0, -1);
-            }
-        }
-    </script>
-    
-    <!-- Auth Script -->
-    <script src="./assets/js/auth.js"></script>
-    <!-- SPA Navigation - Mantém background e navbar fixos -->
-    <script src="./assets/js/spa-navigation.js"></script>
-    <!-- App State - Gerencia estado para evitar recarregamentos -->
-    <script src="./assets/js/app-state.js"></script>
-    
-    <style>
+<div class="app-container">
+<style>
         :root {
             --keyboard-offset: 0px;
         }
@@ -130,8 +26,7 @@
             -webkit-tap-highlight-color: transparent;
         }
     </style>
-    
-    <style>
+<style>
         .lottie-animation-container {
         width: 100%;
         height: 100%;
@@ -140,7 +35,6 @@
         opacity: 1 !important;
     }
 </style>
-
 <style>
 /* CSS do layout moderno */
 .header{display:flex;justify-content:flex-end;align-items:center}.header-actions{display:flex;align-items:center;gap:.75rem}.points-counter-badge{display:flex;align-items:center;gap:8px;height:44px;padding:0 16px;border-radius:22px;background-color:var(--surface-color);border:1px solid var(--border-color);color:var(--text-primary);text-decoration:none;transition:all .2s ease}.points-counter-badge:hover{border-color:var(--accent-orange)}.points-counter-badge i{color:var(--accent-orange);font-size:1rem}.points-counter-badge span{font-weight:600;font-size:1rem}
@@ -1597,16 +1491,12 @@
     box-shadow: none;
 }
 </style>
-
-    </style>
-</head>
-<body>
-    <div class="fixed-background"></div>
+<div class="fixed-background"></div>
     <div id="alert-container"></div>
     
     <div class="app-container" id="dashboard-container" style="display: none;">
         <header class="header">
-    <script src="./www-config.js"></script>
+    
             <div class="header-actions">
                 <a href="./points_history.html" class="points-counter-badge"><i class="fas fa-star"></i><span id="user-points-display">0</span></a>
                 <a href="./edit_profile.html" class="profile-icon" id="profile-icon-link">
@@ -1907,7 +1797,7 @@
     </div>
 </div>
 
-    <script src="./assets/js/pages/main_app_core.js"></script>
+    
 
 
     <!-- Botão Flutuante de Check-in -->
@@ -1916,7 +1806,7 @@
     </button>
     
     <!-- Bottom Navigation (via JavaScript - funciona como include) -->
-    <script src="./assets/js/bottom-nav.js"></script>
+    
 
 <style>
 /* Check-in Floating Button */
@@ -2314,11 +2204,10 @@ body.checkin-modal-open .checkin-input-container {
     </div>
 </div>
 
-<script src="./assets/js/pages/main_app_checkin.js"></script>
+
 
 
 <!-- Scripts do carrossel de banners -->
-<script src="./assets/js/banner-carousel.js"></script>
 
-</body>
-</html>
+<script src="./assets/js/pages/main_app.js"></script>
+</div>

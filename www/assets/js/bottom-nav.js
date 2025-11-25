@@ -87,10 +87,10 @@ const bottomNavCSS = `
 `;
 
 // HTML do bottom nav - usando caminhos relativos
-// main_app.html sempre faz reload completo (não SPA)
+// Todas as páginas agora são fragmentos SPA
 const bottomNavHTML = `
     <nav class="bottom-nav">
-        <a href="./main_app.html" class="nav-item ${bottomNavActiveItem === 'home' ? 'active' : ''}" data-no-spa="true">
+        <a href="./main_app.html" class="nav-item ${bottomNavActiveItem === 'home' ? 'active' : ''}">
             <i class="fas fa-home"></i>
         </a>
         <a href="./progress.html" class="nav-item ${bottomNavActiveItem === 'stats' ? 'active' : ''}">
