@@ -53,6 +53,23 @@ const server = http.createServer((req, res) => {
     // Caminho completo do arquivo
     let filePath = path.join(WWW_DIR, pathname);
 
+    // Verificar se é uma requisição para uma página HTML (fragmento SPA)
+    // Se for, sempre servir index.html e deixar o SPA carregar o conteúdo
+    if (pathname.endsWith('.html') && pathname !== '/index.html') {
+        // É uma página HTML - servir index.html (SPA routing)
+        const indexPath = path.join(WWW_DIR, 'index.html');
+        if (fileExists(indexPath)) {
+            const content = fs.readFileSync(indexPath);
+            res.writeHead(200, {
+                'Content-Type': 'text/html',
+                'Access-Control-Allow-Origin': '*',
+                'Cache-Control': 'no-cache'
+            });
+            res.end(content);
+            return;
+        }
+    }
+    
     // Verificar se o arquivo existe
     if (fileExists(filePath)) {
         // Servir o arquivo
