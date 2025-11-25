@@ -78,7 +78,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     
     <!-- Lottie.js para animações dos banners -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
     
     <!-- CSS Principal Global -->
     <link rel="stylesheet" href="./assets/css/style.css">
@@ -219,44 +219,63 @@
                                 spaContainer.innerHTML = tempDiv.innerHTML;
                                 
                                 // Executar scripts DEPOIS de inserir conteúdo
+                                // IMPORTANTE: Carregar scripts na ordem correta
                                 const scriptPromises = [];
+                                const scriptSrcs = [];
+                                
                                 scripts.forEach((script, index) => {
                                     if (script.src) {
-                                        console.log(`[Index] Carregando script externo ${index + 1}:`, script.src);
-                                        const promise = new Promise((resolve, reject) => {
-                                            const newScript = document.createElement('script');
-                                            newScript.src = script.src;
-                                            newScript.async = false;
-                                            newScript.onload = resolve;
-                                            newScript.onerror = reject;
-                                            document.head.appendChild(newScript);
-                                        });
-                                        scriptPromises.push(promise);
-                                    } else if (script.textContent.trim()) {
-                                        console.log(`[Index] Executando script inline ${index + 1}`);
-                                        const newScript = document.createElement('script');
-                                        newScript.textContent = script.textContent;
-                                        document.body.appendChild(newScript);
+                                        scriptSrcs.push(script.src);
                                     }
                                 });
                                 
-                                // Aguardar scripts externos carregarem
-                                Promise.all(scriptPromises).then(() => {
+                                // Carregar scripts sequencialmente para garantir ordem
+                                async function loadScriptsSequentially() {
+                                    for (let i = 0; i < scripts.length; i++) {
+                                        const script = scripts[i];
+                                        if (script.src) {
+                                            console.log(`[Index] Carregando script externo ${i + 1}:`, script.src);
+                                            await new Promise((resolve, reject) => {
+                                                // Verificar se já foi carregado
+                                                const existing = document.querySelector(`script[src="${script.src}"]`);
+                                                if (existing) {
+                                                    resolve();
+                                                    return;
+                                                }
+                                                
+                                                const newScript = document.createElement('script');
+                                                newScript.src = script.src;
+                                                newScript.async = false;
+                                                newScript.onload = resolve;
+                                                newScript.onerror = reject;
+                                                document.head.appendChild(newScript);
+                                            });
+                                        } else if (script.textContent.trim()) {
+                                            console.log(`[Index] Executando script inline ${i + 1}`);
+                                            const newScript = document.createElement('script');
+                                            newScript.textContent = script.textContent;
+                                            document.body.appendChild(newScript);
+                                        }
+                                    }
+                                    
                                     console.log('[Index] Todos os scripts carregados');
                                     
+                                    // Aguardar um pouco para garantir que tudo está pronto
+                                    await new Promise(resolve => setTimeout(resolve, 200));
+                                    
                                     // Disparar eventos para scripts da página
-                                    setTimeout(() => {
-                                        // Primeiro DOMContentLoaded (para compatibilidade)
-                                        const domContentLoadedEvent = new Event('DOMContentLoaded', { bubbles: true, cancelable: true });
-                                        document.dispatchEvent(domContentLoadedEvent);
-                                        
-                                        // Depois spa-page-loaded
-                                        window.dispatchEvent(new CustomEvent('spa-page-loaded', {
-                                            detail: { url: pageToLoad, isSPANavigation: false }
-                                        }));
-                                        console.log('[Index] Eventos disparados (DOMContentLoaded + spa-page-loaded)');
-                                    }, 100);
-                                }).catch(error => {
+                                    // Primeiro DOMContentLoaded (para compatibilidade)
+                                    const domContentLoadedEvent = new Event('DOMContentLoaded', { bubbles: true, cancelable: true });
+                                    document.dispatchEvent(domContentLoadedEvent);
+                                    
+                                    // Depois spa-page-loaded
+                                    window.dispatchEvent(new CustomEvent('spa-page-loaded', {
+                                        detail: { url: pageToLoad, isSPANavigation: false }
+                                    }));
+                                    console.log('[Index] Eventos disparados (DOMContentLoaded + spa-page-loaded)');
+                                }
+                                
+                                loadScriptsSequentially().catch(error => {
                                     console.error('[Index] Erro ao carregar scripts:', error);
                                 });
                             }

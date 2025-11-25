@@ -1160,9 +1160,27 @@ function animatePointsCount(element, startValue, endValue, duration) {
 // CARREGAR E RENDERIZAR DASHBOARD
 // ========================================
 (async function() {
+    // Aguardar auth.js estar disponível
+    if (typeof getAuthToken === 'undefined') {
+        console.log('[main_app_checkin] Aguardando auth.js...');
+        await new Promise(resolve => {
+            const checkAuth = setInterval(() => {
+                if (typeof getAuthToken !== 'undefined') {
+                    clearInterval(checkAuth);
+                    resolve();
+                }
+            }, 50);
+            // Timeout após 2 segundos
+            setTimeout(() => {
+                clearInterval(checkAuth);
+                resolve();
+            }, 2000);
+        });
+    }
+    
     const BASE_URL = window.BASE_APP_URL;
     console.log('BASE_URL:', BASE_URL);
-    console.log('Token no localStorage:', getAuthToken() ? 'SIM' : 'NÃO');
+    console.log('Token no localStorage:', typeof getAuthToken !== 'undefined' && getAuthToken() ? 'SIM' : 'NÃO');
     
     // Verificar se há token na URL (vindo do login.php)
     const urlParams = new URLSearchParams(window.location.search);
