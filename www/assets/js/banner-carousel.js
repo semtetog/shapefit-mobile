@@ -450,27 +450,33 @@ function initLottieCarousel() {
 }
 
 // Função para inicializar o carrossel (reutilizável)
-function tryInitCarousel() {
+async function tryInitCarousel() {
   console.log('[Banner Carousel] Tentando inicializar carrossel...');
   
   const carousel = document.querySelector('.main-carousel');
-  if (carousel) {
-    // Aguardar um pouco mais para garantir que Lottie.js carregou
-    if (typeof lottie !== 'undefined') {
-      initLottieCarousel();
-    } else {
-      console.warn('[Banner Carousel] Lottie.js não foi encontrado. Tentando novamente em 500ms...');
-      // Tentar novamente após um delay
-      setTimeout(() => {
-        if (typeof lottie !== 'undefined') {
-          initLottieCarousel();
-        } else {
-          console.error('[Banner Carousel] Lottie.js ainda não foi encontrado após delay.');
-        }
-      }, 500);
-    }
-  } else {
+  if (!carousel) {
     console.log('[Banner Carousel] Container .main-carousel não encontrado nesta página. Script inativo.');
+    return;
+  }
+  
+  // Aguardar Lottie.js estar disponível
+  let lottieReady = false;
+  const maxWait = 5000; // 5 segundos
+  const startTime = Date.now();
+  
+  while (!lottieReady && (Date.now() - startTime) < maxWait) {
+    if (typeof window.lottie !== 'undefined' || typeof lottie !== 'undefined') {
+      lottieReady = true;
+      console.log('[Banner Carousel] Lottie.js encontrado!');
+      break;
+    }
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  
+  if (lottieReady) {
+    initLottieCarousel();
+  } else {
+    console.error('[Banner Carousel] Lottie.js não foi encontrado após 5 segundos. Verifique se o script está carregando corretamente.');
   }
 }
 
