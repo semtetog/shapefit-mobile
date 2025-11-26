@@ -3,6 +3,9 @@ npm-debug.log*
 yarn.lock
 package-lock.json
 
+# Pasta de arquivos de desenvolvimento (não vai pro build)
+org/
+
 # Capacitor / Android
 android/.gradle/
 android/local.properties

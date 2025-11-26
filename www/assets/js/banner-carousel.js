@@ -1,129 +1,189 @@
-if (window.__BANNER_CAROUSEL_LOADED) {
-  console.log('[Banner Carousel] Script já carregado, reutilizando instância existente.');
-  if (typeof window.initLottieCarousel === "function") {
-    window.initLottieCarousel();
-  }
-} else {
-  window.__BANNER_CAROUSEL_LOADED = true;
+// banner-carousel.js (VERSÃO CORRIGIDA PARA SPA)
+(function() {
 
-// banner-carousel.js (VERSÃO FINAL, ESTÁVEL E COM LOOP SIMPLES)
+// Variáveis globais do carrossel (precisam ser acessíveis para cleanup)
+let carouselInterval = null;
+let loadedAnimations = [];
+let currentCarouselElement = null;
 
-// Variáveis globais para controle de limpeza
-// Evitar re-declaração em navegação SPA
-if (typeof window.globalCarouselInterval === 'undefined') {
-    window.globalCarouselInterval = null;
-}
-if (typeof window.globalLoadedAnimations === 'undefined') {
-    window.globalLoadedAnimations = [];
-}
-let globalCarouselInterval = window.globalCarouselInterval;
-let globalLoadedAnimations = window.globalLoadedAnimations;
-
-function initLottieCarousel() {
-  console.log('[Banner Carousel] Inicializando com loop estável...');
+// Função para limpar carrossel anterior (IMPORTANTE para SPA)
+function cleanupCarousel() {
+  console.log('[Banner Carousel] Limpando carrossel anterior...');
   
-  // LIMPAR ANIMAÇÕES E TIMERS ANTIGOS ANTES DE INICIALIZAR
-  if (window.globalCarouselInterval) {
-    clearInterval(window.globalCarouselInterval);
-    window.globalCarouselInterval = null;
+  // Parar intervalo
+  if (carouselInterval) {
+    clearInterval(carouselInterval);
+    carouselInterval = null;
   }
-  globalCarouselInterval = window.globalCarouselInterval;
   
-  // Destruir todas as animações Lottie antigas
-  window.globalLoadedAnimations.forEach(anim => {
+  // Destruir animações Lottie
+  loadedAnimations.forEach(anim => {
     if (anim && typeof anim.destroy === 'function') {
       try {
         anim.destroy();
       } catch (e) {
-        console.warn('[Banner Carousel] Erro ao destruir animação antiga:', e);
+        console.warn('[Banner Carousel] Erro ao destruir animação:', e);
       }
     }
   });
-  window.globalLoadedAnimations = [];
-  globalLoadedAnimations = window.globalLoadedAnimations;
+  loadedAnimations = [];
+  
+  // Remover flag de inicializado do elemento antigo
+  if (currentCarouselElement) {
+    currentCarouselElement.dataset.initialized = 'false';
+  }
+  currentCarouselElement = null;
+}
+
+// Função para carregar banners da API
+async function loadBannersFromAPI() {
+  try {
+    const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const apiUrl = isDev 
+      ? 'https://appshapefit.com/api/get_banners.php'
+      : '/api/get_banners.php';
+    
+    console.log('[Banner Carousel] Carregando banners de:', apiUrl);
+    
+    const response = await fetch(apiUrl);
+    const result = await response.json();
+    
+    if (result.success && result.banners && result.banners.length > 0) {
+      console.log('[Banner Carousel] Banners carregados:', result.banners.length);
+      
+      if (isDev) {
+        return result.banners.map(b => ({
+          ...b,
+          json_path: b.json_path.startsWith('http') 
+            ? b.json_path 
+            : `https://appshapefit.com${b.json_path}`
+        }));
+      }
+      
+      return result.banners;
+    } else {
+      console.warn('[Banner Carousel] API vazia, usando fallback');
+      return getFallbackBanners();
+    }
+  } catch (error) {
+    console.error('[Banner Carousel] Erro API:', error);
+    return getFallbackBanners();
+  }
+}
+
+function getFallbackBanners() {
+  const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const baseUrl = isDev ? 'https://appshapefit.com' : '';
+  
+  return [
+    { json_path: `${baseUrl}/assets/banners/banner_receitas.json`, link_url: '/explorar' },
+    { json_path: `${baseUrl}/assets/banners/banner2.json`, link_url: null },
+    { json_path: `${baseUrl}/assets/banners/banner3.json`, link_url: null },
+    { json_path: `${baseUrl}/assets/banners/banner4.json`, link_url: null }
+  ];
+}
+
+async function initLottieCarousel() {
+  // Primeiro, limpar qualquer carrossel anterior
+  cleanupCarousel();
+  
+  console.log('[Banner Carousel] Inicializando...');
   
   if (typeof lottie === 'undefined') {
-    console.error('[Banner Carousel] Biblioteca lottie-web não foi carregada!');
+    console.error('[Banner Carousel] Lottie não carregado!');
     return;
   }
   
   const carousel = document.querySelector('.main-carousel');
   if (!carousel) {
-    console.error('[Banner Carousel] Container .main-carousel não encontrado!');
+    console.log('[Banner Carousel] Container não encontrado nesta página.');
     return;
   }
   
-  // Verificar se há slides duplicados e remover
+  // Verificar se JÁ foi inicializado (evitar duplicação)
+  if (carousel.dataset.initialized === 'true') {
+    console.log('[Banner Carousel] Já inicializado, pulando...');
+    return;
+  }
+  
+  // Marcar como inicializado
+  carousel.dataset.initialized = 'true';
+  currentCarouselElement = carousel;
+  
   const track = carousel.querySelector('.carousel-track');
-  if (!track) {
-    console.error('[Banner Carousel] Trilho (.carousel-track) não encontrado!');
-    return;
-  }
-  
-  let slides = Array.from(carousel.querySelectorAll('.lottie-slide'));
-  const expectedSlides = 4;
-  
-  // Se há mais slides do que o esperado, remover os extras
-  if (slides.length > expectedSlides) {
-    console.log(`[Banner Carousel] Encontrados ${slides.length} slides, removendo ${slides.length - expectedSlides} duplicados...`);
-    for (let i = expectedSlides; i < slides.length; i++) {
-      slides[i].remove();
-    }
-    // Re-obter slides após remoção
-    slides = Array.from(carousel.querySelectorAll('.lottie-slide'));
-  }
-  
   const paginationContainer = carousel.querySelector('.pagination-container');
   
   if (!track) {
-    console.error('[Banner Carousel] Trilho (.carousel-track) não encontrado!');
+    console.error('[Banner Carousel] .carousel-track não encontrado!');
     return;
   }
   
-  if (slides.length <= 1) {
-    if (slides.length === 1) {
-        const container = slides[0].querySelector('.lottie-animation-container');
-        if (container) {
-          // Banner é arquivo local - usar caminho relativo
-          lottie.loadAnimation({ 
-            container, 
-            renderer: 'svg', 
-            loop: true, 
-            autoplay: true, 
-            path: './banner_receitas.json' 
-          });
-        }
-    }
-    console.log('[Banner Carousel] Apenas 1 slide ou menos. Carrossel desabilitado.');
+  // Carregar banners da API
+  const bannerData = await loadBannersFromAPI();
+  
+  if (bannerData.length === 0) {
+    console.log('[Banner Carousel] Nenhum banner disponível.');
+    carousel.style.display = 'none';
     return;
   }
-
-  let currentIndex = 0;
-  let carouselInterval = null;
-  let isInitializing = true; // Flag para indicar inicialização
-  const DURATION = 7000;
-  const loadedAnimations = [];
   
-  // Atualizar referências globais
-  globalCarouselInterval = carouselInterval;
-  globalLoadedAnimations = loadedAnimations;
-  // Banners são arquivos locais - usar caminhos relativos
-  // NÃO usar BASE_APP_URL pois os banners estão no app, não no servidor
-  const animationPaths = [
-    './banner_receitas.json', 
-    './banner2.json', 
-    './banner3.json', 
-    './banner4.json'
-  ];
+  // Limpar e criar slides
+  track.innerHTML = '';
+  bannerData.forEach((banner, index) => {
+    const slide = document.createElement('div');
+    slide.className = 'lottie-slide';
+    slide.dataset.link = banner.link_url || '#';
+    slide.innerHTML = '<div class="lottie-animation-container"></div>';
+    track.appendChild(slide);
+  });
+  
+  const slides = Array.from(carousel.querySelectorAll('.lottie-slide'));
   const slidesCount = slides.length;
+  
+  // Se só tem 1 slide, não precisa de carrossel
+  if (slidesCount <= 1) {
+    if (slidesCount === 1 && bannerData[0]) {
+      const container = slides[0].querySelector('.lottie-animation-container');
+      if (container) {
+        const anim = lottie.loadAnimation({ 
+          container, 
+          renderer: 'svg', 
+          loop: true, 
+          autoplay: true, 
+          path: bannerData[0].json_path 
+        });
+        loadedAnimations.push(anim);
+      }
+    }
+    if (paginationContainer) paginationContainer.style.display = 'none';
+    console.log('[Banner Carousel] Apenas 1 slide, carrossel desabilitado.');
+    return;
+  }
 
-  // =========================================================================
-  //         FUNÇÕES DE CONTROLE (SIMPLIFICADAS E ROBUSTAS)
-  // =========================================================================
+  // Variáveis de estado
+  let currentIndex = 0;
+  const DURATION = 7000;
+  
+  // Limpar paginação e criar nova
+  if (paginationContainer) {
+    paginationContainer.innerHTML = '';
+  }
+  
+  const progressFills = [];
+  slides.forEach(() => {
+    const item = document.createElement('div');
+    item.className = 'pagination-item';
+    const fill = document.createElement('div');
+    fill.className = 'pagination-fill';
+    fill.style.width = '0%';
+    fill.style.transition = 'none';
+    item.appendChild(fill);
+    if (paginationContainer) paginationContainer.appendChild(item);
+    progressFills.push(fill);
+  });
 
+  // Funções de controle
   function goToSlide(index, withAnimation = true, startTimer = true) {
-    // CÉREBRO (JS): Calcula o índice correto usando o operador de módulo para criar o loop.
-    // Este operador garante que o índice sempre esteja entre 0 e 3, criando o efeito de loop.
     currentIndex = ((index % slidesCount) + slidesCount) % slidesCount;
 
     if (!withAnimation) {
@@ -131,79 +191,59 @@ function initLottieCarousel() {
     }
 
     const slideWidth = slides[0].offsetWidth;
-    // CÉREBRO (JS): Calcula a posição final e atualiza o estilo.
     track.style.transform = `translateX(-${currentIndex * slideWidth}px)`;
     
-    // MÚSCULO (CSS): A propriedade 'transition' no seu CSS fará a animação suavemente até este ponto,
-    // usando a GPU para garantir 60fps e fluidez máxima.
-    
     if (!withAnimation) {
-        track.offsetHeight; // Força reflow para aplicar a mudança
-        track.classList.remove('no-transition');
+      track.offsetHeight;
+      track.classList.remove('no-transition');
     }
 
-    // Controla animações Lottie
+    // Controlar animações Lottie
     loadedAnimations.forEach((anim, i) => {
-        if (anim) {
-          if (i === currentIndex) {
-            anim.play();
-          } else {
-            anim.stop();
-          }
+      if (anim) {
+        if (i === currentIndex) {
+          anim.play();
+        } else {
+          anim.stop();
         }
+      }
     });
 
-    // Atualiza paginação APENAS se não estiver inicializando
-    if (!isInitializing) {
-        updatePagination();
-    } else {
-        // Se estiver inicializando, só reseta sem animar
-        progressFills.forEach(fill => {
-            fill.style.transition = 'none';
-            fill.style.width = '0%';
-            fill.style.setProperty('width', '0%', 'important');
-        });
-    }
+    // Atualizar paginação
+    updatePagination();
     
     if (startTimer) {
-        restartCarouselTimer();
+      restartCarouselTimer();
     }
   }
   
   function nextSlide() {
-    // Timer automático: sempre faz loop
     goToSlide(currentIndex + 1); 
   }
 
   function prevSlide() {
-    // Timer automático: sempre faz loop
     goToSlide(currentIndex - 1); 
   }
 
-  function updatePagination(resetOnly = false) {
-      progressFills.forEach((fill, i) => {
-          fill.style.transition = 'none';
-          fill.style.width = '0%';
-          fill.style.removeProperty('width'); // Remove qualquer !important anterior
-          // Só anima se não for resetOnly E não estiver na fase de inicialização
-          if (i === currentIndex && !resetOnly && !isInitializing) {
-              // Usa requestAnimationFrame duplo para garantir que o reset seja aplicado antes da animação
-              requestAnimationFrame(() => {
-                  requestAnimationFrame(() => {
-                      // Garante que a transição está definida antes de mudar o width
-                      fill.style.transition = `width ${DURATION}ms linear`;
-                      // Força um reflow antes de aplicar o width
-                      fill.offsetHeight;
-                      fill.style.width = '100%';
-                  });
-              });
-          }
-      });
+  function updatePagination() {
+    progressFills.forEach((fill, i) => {
+      // Reset todas as barras
+      fill.style.transition = 'none';
+      fill.style.width = '0%';
+      
+      if (i === currentIndex) {
+        // Usar requestAnimationFrame para garantir reset antes de animar
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            fill.style.transition = `width ${DURATION}ms linear`;
+            fill.style.width = '100%';
+          });
+        });
+      }
+    });
   }
   
-  // =========================================================================
-  //         SISTEMA DE SWIPE (LÓGICA ROBUSTA E SIMPLES)
-  // =========================================================================
+  // Sistema de swipe
   let isDragging = false;
   let startX = 0;
   let startTranslate = 0;
@@ -217,15 +257,10 @@ function initLottieCarousel() {
     isDragging = true;
     startX = getPositionX(e);
     stopCarouselTimer();
-    
-    // CÉREBRO (JS): Diz ao CSS para desativar a animação durante o arraste.
     carousel.classList.add('is-dragging');
-    
-    // NOVO: Bloqueia o scroll da página durante o toque no carrossel
     document.body.style.overflow = 'hidden';
     document.body.style.touchAction = 'none';
     
-    // Captura a posição atual do trilho
     const transformMatrix = new WebKitCSSMatrix(window.getComputedStyle(track).transform);
     startTranslate = transformMatrix.m41;
     currentTranslate = startTranslate;
@@ -233,82 +268,56 @@ function initLottieCarousel() {
 
   function handleMove(e) {
     if (!isDragging) return;
-    
-    // NOVO: Previne o scroll da página durante o arraste no mobile
     e.preventDefault();
     
     const currentX = getPositionX(e);
     const diffX = currentX - startX;
     let newTranslate = startTranslate + diffX;
     
-    // LIMITE: Impede arrastar além dos limites
     const slideWidth = slides[0].offsetWidth;
-    const minTranslate = -(slidesCount - 1) * slideWidth; // Último slide
-    const maxTranslate = 0; // Primeiro slide
+    const minTranslate = -(slidesCount - 1) * slideWidth;
+    const maxTranslate = 0;
     
-    // Se está no primeiro slide (index 0) e tentando arrastar para direita
     if (currentIndex === 0 && newTranslate > maxTranslate) {
       newTranslate = maxTranslate;
     }
-    
-    // Se está no último slide (index 3) e tentando arrastar para esquerda
     if (currentIndex === slidesCount - 1 && newTranslate < minTranslate) {
       newTranslate = minTranslate;
     }
     
     currentTranslate = newTranslate;
-    
-    // CÉREBRO (JS): Atualiza a posição em tempo real enquanto o dedo se move.
     track.style.transform = `translateX(${currentTranslate}px)`;
   }
 
   function handleEnd() {
     if (!isDragging) return;
     isDragging = false;
-    
-    // CÉREBRO (JS): Diz ao CSS para reativar a animação.
     carousel.classList.remove('is-dragging');
-    
-    // NOVO: Reativa o scroll da página quando soltar o toque
     document.body.style.overflow = '';
     document.body.style.touchAction = '';
 
     const movedBy = currentTranslate - startTranslate;
-    const threshold = slides[0].offsetWidth * 0.2; // 20% de arraste
+    const threshold = slides[0].offsetWidth * 0.2;
 
-    // A decisão de ir para o próximo/anterior é simples
     if (movedBy < -threshold) {
-        nextSlide();
+      nextSlide();
     } else if (movedBy > threshold) {
-        prevSlide();
+      prevSlide();
     } else {
-        // Se não arrastou o suficiente, volta para o slide atual
-        goToSlide(currentIndex);
+      goToSlide(currentIndex);
     }
   }
 
-  // =========================================================================
-  //         TIMERS E GERENCIAMENTO
-  // =========================================================================
+  // Timer
   function startCarouselTimer() {
     stopCarouselTimer();
-    // Garante que a flag está desativada antes de atualizar paginação
-    isInitializing = false;
-    // Primeiro atualiza a paginação para começar a animar a barra do slide atual
-    updatePagination();
-    // Timer automático sempre faz loop infinito
     carouselInterval = setInterval(nextSlide, DURATION);
-    // Atualizar referência global
-    window.globalCarouselInterval = carouselInterval;
-    globalCarouselInterval = window.globalCarouselInterval;
   }
   
   function stopCarouselTimer() { 
-    clearInterval(carouselInterval);
-    if (window.globalCarouselInterval) {
-      clearInterval(window.globalCarouselInterval);
-      window.globalCarouselInterval = null;
-      globalCarouselInterval = null;
+    if (carouselInterval) {
+      clearInterval(carouselInterval);
+      carouselInterval = null;
     }
   }
   
@@ -316,286 +325,126 @@ function initLottieCarousel() {
     startCarouselTimer(); 
   }
 
-  // =========================================================================
-  //         CONFIGURAÇÃO INICIAL
-  // =========================================================================
-  const progressFills = [];
-  slides.forEach(() => {
-    const item = document.createElement('div');
-    item.className = 'pagination-item';
-    const fill = document.createElement('div');
-    fill.className = 'pagination-fill';
-    // GARANTE que começa em 0% explicitamente
-    fill.style.width = '0%';
-    fill.style.transition = 'none';
-    item.appendChild(fill);
-    paginationContainer.appendChild(item);
-    progressFills.push(fill);
-  });
-  
   // Event Listeners
   carousel.addEventListener('mousedown', handleStart);
   carousel.addEventListener('mousemove', handleMove);
   carousel.addEventListener('mouseup', handleEnd);
   carousel.addEventListener('mouseleave', handleEnd);
-  
-  // NOVO: { passive: false } permite preventDefault() para bloquear scroll
   carousel.addEventListener('touchstart', handleStart, { passive: false });
   carousel.addEventListener('touchmove', handleMove, { passive: false });
   carousel.addEventListener('touchend', handleEnd, { passive: false });
   
-  // Ajusta a posição ao redimensionar a janela
-  window.addEventListener('resize', () => goToSlide(currentIndex, false));
+  window.addEventListener('resize', () => goToSlide(currentIndex, false, false));
   
-  // Click handler para navegação (adiciona ao carousel diretamente)
+  // Click handler
   carousel.addEventListener('click', (e) => {
-    // Previne clique se o usuário acabou de arrastar
     const movedBy = Math.abs(currentTranslate - startTranslate);
     if (isDragging || movedBy > 10) return;
 
-    const link = slides[currentIndex].dataset.link;
-    if (link && link !== '#') {
-      window.location.href = link;
+    const link = bannerData[currentIndex]?.link_url;
+    if (link && link !== '#' && link !== null) {
+      if (window.SPARouter) {
+        window.SPARouter.navigate(link);
+      } else {
+        window.location.href = link;
+      }
     }
   });
 
-  // =========================================================================
-  //         CARREGAR ANIMAÇÕES E INICIAR
-  // =========================================================================
-  
-  // Inicia o carrossel imediatamente (não espera carregar)
-  // PRIMEIRO: Garante que todas as barras estão em 0% e sem transição
-  progressFills.forEach(fill => {
-      fill.style.width = '0%';
-      fill.style.transition = 'none';
-      fill.style.setProperty('width', '0%', 'important');
-  });
-  
-  // Vai para o primeiro slide sem iniciar o timer ainda
-  goToSlide(0, false, false);
-  
-  // Função para forçar reset das barras
-  function forceResetBars() {
-      progressFills.forEach(fill => {
-          fill.style.transition = 'none';
-          fill.style.width = '0%';
-          fill.style.setProperty('width', '0%', 'important');
-          fill.offsetHeight; // Force reflow
-      });
-  }
-  
-  // Aguarda frames para garantir que o reset foi aplicado
-  requestAnimationFrame(() => {
-      forceResetBars();
-      requestAnimationFrame(() => {
-          forceResetBars();
-          requestAnimationFrame(() => {
-              forceResetBars();
-              
-              // Delay maior para desktop em modo mobile
-              setTimeout(() => {
-                  // FORÇA o reset MAIS UMA VEZ antes de iniciar
-                  forceResetBars();
-                  
-                  // Verifica se ainda está em 0% antes de iniciar
-                  const firstFill = progressFills[0];
-                  if (firstFill && firstFill.style.width !== '0%') {
-                      firstFill.style.width = '0%';
-                      firstFill.style.setProperty('width', '0%', 'important');
-                  }
-                  
-                  // Agora inicia o timer (a flag será desativada dentro de startCarouselTimer)
-                  startCarouselTimer();
-              }, 200);
-          });
-      });
-  });
-  
-  // Carrega as animações em paralelo
+  // Carregar animações Lottie
   slides.forEach((slide, index) => {
     const container = slide.querySelector('.lottie-animation-container');
-    if (!container) {
-      console.warn(`[Banner Carousel] Container não encontrado no slide ${index}`);
-      return;
-    }
+    if (!container) return;
     
-    // Limpar container antes de carregar nova animação
-    container.innerHTML = '';
+    const bannerPath = bannerData[index]?.json_path;
+    if (!bannerPath) return;
+    
+    console.log(`[Banner Carousel] Carregando animação ${index}`);
     
     const anim = lottie.loadAnimation({
-        container, 
-        renderer: 'svg', 
-        loop: true, 
-        autoplay: (index === 0), // Primeiro slide começa automaticamente
-        path: animationPaths[index]
+      container, 
+      renderer: 'svg', 
+      loop: true, 
+      autoplay: (index === 0),
+      path: bannerPath
     });
+    
+    loadedAnimations[index] = anim;
     
     anim.addEventListener('DOMLoaded', () => {
-        console.log(`[Banner Carousel] Animação ${index} carregada.`);
-        loadedAnimations[index] = anim;
-        // Atualizar referência global
-        window.globalLoadedAnimations[index] = anim;
-        globalLoadedAnimations[index] = window.globalLoadedAnimations[index];
-        
-        // Se é o primeiro slide e ainda está visível, garante que está tocando
-        if (index === 0 && currentIndex === 0) {
-          anim.play();
-        }
-    });
-    
-    anim.addEventListener('data_failed', () => {
-      console.error(`[Banner Carousel] Falha ao carregar animação ${index}`);
+      console.log(`[Banner Carousel] Animação ${index} carregada.`);
+      if (index === 0 && currentIndex === 0) {
+        anim.play();
+      }
     });
   });
+
+  // Iniciar no primeiro slide
+  goToSlide(0, false, false);
+  
+  // Aguardar um pouco e iniciar timer
+  setTimeout(() => {
+    // Garantir barras em 0%
+    progressFills.forEach(fill => {
+      fill.style.transition = 'none';
+      fill.style.width = '0%';
+    });
+    
+    // Iniciar
+    startCarouselTimer();
+    updatePagination();
+  }, 100);
 }
 
-// Função para inicializar o carrossel (reutilizável)
-async function tryInitCarousel() {
-  console.log('[Banner Carousel] Tentando inicializar carrossel...');
-  
+// Função para tentar inicializar
+function tryInitCarousel() {
   const carousel = document.querySelector('.main-carousel');
+  
   if (!carousel) {
-    console.log('[Banner Carousel] Container .main-carousel não encontrado nesta página. Script inativo.');
+    console.log('[Banner Carousel] Container não existe nesta página.');
     return;
   }
   
-  // Aguardar Lottie.js estar disponível
-  let lottieReady = false;
-  const maxWait = 15000; // 15 segundos (CDN pode ser muito lento)
-  const startTime = Date.now();
-  
-  console.log('[Banner Carousel] Verificando Lottie.js...');
-  console.log('[Banner Carousel] window.lottie:', typeof window.lottie);
-  console.log('[Banner Carousel] lottie (global):', typeof lottie);
-  console.log('[Banner Carousel] window.__LOTTIE_LOADED:', window.__LOTTIE_LOADED);
-  
-  // Verificar se o script está no DOM
-  const lottieScript = document.querySelector('script[src*="lottie"]');
-  console.log('[Banner Carousel] Script Lottie.js no DOM:', lottieScript ? 'SIM' : 'NÃO');
-  
-  while (!lottieReady && (Date.now() - startTime) < maxWait) {
-    // Verificar tanto window.lottie quanto lottie global
-    const lottieAvailable = typeof window.lottie !== 'undefined' || typeof lottie !== 'undefined' || (window.lottie && typeof window.lottie.loadAnimation !== 'undefined');
-    if (lottieAvailable) {
-      lottieReady = true;
-      console.log('[Banner Carousel] ✅ Lottie.js encontrado!');
-      break;
-    }
-    await new Promise(resolve => setTimeout(resolve, 200));
+  // Se já está inicializado E é o mesmo elemento, não fazer nada
+  if (carousel.dataset.initialized === 'true' && carousel === currentCarouselElement) {
+    console.log('[Banner Carousel] Já inicializado (mesmo elemento).');
+    return;
   }
   
-  if (lottieReady) {
+  // Se é um novo elemento ou não está inicializado, limpar e reiniciar
+  if (typeof lottie !== 'undefined') {
     initLottieCarousel();
   } else {
-    console.error('[Banner Carousel] ❌ Lottie.js não foi encontrado após 15 segundos.');
-    console.error('[Banner Carousel] Verificando se o script está no DOM...');
-    if (lottieScript) {
-      console.error('[Banner Carousel] Script Lottie.js encontrado no DOM mas não carregou.');
-      console.error('[Banner Carousel] Tentando recarregar de CDN alternativo...');
-      // Tentar recarregar de um CDN alternativo
-      lottieScript.remove();
-      const newLottieScript = document.createElement('script');
-      newLottieScript.src = 'https://unpkg.com/lottie-web@5.12.2/build/player/lottie.min.js';
-      newLottieScript.onload = () => {
-        console.log('[Banner Carousel] Lottie.js recarregado com sucesso do unpkg!');
-        setTimeout(() => tryInitCarousel(), 500);
-      };
-      newLottieScript.onerror = () => {
-        console.error('[Banner Carousel] Erro ao recarregar Lottie.js do unpkg');
-        // Tentar CDN original novamente
-        const originalLottieScript = document.createElement('script');
-        originalLottieScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js';
-        originalLottieScript.onload = () => {
-          console.log('[Banner Carousel] Lottie.js recarregado do cdnjs!');
-          setTimeout(() => tryInitCarousel(), 500);
-        };
-        document.head.appendChild(originalLottieScript);
-      };
-      document.head.appendChild(newLottieScript);
-    } else {
-      console.error('[Banner Carousel] Script Lottie.js não encontrado no DOM! Carregando agora...');
-      const newLottieScript = document.createElement('script');
-      newLottieScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js';
-      newLottieScript.onload = () => {
-        console.log('[Banner Carousel] Lottie.js carregado!');
-        setTimeout(() => tryInitCarousel(), 500);
-      };
-      newLottieScript.onerror = () => {
-        console.error('[Banner Carousel] Erro ao carregar Lottie.js');
-      };
-      document.head.appendChild(newLottieScript);
-    }
+    console.warn('[Banner Carousel] Lottie não encontrado, tentando em 500ms...');
+    setTimeout(() => {
+      if (typeof lottie !== 'undefined') {
+        initLottieCarousel();
+      } else {
+        console.error('[Banner Carousel] Lottie não encontrado após delay.');
+      }
+    }, 500);
   }
 }
 
-// Aguarda o window.load para garantir que todos os scripts carregaram
-window.addEventListener('load', () => {
-  console.log('[Banner Carousel] Window load event - verificando se o carrossel existe...');
+// Inicialização
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', tryInitCarousel);
+} else {
   tryInitCarousel();
-});
-
-// Suporte para navegação SPA - re-inicializar quando main_app for carregado via SPA
-// Usar uma flag para evitar múltiplas inicializações simultâneas
-let isReinitializing = false;
-
-window.addEventListener('spa-page-loaded', function(e) {
-  if (e.detail && e.detail.isSPANavigation) {
-    const pageName = window.location.pathname.split('/').pop();
-    if (pageName === 'main_app.html' || pageName === 'dashboard.html') {
-      // Evitar múltiplas inicializações simultâneas
-      if (isReinitializing) {
-        console.log('[Banner Carousel] Já está re-inicializando, ignorando...');
-        return;
-      }
-      
-      isReinitializing = true;
-      console.log('[Banner Carousel] Página main_app carregada via SPA - limpando e re-inicializando carrossel...');
-      
-      // Limpar completamente antes de re-inicializar
-      if (window.globalCarouselInterval) {
-        clearInterval(window.globalCarouselInterval);
-        window.globalCarouselInterval = null;
-        globalCarouselInterval = null;
-      }
-      
-      window.globalLoadedAnimations.forEach(anim => {
-        if (anim && typeof anim.destroy === 'function') {
-          try {
-            anim.destroy();
-          } catch (e) {
-            console.warn('[Banner Carousel] Erro ao destruir animação:', e);
-          }
-        }
-      });
-      window.globalLoadedAnimations = [];
-      globalLoadedAnimations = window.globalLoadedAnimations;
-      
-      // Limpar paginação antiga E containers de animação
-      const carousel = document.querySelector('.main-carousel');
-      if (carousel) {
-        const paginationContainer = carousel.querySelector('.pagination-container');
-        if (paginationContainer) {
-          paginationContainer.innerHTML = '';
-        }
-        
-        // Limpar TODOS os containers de animação para evitar duplicatas
-        const animationContainers = carousel.querySelectorAll('.lottie-animation-container');
-        animationContainers.forEach(container => {
-          container.innerHTML = '';
-        });
-      }
-      
-      // Aguardar um pouco mais para garantir que o HTML foi completamente inserido
-      setTimeout(() => {
-        tryInitCarousel();
-        // Resetar flag após um delay
-        setTimeout(() => {
-          isReinitializing = false;
-        }, 1000);
-      }, 300);
-    }
-  }
-});
-
-window.initLottieCarousel = initLottieCarousel;
 }
+
+// Para SPA: limpar e reinicializar quando mudar de página
+window.addEventListener('pageLoaded', (e) => {
+  // Se a nova página tem carrossel, inicializar
+  // Se não tem, apenas limpar o anterior
+  setTimeout(tryInitCarousel, 50);
+});
+
+window.addEventListener('fragmentReady', (e) => {
+  setTimeout(tryInitCarousel, 50);
+});
+
+// Limpar ao sair da página (para navegação tradicional)
+window.addEventListener('beforeunload', cleanupCarousel);
+
+})();

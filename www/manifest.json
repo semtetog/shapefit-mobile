@@ -8,55 +8,21 @@
   "background_color": "#101010",
   "theme_color": "#101010",
   "orientation": "portrait-primary",
-  "categories": [
-    "health",
-    "fitness",
-    "lifestyle"
-  ],
+  "categories": ["health", "fitness", "lifestyle"],
   "lang": "pt-BR",
   "dir": "ltr",
   "icons": [
     {
-      "src": "assets/icons/icon-48.webp",
+      "src": "/assets/images/app-icon-180x180.png",
       "type": "image/png",
-      "sizes": "48x48",
-      "purpose": "any maskable"
+      "sizes": "180x180",
+      "purpose": "any"
     },
     {
-      "src": "assets/icons/icon-72.webp",
-      "type": "image/png",
-      "sizes": "72x72",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "assets/icons/icon-96.webp",
-      "type": "image/png",
-      "sizes": "96x96",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "assets/icons/icon-128.webp",
-      "type": "image/png",
-      "sizes": "128x128",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "assets/icons/icon-192.webp",
-      "type": "image/png",
-      "sizes": "192x192",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "assets/icons/icon-256.webp",
-      "type": "image/png",
-      "sizes": "256x256",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "assets/icons/icon-512.webp",
+      "src": "/assets/images/app-icon.png",
       "type": "image/png",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
   "screenshots": [

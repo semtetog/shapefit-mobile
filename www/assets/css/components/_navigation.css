@@ -19,9 +19,19 @@
     align-items: center;
     z-index: 1000;
     
-    /* Espaço extra na parte inferior, mas sem exagerar no iOS nativo */
-    padding: 10px 10px;
-    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    /* REMOVER QUALQUER BORDER-RADIUS - MENU DEVE SER RETO */
+    border-radius: 0 !important;
+    border-top-left-radius: 0 !important;
+    border-top-right-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    
+    /* 
+      A MUDANÇA: O padding-bottom agora é APLICADO AOS ÍCONES,
+      NÃO À BARRA INTEIRA. A barra em si vai até o fundo.
+    */
+    padding: 12px 10px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom));
     padding-left: calc(10px + env(safe-area-inset-left, 0px));
     padding-right: calc(10px + env(safe-area-inset-right, 0px));
 }

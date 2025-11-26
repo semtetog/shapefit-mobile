@@ -2,26 +2,25 @@
 
 // Inicialização comum
 (function() {
-    // Definir BASE_APP_URL se não estiver definido
+    // API Base URL - SEMPRE usar appshapefit.com/api diretamente
+    // Não usar proxy local, sempre chamar a API remota
+    window.API_BASE_URL = 'https://appshapefit.com/api';
+    
+    // BASE_APP_URL - URL base do app (appshapefit.com)
+    // IMPORTANTE: Em desenvolvimento local, usar localhost para redirecionamentos
+    // Mas APIs sempre vão para appshapefit.com
     if (!window.BASE_APP_URL) {
-        window.BASE_APP_URL = window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/');
-        if (window.BASE_APP_URL.endsWith('/')) {
-            window.BASE_APP_URL = window.BASE_APP_URL.slice(0, -1);
+        // Se estiver em localhost, usar localhost para redirecionamentos internos
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            window.BASE_APP_URL = window.location.origin;
+        } else {
+            window.BASE_APP_URL = 'https://appshapefit.com';
         }
     }
     
-    // Verificar autenticação em todas as páginas (exceto login/register)
-    const publicPages = ['login.html', 'register.html', 'index.html'];
-    const currentPage = window.location.pathname.split('/').pop();
-    
-    if (!publicPages.includes(currentPage) && typeof requireAuth === 'function') {
-        requireAuth().then(authenticated => {
-            if (!authenticated) {
-                // Já redirecionou para login
-                return;
-            }
-        });
-    }
+    // NÃO verificar autenticação automaticamente no SPA
+    // O router vai gerenciar isso quando carregar cada página
+    // Isso evita redirecionamentos antes do router inicializar
 })();
 
 // Função helper para fazer requisições autenticadas
@@ -45,7 +44,13 @@ async function apiRequest(url, options = {}) {
         
         if (response.status === 401) {
             clearAuthToken();
-            window.location.href = './auth/login.html';
+            // Se estiver em modo SPA, usar router
+            if (window.SPARouter) {
+                window.SPARouter.navigate('/fragments/auth_login.html');
+            } else {
+                // Fallback: usar fragmento mesmo sem router
+                window.location.href = `${window.location.origin}/fragments/auth_login.html`;
+            }
             return null;
         }
         
@@ -100,53 +105,10 @@ function formatDate(dateStr) {
     }
 }
 
-// Função para obter data/hora do servidor (para validações críticas)
-// IMPORTANTE: Use esta função para validações que não podem ser burladas pelo cliente
-// (ex: restrição de 7 dias para atualizar peso)
-let serverDateCache = null;
-let serverDateCacheTime = null;
-const SERVER_DATE_CACHE_DURATION = 60000; // Cache por 1 minuto
-
-async function getServerDate() {
-    // Se temos cache válido, retornar
-    if (serverDateCache && serverDateCacheTime && (Date.now() - serverDateCacheTime) < SERVER_DATE_CACHE_DURATION) {
-        return serverDateCache;
-    }
-    
-    try {
-        // Tentar obter data do servidor via API
-        // Se a API não retornar, usar data local como fallback (mas avisar no console)
-        const response = await fetch(`${window.BASE_APP_URL || ''}/api/get_server_time.php`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${getAuthToken() || ''}`
-            }
-        });
-        
-        if (response && response.ok) {
-            const result = await response.json();
-            if (result.success && result.server_date) {
-                serverDateCache = result.server_date;
-                serverDateCacheTime = Date.now();
-                console.log('[Server Date] Data do servidor obtida:', serverDateCache);
-                return serverDateCache;
-            }
-        }
-    } catch (error) {
-        console.warn('[Server Date] Erro ao obter data do servidor, usando data local:', error);
-    }
-    
-    // Fallback: usar data local (mas avisar que não é seguro para validações)
-    const localDate = getLocalDateString();
-    console.warn('[Server Date] Usando data local como fallback (não seguro para validações críticas):', localDate);
-    return localDate;
-}
-
 // Exportar funções globais
 window.apiRequest = apiRequest;
 window.escapeHtml = escapeHtml;
 window.formatDate = formatDate;
 window.getLocalDateString = getLocalDateString;
 window.addDaysLocal = addDaysLocal;
-window.getServerDate = getServerDate;
 

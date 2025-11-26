@@ -1,18 +1,16 @@
 {
-  "name": "shapefit-android-app",
+  "name": "shapefit-mobile",
   "version": "1.0.0",
-  "description": "ShapeFit Mobile App - Android",
+  "description": "ShapeFit Mobile App - iOS & Android",
   "main": "www/index.html",
   "scripts": {
     "build": "npx cap sync",
     "sync": "npx cap sync",
+    "sync:ios": "npx cap sync ios",
+    "sync:android": "npx cap sync android",
     "open:android": "npx cap open android",
     "open:ios": "npx cap open ios",
-    "clean": "powershell -ExecutionPolicy Bypass -File clean.ps1",
-    "generate:assets": "npx capacitor-assets generate",
-    "dev": "powershell -ExecutionPolicy Bypass -File start-dev.ps1",
-    "dev:stop": "powershell -ExecutionPolicy Bypass -File stop-dev.ps1",
-    "serve": "node serve.js"
+    "generate:assets": "npx capacitor-assets generate"
   },
   "dependencies": {
     "@capacitor-mlkit/barcode-scanning": "^7.3.0",

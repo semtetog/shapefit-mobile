@@ -1,255 +1,160 @@
-// auth.js - Sistema de autenticação para páginas HTML
-// Este arquivo gerencia tokens e autenticação para o Capacitor
+// auth.js - Sistema de autenticação SPA
 
-// Evitar re-declaração em navegação SPA
-if (typeof window.AUTH_TOKEN_KEY === 'undefined') {
-    window.AUTH_TOKEN_KEY = 'shapefit_auth_token';
-}
-var AUTH_TOKEN_KEY = window.AUTH_TOKEN_KEY;
-window.AUTH_TOKEN_KEY = AUTH_TOKEN_KEY;
-// Não declarar BASE_APP_URL aqui - usar window.BASE_APP_URL diretamente
+const AUTH_TOKEN_KEY = 'shapefit_auth_token';
 
-/**
- * Obtém o token de autenticação do localStorage
- */
 function getAuthToken() {
     return localStorage.getItem(AUTH_TOKEN_KEY);
 }
 
-/**
- * Salva o token de autenticação no localStorage
- */
 function setAuthToken(token) {
     localStorage.setItem(AUTH_TOKEN_KEY, token);
 }
 
-/**
- * Remove o token de autenticação
- */
 function clearAuthToken() {
     localStorage.removeItem(AUTH_TOKEN_KEY);
 }
 
-/**
- * Verifica se o usuário está autenticado
- */
 async function isAuthenticated() {
     const token = getAuthToken();
     if (!token) {
-        console.log('isAuthenticated: Nenhum token encontrado');
+        console.log('[Auth] Nenhum token encontrado');
         return false;
     }
-    
-    // Se tem token, assumir que está autenticado (verificação será feita nas requisições)
-    // Isso evita redirecionamentos desnecessários quando há problemas de rede
-    return true;
-    
-    // Código comentado - verificação no servidor será feita nas requisições individuais
-    /*
-    // Usar BASE_APP_URL que foi definido pelo www-config.js
-    // NÃO usar window.location.origin pois no Capacitor é localhost
-    if (!window.BASE_APP_URL) {
-        console.error('[auth.js] BASE_APP_URL não foi definido!');
-        return false;
-    }
-    
-    const baseUrl = window.BASE_APP_URL;
     
     try {
-        console.log('[auth.js] Verificando token em:', `${baseUrl}/api/verify_token.php`);
-        const response = await fetch(`${baseUrl}/api/verify_token.php`, {
+        // Usar window.API_BASE_URL - sempre aponta para appshapefit.com/api
+        const apiBase = window.API_BASE_URL || 'https://appshapefit.com/api';
+        const verifyUrl = `${apiBase}/verify_token.php`;
+        console.log('[Auth] Verificando token em:', verifyUrl);
+        
+        const response = await fetch(verifyUrl, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ token })
         });
         
+        if (!response.ok) {
+            console.log('[Auth] Resposta não OK:', response.status);
+            return false;
+        }
+        
+        // Verificar Content-Type antes de fazer parse
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            console.error('[Auth] Resposta não é JSON:', contentType, text.substring(0, 200));
+            return false;
+        }
+        
         const result = await response.json();
-        console.log('Token verification result:', result);
-        return result.success === true;
+        const isAuth = result.success === true;
+        console.log('[Auth] Token válido:', isAuth);
+        return isAuth;
     } catch (error) {
-        console.error('Erro ao verificar token:', error);
+        console.error('[Auth] Erro verificação:', error);
+        // Se for erro de JSON parsing, logar mais detalhes
+        if (error instanceof SyntaxError && error.message.includes('JSON')) {
+            console.error('[Auth] Erro de parsing JSON - possível resposta HTML ou texto');
+        }
         return false;
     }
-    */
 }
 
-/**
- * Requer autenticação - redireciona para login se não estiver autenticado
- */
 async function requireAuth() {
-    const authenticated = await isAuthenticated();
-    if (!authenticated) {
-        // Usar caminho relativo para manter dentro do app
-        console.log('Redirecionando para login');
-        window.location.href = './auth/login.html';
-        return false;
+    const currentPath = window.location.pathname;
+    if (currentPath.includes('auth_login')) return false;
+    
+    // Limpar cache de autenticação após 5 segundos (evitar cache permanente)
+    if (window._authLastCheck && Date.now() - window._authLastCheck > 5000) {
+        window._authResult = undefined;
+        window._authChecking = false;
     }
-    return true;
+    
+    if (window._authChecking) {
+        // Aguardar verificação em andamento
+        await new Promise(resolve => {
+            const checkInterval = setInterval(() => {
+                if (!window._authChecking) {
+                    clearInterval(checkInterval);
+                    resolve();
+                }
+            }, 50);
+        });
+        return window._authResult || false;
+    }
+    
+    window._authChecking = true;
+    window._authLastCheck = Date.now();
+    
+    try {
+        const authenticated = await isAuthenticated();
+        window._authResult = authenticated;
+        
+        if (!authenticated) {
+            if (window.SPARouter) {
+                window.SPARouter.navigate('/fragments/auth_login.html', true);
+            } else {
+                window.location.href = '/auth/login.html';
+            }
+            return false;
+        }
+        return authenticated;
+    } finally {
+        window._authChecking = false;
+    }
 }
 
-/**
- * Faz uma requisição autenticada para a API
- */
 async function authenticatedFetch(url, options = {}) {
-    const token = getAuthToken();
-    
-    // Se é FormData, NÃO definir headers manualmente - deixar o browser fazer
-    const isFormData = options.body instanceof FormData;
-    
-    const headers = {};
-    
-    // Se não é FormData, copiar headers do options e adicionar JSON se necessário
-    if (!isFormData) {
-        headers['Content-Type'] = options.headers?.['Content-Type'] || options.headers?.['content-type'] || 'application/json';
-        // Copiar outros headers se existirem
-        if (options.headers) {
-            Object.keys(options.headers).forEach(key => {
-                if (key.toLowerCase() !== 'content-type') {
-                    headers[key] = options.headers[key];
-                }
-            });
-        }
+    // Se a URL já é completa (https://), usar diretamente
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+        // URL já está completa, usar como está
+    } else if (url.startsWith('/api')) {
+        // URLs que começam com /api serão interceptadas pelo config.js
+        // Não fazer nada aqui
     } else {
-        // Para FormData, NÃO definir Content-Type - o browser precisa fazer isso automaticamente
-        // Copiar apenas headers que não são Content-Type
-        if (options.headers) {
-            Object.keys(options.headers).forEach(key => {
-                if (key.toLowerCase() !== 'content-type') {
-                    headers[key] = options.headers[key];
-                }
-            });
-        }
+        // Se for relativa, adicionar API_BASE_URL
+        const apiBase = window.API_BASE_URL || 'https://appshapefit.com/api';
+        url = apiBase + (url.startsWith('/') ? url : '/' + url);
+    }
+
+    const token = getAuthToken();
+    const isFormData = options.body instanceof FormData;
+    const headers = options.headers || {};
+    
+    if (!isFormData) {
+        headers['Content-Type'] = headers['Content-Type'] || 'application/json';
     }
     
     if (token) {
         headers['Authorization'] = `Bearer ${token}`;
-        console.log('Enviando requisição autenticada para:', url, isFormData ? '(FormData - sem Content-Type)' : '(JSON)');
-    } else {
-        console.warn('authenticatedFetch: Nenhum token disponível');
     }
     
-    // Criar objeto de opções
     const fetchOptions = {
         method: options.method || 'GET',
-        body: options.body,
+        headers: headers,
+        body: options.body
     };
     
-    // Para FormData, NÃO definir headers - deixar o browser fazer automaticamente
-    // Isso é crítico para que o browser defina o Content-Type correto com boundary
-    if (!isFormData) {
-        fetchOptions.headers = headers;
-    } else {
-        // Para FormData, criar headers apenas com Authorization (se houver token)
-        // NÃO incluir Content-Type - o browser vai fazer isso automaticamente
-        const formDataHeaders = {};
-        if (token) {
-            formDataHeaders['Authorization'] = `Bearer ${token}`;
+    try {
+        const response = await fetch(url, fetchOptions);
+        
+        if (response.status === 401) {
+            clearAuthToken();
+            if (window.SPARouter) window.SPARouter.navigate('/fragments/auth_login.html');
+            else window.location.href = '/auth/login.html';
+            return null;
         }
-        // Copiar outros headers do options (exceto Content-Type)
-        if (options.headers) {
-            Object.keys(options.headers).forEach(key => {
-                const lowerKey = key.toLowerCase();
-                if (lowerKey !== 'content-type' && lowerKey !== 'authorization') {
-                    formDataHeaders[key] = options.headers[key];
-                }
-            });
-        }
-        // Só definir headers se houver algo para adicionar
-        if (Object.keys(formDataHeaders).length > 0) {
-            fetchOptions.headers = formDataHeaders;
-        }
-        // Se não houver headers, não definir a propriedade headers - isso permite o browser definir automaticamente
+        
+        return response;
+    } catch (error) {
+        console.error('[Auth] Erro requisição:', error);
+        throw error;
     }
-    
-    console.log('Fetch options:', {
-        method: fetchOptions.method,
-        hasBody: !!fetchOptions.body,
-        isFormData: isFormData,
-        headers: fetchOptions.headers || '(não definido - browser vai definir)'
-    });
-    
-    const response = await fetch(url, fetchOptions);
-    
-    console.log('Response status:', response.status, 'URL:', url);
-    
-    // Se receber 401, token inválido - limpar e redirecionar
-    if (response.status === 401) {
-        console.error('Token inválido (401) - redirecionando para login');
-        clearAuthToken();
-        // Usar caminho relativo para manter dentro do app
-        window.location.href = './auth/login.html';
-        return null;
-    }
-    
-    return response;
 }
 
-// Exportar funções para uso global - IMEDIATAMENTE
 window.getAuthToken = getAuthToken;
 window.setAuthToken = setAuthToken;
 window.clearAuthToken = clearAuthToken;
 window.isAuthenticated = isAuthenticated;
 window.requireAuth = requireAuth;
 window.authenticatedFetch = authenticatedFetch;
-
-// Sinalizar que auth.js está pronto
-console.log('[auth.js] Funções exportadas para window:', {
-    getAuthToken: typeof window.getAuthToken,
-    requireAuth: typeof window.requireAuth,
-    authenticatedFetch: typeof window.authenticatedFetch
-});
-window.__AUTH_JS_READY = true;
-
-// Carregar page-transitions.js automaticamente se disponível
-(function() {
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            loadPageTransitions();
-        });
-    } else {
-        loadPageTransitions();
-    }
-    
-    function loadPageTransitions() {
-        // Verificar se já foi carregado
-        if (window.pageTransitionsLoaded) return;
-        
-        // Tentar carregar o script de transições
-        const script = document.createElement('script');
-        script.src = './assets/js/page-transitions.js';
-        script.onerror = function() {
-            // Se falhar, tentar caminho relativo
-            const script2 = document.createElement('script');
-            script2.src = '../assets/js/page-transitions.js';
-            script2.onerror = function() {
-                // Se ainda falhar, não fazer nada (página pode não ter o arquivo)
-            };
-            document.head.appendChild(script2);
-        };
-        document.head.appendChild(script);
-        window.pageTransitionsLoaded = true;
-    }
-})();
-
-// Carregar network-monitor.js automaticamente
-(function() {
-    const scriptId = 'network-monitor-script';
-    if (!document.getElementById(scriptId)) {
-        const script = document.createElement('script');
-        script.id = scriptId;
-        script.src = './assets/js/network-monitor.js';
-        script.onerror = function() {
-            // Se falhar, tentar caminho relativo
-            const script2 = document.createElement('script');
-            script2.src = '../assets/js/network-monitor.js';
-            script2.onerror = function() {
-                // Se ainda falhar, não fazer nada (página pode não ter o arquivo)
-            };
-            document.head.appendChild(script2);
-        };
-        document.head.appendChild(script);
-    }
-})();
-

@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function() {
         addMealBtn.addEventListener('click', () => {
             const currentDate = dateSpan ? dateSpan.dataset.date : '';
             // Redireciona para a página de adicionar refeição, passando a data atual
-            window.location.href = `./add_food_to_diary.html?date=${currentDate}`;
+            window.location.href = `${baseAppUrl}/add_food_to_diary.php?date=${currentDate}`;
         });
     }
 
@@ -19,17 +19,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if(addMealShortcut) {
         addMealShortcut.addEventListener('click', (e) => {
             e.preventDefault();
-            // Função para obter data local (não UTC)
-            function getLocalDateString() {
-                const now = new Date();
-                const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, '0');
-                const day = String(now.getDate()).padStart(2, '0');
-                return `${year}-${month}-${day}`;
-            }
-            const today = getLocalDateString();
-            // Usar caminho relativo para manter dentro do app
-            window.location.href = `./add_food_to_diary.html?date=${today}`;
+            const today = new Date().toISOString().slice(0, 10);
+            window.location.href = `${baseAppUrl}/add_food_to_diary.php?date=${today}`;
         });
     }
 });

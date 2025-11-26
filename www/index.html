@@ -1,420 +1,406 @@
 ﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <!-- Config Global - DEVE SER O PRIMEIRO -->
-    <script src="./www-config.js"></script>
-    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no">
     
-    <!-- PWA Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="ShapeFIT">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="application-name" content="ShapeFIT">
-    <meta name="theme-color" content="transparent">
+    <meta name="theme-color" content="#000000">
     
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="./manifest.json">
-    
-    <!-- Script Critical - Viewport e Touch -->
-    <script>
-        function setRealViewportHeight() { 
-            const vh = window.innerHeight * 0.01; 
-            document.documentElement.style.setProperty('--vh', `${vh}px`); 
-        }
-        setRealViewportHeight();
-        window.addEventListener('resize', setRealViewportHeight);
-        window.addEventListener('orientationchange', function() {
-            setTimeout(setRealViewportHeight, 100);
-        });
-        
-        if (window.visualViewport) {
-            const updateKeyboardOffset = () => {
-                const viewportHeight = window.visualViewport.height;
-                const offset = Math.max(0, window.innerHeight - viewportHeight);
-                document.documentElement.style.setProperty('--keyboard-offset', `${offset}px`);
-            };
-            
-            window.visualViewport.addEventListener('resize', updateKeyboardOffset);
-            window.visualViewport.addEventListener('scroll', updateKeyboardOffset);
-            window.addEventListener('orientationchange', updateKeyboardOffset);
-            updateKeyboardOffset();
-        }
-        
-        document.addEventListener('touchmove', function(event) {
-            const checkinModal = document.getElementById('checkinModal');
-            const isModalOpen = checkinModal && checkinModal.classList.contains('active');
-            
-            if (isModalOpen) {
-                const insideMessages = event.target.closest('#checkinMessages');
-                if (insideMessages) {
-                    return;
-                }
-                
-                const insideModal = event.target.closest('#checkinModal');
-                if (insideModal) {
-                    event.preventDefault();
-                    return;
-                }
-            }
-            
-            const scrollable = event.target.closest('.app-container, .container');
-            if (!scrollable) {
-                event.preventDefault();
-            }
-        }, { passive: false });
-    </script>
+    <link rel="manifest" href="/manifest.json">
     
     <title>ShapeFIT</title>
     
-    <!-- Fontes -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- Ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     
-    <!-- Lottie.js para animações dos banners -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js" onload="console.log('[Index] Lottie.js carregado'); window.__LOTTIE_LOADED = true;" onerror="console.error('[Index] Erro ao carregar Lottie.js'); window.__LOTTIE_LOADED = false;"></script>
+   
+   
+  
+
+    <link rel="stylesheet" href="/assets/css/style.css">
     
-    <!-- CSS Principal Global -->
-    <link rel="stylesheet" href="./assets/css/style.css">
-    
-    <!-- Variáveis Globais -->
-    <script>
-        // BASE_APP_URL já foi definido pelo www-config.js
-        if (!window.BASE_APP_URL) {
-            window.BASE_APP_URL = window.location.origin + window.location.pathname.split('/').slice(0, -1).join('/');
-            if (window.BASE_APP_URL.endsWith('/')) {
-                window.BASE_APP_URL = window.BASE_APP_URL.slice(0, -1);
-            }
-        }
-        console.log('[Index] BASE_APP_URL definido como:', window.BASE_APP_URL);
-    </script>
-    
-    <!-- Scripts Globais - SEM async/defer para garantir ordem -->
-    <script src="./assets/js/auth.js" onload="console.log('[Index] auth.js carregado'); window.__AUTH_JS_LOADED = true;" onerror="console.error('[Index] Erro ao carregar auth.js')"></script>
-    <script>
-        // Aguardar auth.js estar pronto antes de continuar
-        if (typeof window.getAuthToken === 'undefined' || typeof window.requireAuth === 'undefined') {
-            console.warn('[Index] auth.js ainda não expôs funções, aguardando...');
-            // Aguardar até 2 segundos
-            let waitCount = 0;
-            const checkAuth = setInterval(() => {
-                waitCount++;
-                if (typeof window.getAuthToken !== 'undefined' && typeof window.requireAuth !== 'undefined') {
-                    clearInterval(checkAuth);
-                    console.log('[Index] auth.js funções disponíveis!');
-                    window.__AUTH_JS_READY = true;
-                } else if (waitCount > 20) {
-                    clearInterval(checkAuth);
-                    console.error('[Index] Timeout aguardando auth.js');
-                }
-            }, 100);
-        } else {
-            console.log('[Index] auth.js já está pronto!');
-            window.__AUTH_JS_READY = true;
-        }
-    </script>
-    <script src="./assets/js/spa-navigation.js"></script>
-    <script src="./assets/js/app-state.js"></script>
-    <script src="./assets/js/bottom-nav.js"></script>
-    
-    <!-- CSS Global para SPA -->
     <style>
-        :root {
-            --keyboard-offset: 0px;
+        /* === VIEW TRANSITIONS API (Login <-> Register) === */
+        @view-transition {
+            navigation: auto;
         }
         
+        /* Logo transiciona suavemente de posição */
+        ::view-transition-old(auth-logo),
+        ::view-transition-new(auth-logo) {
+            animation-duration: 0.35s;
+            animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Desabilitar animação padrão da logo - só mover */
+        ::view-transition-old(auth-logo) {
+            animation: none;
+        }
+        
+        ::view-transition-new(auth-logo) {
+            animation: none;
+        }
+        
+        /* Root (fundo) não anima - evita o flash */
+        ::view-transition-old(root),
+        ::view-transition-new(root) {
+            animation: none;
+            mix-blend-mode: normal;
+        }
+        
+        /* Grupo da logo mantém posição durante transição */
+        ::view-transition-group(auth-logo) {
+            animation-duration: 0.35s;
+            animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Título e Formulário - apenas crossfade suave, sem movimento */
+        ::view-transition-old(auth-title),
+        ::view-transition-old(auth-form) {
+            animation: simpleFadeOut 0.25s ease-out forwards;
+        }
+        
+        ::view-transition-new(auth-title),
+        ::view-transition-new(auth-form) {
+            animation: simpleFadeIn 0.35s ease-out forwards;
+        }
+        
+        @keyframes simpleFadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        
+        @keyframes simpleFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* === CORREÇÕES GERAIS DO SPA (SCROLL & LAYOUT) === */
         html, body {
-            min-height: 100%;
+            height: 100%;
+            overflow-y: auto !important;
+            overflow-x: hidden;
+            position: static !important;
+            -webkit-overflow-scrolling: touch;
+            background-color: var(--bg-color, #121212);
+            margin: 0;
+            padding: 0;
+            /* Esconder scrollbar */
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE/Edge */
+        }
+        
+        /* Esconder scrollbar no Chrome/Safari */
+        html::-webkit-scrollbar,
+        body::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Container Padrão (Dashboard, etc): Scrollável e ocupa altura do conteúdo */
+        #app-container {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            padding-bottom: 60px; /* Espaço do menu - igual à altura do bottom-nav */
+            z-index: 1;
+            box-sizing: border-box;
+            /* SCROLL - Essencial! */
+            overflow-y: scroll !important;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            /* TOUCH - Crítico para mobile */
+            touch-action: pan-y !important;
+            overscroll-behavior: contain;
+            /* Garantir que não há espaço extra no final */
+            margin-bottom: 0;
+            /* Esconder scrollbar */
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE/Edge */
+        }
+        
+        /* Esconder scrollbar no Chrome/Safari */
+        #app-container::-webkit-scrollbar {
+            display: none;
+        }
+        
+        /* Remover espaço extra apenas da última section.dashboard-grid na main_app */
+        #app-container .page-root section.dashboard-grid:last-of-type {
+            margin-bottom: 0 !important;
+            padding-bottom: 0 !important;
+        }
+        
+        /* Remover espaço extra do último card dentro da última dashboard-grid */
+        #app-container .page-root section.dashboard-grid:last-of-type > .card-challenges:last-child {
+            margin-bottom: 0 !important;
+        }
+
+        /* Classe de Controle: Quando o menu some, remove o buraco no final */
+        #bottom-nav-container.hidden ~ #app-container, 
+        body.auth-mode #app-container {
+            padding-bottom: 0 !important;
+        }
+        
+        /* Remover padding-bottom dos .app-container dentro dos fragments 
+           O #app-container principal já cuida do espaçamento do menu */
+        #app-container .page-root .app-container {
+            padding-bottom: 0 !important;
+            margin-bottom: 0 !important;
+            /* IMPORTANTE: Não definir altura - deixar o conteúdo determinar */
+            height: auto !important;
+            min-height: auto !important;
+            overflow: visible !important;
+        }
+        
+        /* Page root precisa permitir que o conteúdo flua */
+        #app-container .page-root {
+            margin-bottom: 0 !important;
+            /* NÃO remover padding-bottom aqui - deixar os grids definirem */
+            overflow: visible !important;
+            min-height: auto !important;
+        }
+        
+        /* Esconder scrollbar em todos os elementos com scroll */
+        * {
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE/Edge */
+        }
+        
+        *::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
+        }
+        
+        .hidden { display: none !important; }
+        .page-loading { opacity: 0; }
+        .page-loaded { opacity: 1; }
+        
+        /* Otimização de camada para evitar flick */
+        #app-container {
+            will-change: scroll-position;
+            /* REMOVIDO contain: layout style - quebrava scroll em alguns casos */
+        }
+
+        /* === ESTILO DO MENU (GLASSMORPHISM) === */
+        #bottom-nav-container {
+            position: fixed !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            width: 100% !important;
+            z-index: 1000 !important;
+            will-change: transform;
+            transform: translateY(0);
+            -webkit-transform: translateY(0);
+            /* Transição FLUIDA */
+            transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+            -webkit-transition: -webkit-transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+        }
+        
+        /* Auto-hide: quando scrollar para baixo */
+        #bottom-nav-container.nav-hidden {
+            transform: translateY(100%) !important;
+            -webkit-transform: translateY(100%) !important;
+        }
+
+        .bottom-nav {
+            /* CRÍTICO: Remover position fixed do filho - só o container deve ser fixed */
+            position: relative !important;
+            /* Herdar transição */
+            transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
+            display: flex !important;
+            justify-content: space-around !important;
+            align-items: center !important;
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+            background: rgba(24, 24, 24, 0.92) !important;
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
+            border-top: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1)) !important;
+            padding-top: 12px !important;
+            padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+            padding-left: calc(10px + env(safe-area-inset-left, 0px)) !important;
+            padding-right: calc(10px + env(safe-area-inset-right, 0px)) !important;
+            min-height: calc(60px + env(safe-area-inset-bottom, 0px)) !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: var(--text-secondary, #8E8E93);
+            transition: color 0.2s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .nav-item i { font-size: 1.5rem; }
+        .nav-item.active { color: var(--accent-orange, #ff6b00) !important; }
+
+        /* === CORREÇÃO DE LOGIN E REGISTRO (MODO AUTH) === */
+        
+        /* Padrão: Bloco normal (Dashboard) */
+        .page-root {
+            display: block;
+            width: 100%;
+            height: auto;
             margin: 0;
             padding: 0;
         }
-        
-        body {
-            -webkit-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-            -webkit-touch-callout: none;
-            overflow-x: hidden;
-            background: var(--bg-color, #101010);
-            position: relative;
+
+        /* Modo Auth: Centraliza tudo na tela */
+        body.auth-mode .page-root {
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+            min-height: 100vh !important;
+            width: 100% !important;
         }
-        
-        body.checkin-modal-open {
-            overflow: hidden;
-        }
-        
-        a, button, .btn, [role="button"] {
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-        
-        /* Container SPA - onde as páginas serão injetadas */
-        #spa-container {
-            position: relative;
+
+        /* Ajustes dos containers internos de login */
+        .login-container, .register-container, .auth-container {
             width: 100%;
-            min-height: 100vh;
-            padding-bottom: calc(64px + env(safe-area-inset-bottom));
+            max-width: 350px;
+            padding: 20px;
+            margin: 0 auto;
         }
-        
-        /* Background fixo - se necessário */
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
+
+        /* Ícones e Inputs (FontAwesome) */
+        .form-group, .input-group {
+            position: relative !important;
+            margin-bottom: 15px;
             width: 100%;
-            height: 100%;
-            background: var(--bg-color, #101010);
-            z-index: -1;
+        }
+
+        .form-group i, .input-group i, .input-icon {
+            position: absolute !important;
+            left: 15px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            z-index: 10 !important;
+            font-style: normal !important; 
+            font-family: "Font Awesome 5 Free" !important;
+            font-weight: 900 !important;
+            font-size: 16px !important;
+            color: #888 !important;
             pointer-events: none;
+            display: block !important;
+        }
+
+        .form-group input, .input-group input {
+            padding-left: 45px !important;
+            height: 50px !important;
+            width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        
+        /* === CORREÇÃO DE MODAIS === */
+        /* Garantir que modais funcionem corretamente no SPA */
+        /* Modais devem estar acima de tudo quando visíveis */
+        .modal {
+            z-index: 9999 !important;
+            position: fixed !important;
+        }
+        
+        /* Quando visível, garantir interatividade */
+        .modal.is-visible {
+            pointer-events: auto !important;
+        }
+        
+        /* Conteúdo do modal sempre interativo quando modal está visível */
+        .modal.is-visible .modal-content {
+            pointer-events: auto !important;
+            position: relative !important;
+            z-index: 10000 !important;
+        }
+        
+        /* Garantir que app-container não bloqueie modais */
+        #app-container {
+            z-index: 1 !important;
+        }
+        
+        /* Bottom nav deve ficar abaixo dos modais */
+        #bottom-nav-container {
+            z-index: 1000 !important;
+        }
+
+        /* Logo */
+        body.auth-mode .page-root img {
+            max-width: 150px;
+            margin-bottom: 30px;
+            display: block;
         }
     </style>
-    
-    <!-- Script para carregar main_app.html inicialmente -->
     <script>
-        // Função para carregar página inicial
-        async function loadInitialPage() {
-            const spaContainer = document.getElementById('spa-container');
-            if (!spaContainer) {
-                setTimeout(loadInitialPage, 100);
-                return;
+        // Esconder menu IMEDIATAMENTE se for página de auth (antes do DOM carregar)
+        (function() {
+            var path = window.location.pathname;
+            var isAuthPage = path.includes('login') || path.includes('cadastro') || path.includes('register') || path.includes('bem-vindo') || path.includes('onboarding');
+            if (isAuthPage) {
+                document.write('<style>#bottom-nav-container{display:none!important}</style>');
             }
-            
-            // Garantir que BASE_APP_URL está definido antes de prosseguir
-            if (typeof window.BASE_APP_URL === 'undefined') {
-                console.warn('[Index] BASE_APP_URL ainda não definido, aguardando www-config.js...');
-                setTimeout(loadInitialPage, 50);
-                return;
-            }
-            console.log('[Index] BASE_APP_URL definido como:', window.BASE_APP_URL);
-            
-            // CRÍTICO: Aguardar auth.js estar 100% pronto
-            console.log('[Index] Verificando auth.js...');
-            console.log('[Index] getAuthToken:', typeof window.getAuthToken);
-            console.log('[Index] requireAuth:', typeof window.requireAuth);
-            console.log('[Index] authenticatedFetch:', typeof window.authenticatedFetch);
-            
-            if (typeof window.getAuthToken === 'undefined' || typeof window.requireAuth === 'undefined' || typeof window.authenticatedFetch === 'undefined') {
-                console.warn('[Index] auth.js ainda não está pronto, aguardando...');
-                // Aguardar até 10 segundos
-                let waitCount = 0;
-                const maxWait = 100; // 10 segundos
-                while (waitCount < maxWait && (typeof window.getAuthToken === 'undefined' || typeof window.requireAuth === 'undefined' || typeof window.authenticatedFetch === 'undefined')) {
-                    await new Promise(resolve => setTimeout(resolve, 100));
-                    waitCount++;
-                }
-                
-                // Verificar novamente
-                if (typeof window.getAuthToken === 'undefined' || typeof window.requireAuth === 'undefined' || typeof window.authenticatedFetch === 'undefined') {
-                    console.error('[Index] ERRO CRÍTICO: auth.js não está disponível após 10 segundos!');
-                    console.error('[Index] Tentando recarregar auth.js...');
-                    
-                    // Tentar recarregar auth.js
-                    const existingAuthScript = document.querySelector('script[src*="auth.js"]');
-                    if (existingAuthScript) {
-                        existingAuthScript.remove();
-                    }
-                    
-                    await new Promise((resolve) => {
-                        const authScript = document.createElement('script');
-                        authScript.src = './assets/js/auth.js';
-                        authScript.async = false;
-                        authScript.onload = () => {
-                            setTimeout(() => {
-                                console.log('[Index] auth.js recarregado');
-                                resolve();
-                            }, 500);
-                        };
-                        authScript.onerror = () => {
-                            console.error('[Index] Erro ao recarregar auth.js');
-                            resolve();
-                        };
-                        document.head.insertBefore(authScript, document.head.firstChild);
-                    });
-                }
-            }
-            
-            // Verificação final
-            if (typeof window.getAuthToken === 'undefined' || typeof window.requireAuth === 'undefined' || typeof window.authenticatedFetch === 'undefined') {
-                console.error('[Index] ERRO FATAL: auth.js não está disponível! Não é possível continuar.');
-                return;
-            }
-            
-            console.log('[Index] ✅ auth.js confirmado pronto!');
-            console.log('[Index] getAuthToken:', typeof window.getAuthToken);
-            console.log('[Index] requireAuth:', typeof window.requireAuth);
-            console.log('[Index] authenticatedFetch:', typeof window.authenticatedFetch);
-            
-            // Verificar se já estamos em uma página específica (via URL)
-            const currentPath = window.location.pathname;
-            const pageName = currentPath.split('/').pop();
-            
-            // Se não for index.html ou vazio, carregar a página correspondente
-            let pageToLoad = './main_app.html';
-            if (pageName && pageName !== 'index.html' && pageName !== '' && pageName.endsWith('.html')) {
-                pageToLoad = './' + pageName;
-            }
-            
-            console.log('[Index] Carregando página inicial:', pageToLoad);
-            
-            // Aguardar um pouco para garantir que spa-navigation está pronto
-            setTimeout(() => {
-                // Tentar usar spa-navigation se disponível
-                if (window.spaNavigate) {
-                    window.spaNavigate(pageToLoad);
-                } else {
-                    // Fallback: carregar diretamente usando a mesma lógica do spa-navigation
-                    console.log('[Index] Usando fallback para carregar:', pageToLoad);
-                    fetch(pageToLoad)
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error(`HTTP ${response.status}`);
-                            }
-                            return response.text();
-                        })
-                        .then(html => {
-                            console.log('[Index] HTML recebido, tamanho:', html.length);
-                            
-                            // Extrair conteúdo do app-container
-                            const parser = new DOMParser();
-                            const doc = parser.parseFromString(html, 'text/html');
-                            const appContainer = doc.querySelector('.app-container, .container');
-                            
-                            if (!appContainer) {
-                                console.error('[Index] app-container não encontrado no HTML recebido');
-                                // Se não encontrou app-container, pode ser que o HTML já seja o fragmento
-                                spaContainer.innerHTML = html;
-                            } else {
-                                const content = appContainer.innerHTML;
-                                console.log('[Index] Conteúdo extraído, tamanho:', content.length);
-                                
-                                // Extrair scripts ANTES de inserir conteúdo
-                                const scripts = Array.from(appContainer.querySelectorAll('script'));
-                                console.log('[Index] Scripts encontrados:', scripts.length);
-                                
-                                // Inserir conteúdo (sem scripts)
-                                const tempDiv = document.createElement('div');
-                                tempDiv.innerHTML = content;
-                                const scriptsInContent = tempDiv.querySelectorAll('script');
-                                scriptsInContent.forEach(s => s.remove()); // Remover scripts do conteúdo
-                                spaContainer.innerHTML = tempDiv.innerHTML;
-                                
-                                // Executar scripts DEPOIS de inserir conteúdo
-                                // IMPORTANTE: Carregar scripts na ordem correta
-                                const scriptPromises = [];
-                                const scriptSrcs = [];
-                                
-                                scripts.forEach((script, index) => {
-                                    if (script.src) {
-                                        scriptSrcs.push(script.src);
-                                    }
-                                });
-                                
-                                // Carregar scripts sequencialmente para garantir ordem
-                                async function loadScriptsSequentially() {
-                                    // Garantir que BASE_APP_URL está definido
-                                    if (!window.BASE_APP_URL) {
-                                        window.BASE_APP_URL = 'https://appshapefit.com';
-                                        console.log('[Index] BASE_APP_URL definido como fallback:', window.BASE_APP_URL);
-                                    }
-                                    
-                                    // auth.js JÁ DEVE ESTAR PRONTO (verificado em loadInitialPage)
-                                    // Mas vamos verificar novamente por segurança
-                                    if (typeof window.getAuthToken === 'undefined' || typeof window.requireAuth === 'undefined' || typeof window.authenticatedFetch === 'undefined') {
-                                        console.error('[Index] ERRO: auth.js não está disponível em loadScriptsSequentially!');
-                                        console.error('[Index] Isso não deveria acontecer. Aguardando...');
-                                        let waitCount = 0;
-                                        while (waitCount < 50 && (typeof window.getAuthToken === 'undefined' || typeof window.requireAuth === 'undefined' || typeof window.authenticatedFetch === 'undefined')) {
-                                            await new Promise(resolve => setTimeout(resolve, 100));
-                                            waitCount++;
-                                        }
-                                    }
-                                    
-                                    if (typeof window.getAuthToken === 'undefined' || typeof window.requireAuth === 'undefined' || typeof window.authenticatedFetch === 'undefined') {
-                                        console.error('[Index] ERRO CRÍTICO: auth.js não está disponível! Não é possível carregar scripts da página.');
-                                        return;
-                                    }
-                                    
-                                    console.log('[Index] ✅ auth.js confirmado disponível antes de carregar scripts da página');
-                                    
-                                    for (let i = 0; i < scripts.length; i++) {
-                                        const script = scripts[i];
-                                        if (script.src) {
-                                            console.log(`[Index] Carregando script externo ${i + 1}:`, script.src);
-                                            await new Promise((resolve, reject) => {
-                                                // Verificar se já foi carregado
-                                                const existing = document.querySelector(`script[src="${script.src}"]`);
-                                                if (existing) {
-                                                    resolve();
-                                                    return;
-                                                }
-                                                
-                                                const newScript = document.createElement('script');
-                                                newScript.src = script.src;
-                                                newScript.async = false;
-                                                newScript.onload = resolve;
-                                                newScript.onerror = reject;
-                                                document.head.appendChild(newScript);
-                                            });
-                                        } else if (script.textContent.trim()) {
-                                            console.log(`[Index] Executando script inline ${i + 1}`);
-                                            const newScript = document.createElement('script');
-                                            newScript.textContent = script.textContent;
-                                            document.body.appendChild(newScript);
-                                        }
-                                    }
-                                    
-                                    console.log('[Index] Todos os scripts carregados');
-                                    
-                                    // Aguardar um pouco para garantir que tudo está pronto
-                                    await new Promise(resolve => setTimeout(resolve, 300));
-                                    
-                                    // Disparar eventos para scripts da página
-                                    // Primeiro DOMContentLoaded (para compatibilidade)
-                                    const domContentLoadedEvent = new Event('DOMContentLoaded', { bubbles: true, cancelable: true });
-                                    document.dispatchEvent(domContentLoadedEvent);
-                                    
-                                    // Depois spa-page-loaded
-                                    window.dispatchEvent(new CustomEvent('spa-page-loaded', {
-                                        detail: { url: pageToLoad, isSPANavigation: false }
-                                    }));
-                                    console.log('[Index] Eventos disparados (DOMContentLoaded + spa-page-loaded)');
-                                }
-                                
-                                loadScriptsSequentially().catch(error => {
-                                    console.error('[Index] Erro ao carregar scripts:', error);
-                                });
-                            }
-                            
-                            // Atualizar URL sem recarregar
-                            window.history.replaceState({ url: pageToLoad }, '', pageToLoad);
-                        })
-                        .catch(error => {
-                            console.error('[Index] Erro ao carregar página:', error);
-                        });
-                }
-            }, 200);
-        }
-        
-        // Aguardar DOM e scripts globais carregarem
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', loadInitialPage);
-        } else {
-            loadInitialPage();
-        }
+        })();
     </script>
 </head>
 <body>
-    <!-- Container SPA - páginas serão injetadas aqui -->
-    <div id="spa-container"></div>
+    <div id="app-container"></div>
     
-    <!-- Bottom Navigation será injetado pelo bottom-nav.js -->
+    <div id="bottom-nav-container">
+        <nav class="bottom-nav">
+            <a href="/main_app.html" class="nav-item" data-page="home">
+                <i class="fas fa-home"></i>
+            </a>
+            <a href="/progress.html" class="nav-item" data-page="stats">
+                <i class="fas fa-chart-line"></i>
+            </a>
+            <a href="/diary.html" class="nav-item" data-page="diary">
+                <i class="fas fa-book"></i>
+            </a>
+            <a href="/explore_recipes.html" class="nav-item" data-page="explore">
+                <i class="fas fa-utensils"></i>
+            </a>
+            <a href="/more_options.html" class="nav-item" data-page="settings">
+                <i class="fas fa-cog"></i>
+            </a>
+        </nav>
+    </div>
+    
+    <script src="/assets/js/common.js"></script>
+    <script src="/assets/js/config.js"></script>
+    <script src="/assets/js/auth.js"></script>
+    <script type="module" src="/assets/js/toast-helper.js"></script> 
+
+    <script src="/assets/js/raphael.min.js"></script>
+    <script src="/assets/js/justgage.min.js"></script>
+    <script src="/assets/js/time-picker.js"></script>
+
+    <script src="/assets/js/routine_circular.js"></script>
+    <script src="/assets/js/banner-carousel.js"></script>
+    <!-- Import map para resolver módulos Scandit -->
+    <script type="importmap">
+    {
+        "imports": {
+            "@scandit/web-datacapture-core": "https://cdn.jsdelivr.net/npm/@scandit/web-datacapture-core@7.3.0/+esm",
+            "@scandit/web-datacapture-barcode": "https://cdn.jsdelivr.net/npm/@scandit/web-datacapture-barcode@7.3.0/+esm"
+        }
+    }
+    </script>
+    <script type="module" src="/assets/js/barcode_scanner.js"></script>
+    
+    <script src="/assets/js/bottom-nav.js"></script>
+    <script src="/assets/js/spa-fixes.js"></script>
+
+    <script src="/assets/js/router.js" defer></script>
 </body>
 </html>

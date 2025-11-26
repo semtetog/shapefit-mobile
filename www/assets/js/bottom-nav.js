@@ -1,184 +1,205 @@
-// bottom-nav.js - Componente de navegação inferior para páginas HTML
-// Funciona como um "include" - usado em todas as páginas HTML
+/**
+ * bottom-nav.js - Controle de Ativação do Menu SPA
+ * + Efeito Auto-Hide (estilo Twitter)
+ */
 
-// Evitar re-declaração em navegação SPA
-if (typeof window.__bottomNavInitialized !== 'undefined') {
-    // Já foi inicializado, apenas atualizar item ativo se necessário
-    if (typeof updateActiveItem === 'function') {
-        updateActiveItem();
-    }
-} else {
-    window.__bottomNavInitialized = true;
+(function() {
+    // CORREÇÃO CRÍTICA: Impede re-execução se o script for carregado 2x
+    if (window.BottomNavInitialized) return;
+    window.BottomNavInitialized = true;
 
-// Mapeamento de páginas para itens ativos
-const bottomNavMap = {
-    'main_app.html': 'home',
-    'progress.html': 'stats',
-    'diary.html': 'diary',
-    'add_food_to_diary.html': 'diary',
-    'meal_types_overview.html': 'diary',
-    'explore_recipes.html': 'explore',
-    'favorite_recipes.html': 'explore',
-    'view_recipe.html': 'explore',
-    'profile_overview.html': 'settings',
-    'more_options.html': 'settings',
-    'more_options.php': 'settings',
-    'ranking.html': 'home'
-};
-
-// Detectar página atual
-const bottomNavCurrentPage = window.location.pathname.split('/').pop() || 'main_app.html';
-const bottomNavActiveItem = bottomNavMap[bottomNavCurrentPage] || 'home';
-
-// Usar caminhos relativos para manter navegação dentro do app
-// BASE_APP_URL é apenas para APIs, não para navegação
-
-// CSS do bottom nav
-const bottomNavCSS = `
-    <style>
-    /* === ESTILO FINAL E CLEAN PARA A BARRA DE NAVEGAÇÃO === */
-    .bottom-nav {
-        position: fixed !important;
-        bottom: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        width: 100% !important;
-        max-width: none !important;
-        margin: 0 !important;
-        /* Removido max-width e margin para ocupar toda a largura da tela */
-        /* Padding mínimo sempre presente + safe-area quando disponível */
-        /* Reduzido para não ficar com margem gigante, especialmente no iOS nativo */
-        padding-top: 10px !important;
-        padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
-        padding-left: calc(10px + env(safe-area-inset-left, 0px)) !important;
-        padding-right: calc(10px + env(safe-area-inset-right, 0px)) !important;
-        min-height: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
-        background: rgba(24, 24, 24, 0.85) !important;
-        backdrop-filter: blur(15px) !important;
-        -webkit-backdrop-filter: blur(15px) !important;
-        border-top: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1)) !important;
-        display: flex !important;
-        justify-content: space-around !important;
-        align-items: center !important;
-        z-index: 1000 !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-    }
-
-    .nav-item {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        text-decoration: none;
-        color: var(--text-secondary, #8E8E93);
-        transition: color 0.2s ease;
-        -webkit-tap-highlight-color: transparent;
-    }
-
-    .nav-item i {
-        font-size: 1.5rem;
-    }
-
-    .nav-item.active {
-        color: var(--accent-orange, #ff6b00);
-    }
-    </style>
-`;
-
-// HTML do bottom nav - usando caminhos relativos
-// Todas as páginas agora são fragmentos SPA
-const bottomNavHTML = `
-    <nav class="bottom-nav">
-        <a href="./main_app.html" class="nav-item ${bottomNavActiveItem === 'home' ? 'active' : ''}">
-            <i class="fas fa-home"></i>
-        </a>
-        <a href="./progress.html" class="nav-item ${bottomNavActiveItem === 'stats' ? 'active' : ''}">
-            <i class="fas fa-chart-line"></i>
-        </a>
-        <a href="./diary.html" class="nav-item ${bottomNavActiveItem === 'diary' ? 'active' : ''}">
-            <i class="fas fa-book"></i>
-        </a>
-        <a href="./explore_recipes.html" class="nav-item ${bottomNavActiveItem === 'explore' ? 'active' : ''}">
-            <i class="fas fa-utensils"></i>
-        </a>
-        <a href="./more_options.html" class="nav-item ${bottomNavActiveItem === 'settings' ? 'active' : ''}">
-            <i class="fas fa-cog"></i>
-        </a>
-    </nav>
-`;
-
-// Função para renderizar o bottom nav
-function renderBottomNav() {
-    // Verificar se já existe (evitar duplicatas)
-    const existingNavs = document.querySelectorAll('.bottom-nav');
+    // ============================================
+    // AUTO-HIDE DO MENU (Acompanha o scroll)
+    // ============================================
+    let lastScrollY = 0;
+    let navOffset = 0; // Quanto o nav está "escondido" (0 = visível, navHeight = escondido)
+    let navHeight = 70; // Altura aproximada do nav
+    let ticking = false;
     
-    // Se existem múltiplos, remover todos e criar um novo
-    if (existingNavs.length > 1) {
-        existingNavs.forEach(nav => nav.remove());
-    } else if (existingNavs.length === 1) {
-        // Se já existe apenas um, apenas atualizar o item ativo
-        updateActiveItem();
-        return;
+    function handleNavScroll() {
+        const navContainer = document.getElementById('bottom-nav-container');
+        const scrollContainer = document.getElementById('app-container');
+        
+        if (!navContainer || !scrollContainer) return;
+        if (navContainer.classList.contains('hidden')) return;
+        
+        const currentScrollY = scrollContainer.scrollTop;
+        const scrollDiff = currentScrollY - lastScrollY;
+        
+        // Calcular novo offset baseado na direção do scroll
+        if (currentScrollY < 30) {
+            // No topo - sempre mostrar
+            navOffset = 0;
+        } else {
+            // Adiciona ou subtrai do offset baseado na direção
+            navOffset += scrollDiff;
+            
+            // Limitar entre 0 e navHeight
+            navOffset = Math.max(0, Math.min(navOffset, navHeight));
+        }
+        
+        // Aplicar transform diretamente (fluido)
+        navContainer.style.transform = `translateY(${navOffset}px)`;
+        
+        lastScrollY = currentScrollY;
     }
     
-    const existingStyle = document.querySelector('style[data-bottom-nav]');
-    if (existingStyle) {
-        existingStyle.remove();
-    }
-    
-    // Verificar se body existe
-    if (!document.body) {
-        return;
-    }
-    
-    // Inserir CSS no head
-    const styleDiv = document.createElement('div');
-    styleDiv.innerHTML = bottomNavCSS;
-    const styleElement = styleDiv.querySelector('style');
-    if (styleElement) {
-        styleElement.setAttribute('data-bottom-nav', 'true');
-        document.head.appendChild(styleElement);
-    }
-    
-    // Inserir HTML no body
-    const navDiv = document.createElement('div');
-    navDiv.innerHTML = bottomNavHTML;
-    const navElement = navDiv.querySelector('nav');
-    if (navElement) {
-        document.body.appendChild(navElement);
-    }
-}
-
-// Função para atualizar apenas o item ativo (usado durante navegação SPA)
-function updateActiveItem() {
-    const currentPage = window.location.pathname.split('/').pop() || 'main_app.html';
-    const activeItem = bottomNavMap[currentPage] || 'home';
-    
-    document.querySelectorAll('.bottom-nav .nav-item').forEach(item => {
-        item.classList.remove('active');
-        const href = item.getAttribute('href');
-        if (href) {
-            const itemPage = href.split('/').pop().split('?')[0];
-            if (bottomNavMap[itemPage] === activeItem) {
-                item.classList.add('active');
+    function initAutoHide() {
+        const scrollContainer = document.getElementById('app-container');
+        const navContainer = document.getElementById('bottom-nav-container');
+        
+        if (!scrollContainer || !navContainer) {
+            setTimeout(initAutoHide, 100);
+            return;
+        }
+        
+        // Pegar altura real do nav
+        navHeight = navContainer.offsetHeight || 70;
+        
+        // Remover transição para movimento fluido
+        navContainer.style.transition = 'none';
+        
+        console.log('[BottomNav] Auto-hide fluido ativado! Altura:', navHeight);
+        
+        scrollContainer.addEventListener('scroll', function() {
+            if (!ticking) {
+                window.requestAnimationFrame(function() {
+                    handleNavScroll();
+                    ticking = false;
+                });
+                ticking = true;
             }
+        }, { passive: true });
+    }
+    
+    // Iniciar quando DOM estiver pronto
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAutoHide);
+    } else {
+        setTimeout(initAutoHide, 150);
+    }
+    
+    // Páginas que NÃO devem mostrar o bottom nav
+    const pagesWithoutNav = ['auth_login', 'auth_register', 'login', 'register', 'onboarding'];
+    
+    function shouldHideNav(pageName) {
+        return pagesWithoutNav.some(p => pageName.includes(p));
+    }
+    
+    // Reset ao mudar de página
+    window.addEventListener('pageLoaded', function(e) {
+        const navContainer = document.getElementById('bottom-nav-container');
+        if (!navContainer) return;
+        
+        // Verificar se deve esconder o nav nesta página
+        const pageName = e.detail?.pageName || window.location.pathname;
+        if (shouldHideNav(pageName)) {
+            navContainer.style.display = 'none';
+        } else {
+            navContainer.style.display = 'block';
+            navContainer.style.transform = 'translateY(0)';
+            navOffset = 0;
+        }
+        lastScrollY = 0;
+    });
+
+    // ============================================
+    // MAPEAMENTO DE PÁGINAS
+    // ============================================
+    const pageMap = {
+        // HOME
+        'main_app': 'home',
+        'dashboard': 'home',
+        'ranking': 'home',
+
+        // STATS
+        'progress': 'stats',
+        'measurements_progress': 'stats',
+        'points_history': 'stats',
+
+        // DIARY
+        'diary': 'diary',
+        'add_food_to_diary': 'diary',
+        'meal_types_overview': 'diary',
+
+        // EXPLORE
+        'explore_recipes': 'explore',
+        'favorite_recipes': 'explore',
+        'view_recipe': 'explore',
+
+        // SETTINGS
+        'more_options': 'settings',
+        'profile_overview': 'settings',
+        'edit_profile': 'settings',
+        'routine': 'settings'
+    };
+
+    function updateActiveMenuItem() {
+        let currentPath = window.location.pathname;
+        let pageName = currentPath.split('/').pop().replace('.html', '');
+        
+        // Se for URL bonita (ex: /diario), mapear para nome do arquivo
+        const urlToFileMap = {
+            '/diario': 'diary',
+            '/dashboard': 'main_app',
+            '/evolucao': 'progress',
+            '/explorar': 'explore_recipes',
+            '/mais-opcoes': 'more_options',
+            '/perfil': 'profile_overview',
+            '/ranking': 'ranking',
+            '/': 'main_app',
+            '': 'main_app'
+        };
+        
+        // Se a URL está no mapa, usar o nome do arquivo correspondente
+        if (urlToFileMap[currentPath]) {
+            pageName = urlToFileMap[currentPath];
+        }
+        
+        // Se ainda não encontrou, tentar extrair do pathname
+        if (!pageName || pageName === 'index') {
+            pageName = 'main_app';
+        }
+
+        const activeTab = pageMap[pageName] || 'home';
+        
+        console.log('[BottomNav] Página atual:', pageName, '-> Tab ativa:', activeTab);
+
+        const navItems = document.querySelectorAll('.bottom-nav .nav-item');
+        navItems.forEach(item => {
+            item.classList.remove('active');
+            if (item.getAttribute('data-page') === activeTab) {
+                item.classList.add('active');
+                console.log('[BottomNav] Item ativado:', activeTab);
+            }
+        });
+    }
+
+    window.addEventListener('pageLoaded', function(event) {
+        // Usar pageName do evento se disponível
+        if (event.detail && event.detail.pageName) {
+            const pageName = event.detail.pageName;
+            const activeTab = pageMap[pageName] || 'home';
+            
+            const navItems = document.querySelectorAll('.bottom-nav .nav-item');
+            navItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('data-page') === activeTab) {
+                    item.classList.add('active');
+                    console.log('[BottomNav] Item ativado via pageLoaded:', activeTab);
+                }
+            });
+        } else {
+            updateActiveMenuItem();
         }
     });
-}
+    window.addEventListener('popstate', updateActiveMenuItem);
+    // Também atualizar quando o router dispara fragmentReady
+    window.addEventListener('fragmentReady', updateActiveMenuItem);
 
-// Renderizar quando o DOM estiver pronto
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', renderBottomNav);
-} else {
-    renderBottomNav();
-}
-
-// Fallback: tentar novamente após window.load
-window.addEventListener('load', function() {
-    if (!document.querySelector('.bottom-nav')) {
-        renderBottomNav();
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', updateActiveMenuItem);
+    } else {
+        updateActiveMenuItem();
     }
-});
-
-} // Fim do bloco de verificação de inicialização
+})();

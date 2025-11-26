@@ -3,10 +3,17 @@
   "appName": "ShapeFit",
   "webDir": "www",
   "server": {
-    "androidScheme": "https"
-    // Para Live Reload durante desenvolvimento, descomente e configure seu IP:
-    // "url": "http://SEU_IP_AQUI:8100",
-    // "cleartext": true
+    "androidScheme": "https",
+    "iosScheme": "https"
+  },
+  "ios": {
+    "allowsLinkPreview": false,
+    "scrollEnabled": true,
+    "contentInset": "automatic",
+    "allowNavigation": [
+      "https://appshapefit.com",
+      "https://*.appshapefit.com"
+    ]
   },
   "android": {
     "allowMixedContent": false,
@@ -15,15 +22,7 @@
     "allowNavigation": [
       "https://appshapefit.com",
       "https://*.appshapefit.com"
-    ],
-    "statusBar": {
-      "style": "DARK",
-      "backgroundColor": "#101010",
-      "overlaysWebView": true
-    },
-    "webViewOptions": {
-      "cacheMode": "LOAD_DEFAULT"
-    }
+    ]
   },
   "plugins": {
     "SplashScreen": {

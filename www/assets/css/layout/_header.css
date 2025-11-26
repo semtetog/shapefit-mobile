@@ -7,8 +7,7 @@
     align-items: center;
     margin-bottom: 32px;
     flex-shrink: 0;
-    /* Removido padding-top - o container já cuida do safe-area */
-    padding-top: 0;
+     padding-top: env(safe-area-inset-top);
 }
 
 /* Título principal do header e de outras páginas */

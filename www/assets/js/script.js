@@ -2,8 +2,7 @@
 //         SHAPEFIT - SCRIPT.JS (MASTER SCRIPT PARA DASHBOARD)
 // =========================================================================
 
-// Função de inicialização
-function initMainAppScript() {
+document.addEventListener('DOMContentLoaded', function () {
     console.log('ShapeFit Master Script Loaded');
 
     // =========================================================================
@@ -324,24 +323,9 @@ function initMainAppScript() {
                     label.classList.add('selected');
                 }
             } else {
-                    clickedInput.checked = !clickedInput.checked;
-                    label.classList.toggle('selected', clickedInput.checked);
+                clickedInput.checked = !clickedInput.checked;
+                label.classList.toggle('selected', clickedInput.checked);
             }
         });
     });
-}
-
-// Executar no DOMContentLoaded (carregamento inicial)
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initMainAppScript);
-} else {
-    initMainAppScript();
-}
-
-// Executar também quando carregado via SPA
-window.addEventListener('spa-page-loaded', function(e) {
-    const pageName = window.location.pathname.split('/').pop();
-    if (pageName === 'main_app.html' || pageName === 'dashboard.html') {
-        setTimeout(initMainAppScript, 100);
-    }
 });
